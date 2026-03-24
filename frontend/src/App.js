@@ -25,6 +25,9 @@ import AdminDevices from "./pages/admin/AdminDevices";
 import AdminSettings from "./pages/admin/AdminSettings";
 import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminGyms from "./pages/admin/AdminGyms";
+import AdminClasses from "./pages/admin/AdminClasses";
+import AdminSchedules from "./pages/admin/AdminSchedules";
+import AdminStaff from "./pages/admin/AdminStaff";
 
 // PWA Pages
 import MemberLogin from "./pages/pwa/MemberLogin";
@@ -32,6 +35,7 @@ import MemberHome from "./pages/pwa/MemberHome";
 import MemberHistory from "./pages/pwa/MemberHistory";
 import MemberMembership from "./pages/pwa/MemberMembership";
 import MemberProfile from "./pages/pwa/MemberProfile";
+import MemberClasses from "./pages/pwa/MemberClasses";
 import PaymentSuccess from "./pages/pwa/PaymentSuccess";
 
 // Protected Route Components
@@ -136,6 +140,9 @@ function AppRoutes() {
       <Route path="/admin/gyms" element={<AdminRoute><AdminGyms /></AdminRoute>} />
       <Route path="/admin/members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
       <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
+      <Route path="/admin/classes" element={<AdminRoute><AdminClasses /></AdminRoute>} />
+      <Route path="/admin/schedules" element={<AdminRoute><AdminSchedules /></AdminRoute>} />
+      <Route path="/admin/staff" element={<AdminRoute><AdminStaff /></AdminRoute>} />
       <Route path="/admin/access" element={<AdminRoute><AdminAccess /></AdminRoute>} />
       <Route path="/admin/devices" element={<AdminRoute><AdminDevices /></AdminRoute>} />
       <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
@@ -144,6 +151,7 @@ function AppRoutes() {
       {/* PWA/Member Routes */}
       <Route path="/app/login" element={<MemberLogin />} />
       <Route path="/app" element={<MemberRoute><MemberHome /></MemberRoute>} />
+      <Route path="/app/classes" element={<MemberRoute><MemberClasses /></MemberRoute>} />
       <Route path="/app/history" element={<MemberRoute><MemberHistory /></MemberRoute>} />
       <Route path="/app/membership" element={<MemberRoute><MemberMembership /></MemberRoute>} />
       <Route path="/app/profile" element={<MemberRoute><MemberProfile /></MemberRoute>} />
