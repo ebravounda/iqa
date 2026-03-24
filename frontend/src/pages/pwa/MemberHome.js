@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { generateQR } from '../../lib/api';
 import { getMembershipStatus, getDaysRemaining } from '../../lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, AlertTriangle, CheckCircle } from 'lucide-react';
+import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard } from 'lucide-react';
+import { Button } from '../../components/ui/button';
 
 export default function MemberHome() {
   const { member, gym, membership } = useAuth();
+  const navigate = useNavigate();
   const [qrCode, setQrCode] = useState('');
   const [expiresAt, setExpiresAt] = useState(0);
   const [refreshSeconds, setRefreshSeconds] = useState(10);
@@ -59,34 +62,18 @@ export default function MemberHome() {
 
   const QRDisplay = ({ size = 200, showTimer = true }) => (
     <div className="relative">
-      {/* Countdown Ring */}
       {showTimer && (
         <svg className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)]" viewBox="0 0 100 100">
+          <circle cx="50" cy="50" r="45" fill="none" stroke="#27272A" strokeWidth="2" />
           <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke="#27272A"
-            strokeWidth="2"
-          />
-          <circle
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke="var(--gym-primary)"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeDasharray={circumference}
-            strokeDashoffset={strokeDashoffset}
+            cx="50" cy="50" r="45" fill="none"
+            stroke="var(--gym-primary)" strokeWidth="2" strokeLinecap="round"
+            strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
             transform="rotate(-90 50 50)"
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
         </svg>
       )}
-      
-      {/* QR Code */}
       <AnimatePresence mode="wait">
         <motion.div
           key={qrCode}
@@ -97,14 +84,7 @@ export default function MemberHome() {
           className="bg-white p-4 rounded-2xl"
         >
           {qrCode ? (
-            <QRCodeSVG
-              value={qrCode}
-              size={size}
-              level="H"
-              includeMargin={false}
-              bgColor="#FFFFFF"
-              fgColor="#000000"
-            />
+            <QRCodeSVG value={qrCode} size={size} level="H" includeMargin={false} bgColor="#FFFFFF" fgColor="#000000" />
           ) : (
             <div style={{ width: size, height: size }} className="bg-zinc-200 animate-pulse rounded" />
           )}
@@ -113,27 +93,49 @@ export default function MemberHome() {
     </div>
   );
 
+  const showPaymentAlert = membershipStatus.status === 'expired' || membershipStatus.status === 'expiring';
+
   return (
     <div className="space-y-6" data-testid="member-home">
-      {/* Membership Status Alert */}
-      {membershipStatus.status !== 'active' && (
+      {/* Payment Alert - Membership expiring or expired */}
+      {showPaymentAlert && (
         <motion.div 
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`p-4 rounded-xl flex items-center gap-3 ${
+          className={`p-4 rounded-xl ${
             membershipStatus.status === 'expired' 
-              ? 'bg-red-500/10 border border-red-500/20' 
-              : 'bg-amber-500/10 border border-amber-500/20'
+              ? 'bg-red-500/10 border border-red-500/30' 
+              : 'bg-amber-500/10 border border-amber-500/30'
           }`}
+          data-testid="payment-alert"
         >
-          <AlertTriangle size={20} className={membershipStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'} />
-          <div className="flex-1">
-            <p className={`font-medium text-sm ${membershipStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'}`}>
-              {membershipStatus.label}
-            </p>
-            {membershipStatus.status === 'expired' && (
-              <p className="text-xs text-zinc-400">Renueva tu membresía para acceder</p>
-            )}
+          <div className="flex items-start gap-3">
+            <AlertTriangle size={22} className={`shrink-0 mt-0.5 ${
+              membershipStatus.status === 'expired' ? 'text-red-500' : 'text-amber-500'
+            }`} />
+            <div className="flex-1">
+              <p className={`font-bold text-sm ${
+                membershipStatus.status === 'expired' ? 'text-red-400' : 'text-amber-400'
+              }`}>
+                {membershipStatus.status === 'expired' 
+                  ? 'Tu membresía ha vencido'
+                  : `Tu membresía vence en ${daysRemaining} días`
+                }
+              </p>
+              <p className="text-xs text-zinc-400 mt-1">
+                {membershipStatus.status === 'expired'
+                  ? 'Renueva tu membresía para seguir accediendo al gimnasio.'
+                  : 'Renueva ahora para no perder acceso.'}
+              </p>
+              <Button
+                onClick={() => navigate('/app/membership')}
+                className="mt-3 btn-gym-primary text-sm h-9"
+                data-testid="pay-now-btn"
+              >
+                <CreditCard size={16} className="mr-2" />
+                {membershipStatus.status === 'expired' ? 'Renovar Ahora' : 'Pagar Ahora'}
+              </Button>
+            </div>
           </div>
         </motion.div>
       )}
@@ -145,13 +147,11 @@ export default function MemberHome() {
         className="qr-container text-center"
         data-testid="qr-container"
       >
-        {/* Member Info */}
         <div className="mb-6">
           <h2 className="text-xl font-bold">{member?.name}</h2>
           <p className="text-zinc-400 font-mono text-sm">{member?.code}</p>
         </div>
 
-        {/* QR Code */}
         <div 
           className="flex justify-center cursor-pointer"
           onClick={() => setFullscreen(true)}
@@ -168,7 +168,6 @@ export default function MemberHome() {
           )}
         </div>
 
-        {/* Countdown */}
         <div className="mt-6 flex items-center justify-center gap-2">
           <span className="text-zinc-500 text-sm">Actualiza en</span>
           <span 
@@ -180,7 +179,6 @@ export default function MemberHome() {
           </span>
         </div>
 
-        {/* Expand button */}
         <button
           onClick={() => setFullscreen(true)}
           className="mt-4 text-zinc-400 hover:text-white flex items-center gap-2 mx-auto text-sm transition-colors"
@@ -212,6 +210,25 @@ export default function MemberHome() {
                 membershipStatus.color === 'warning' ? 'text-amber-500' : 'text-red-500'
               } />
             </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* No Membership Card */}
+      {!membership && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="stat-card border border-amber-500/20"
+        >
+          <div className="text-center py-2">
+            <CreditCard size={32} className="mx-auto text-amber-500 mb-3" />
+            <p className="font-bold text-amber-400">Sin Membresía Activa</p>
+            <p className="text-xs text-zinc-500 mt-1 mb-3">Necesitas una membresía para acceder</p>
+            <Button onClick={() => navigate('/app/membership')} className="btn-gym-primary text-sm h-9" data-testid="get-membership-btn">
+              <CreditCard size={16} className="mr-2" /> Ver Planes
+            </Button>
           </div>
         </motion.div>
       )}

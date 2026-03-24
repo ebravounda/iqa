@@ -71,6 +71,18 @@ export const getAccessStats = (gymId) => {
   if (gymId) url += `?gym_id=${gymId}`;
   return axios.get(url);
 };
+export const getDailyAccessStats = (gymId, days = 7) => {
+  let url = `${API}/access/stats/daily?days=${days}`;
+  if (gymId) url += `&gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const getHourlyAccessStats = (gymId) => {
+  let url = `${API}/access/stats/hourly`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const getMemberAccessStats = (memberId, days = 30) =>
+  axios.get(`${API}/access/stats/member/${memberId}?days=${days}`);
 
 // QR
 export const generateQR = () => axios.get(`${API}/qr/generate`);
@@ -89,6 +101,16 @@ export const getDashboardStats = () => axios.get(`${API}/dashboard/stats`);
 // Payments
 export const createCheckout = (planId) => axios.post(`${API}/payments/checkout?plan_id=${planId}`);
 export const getPaymentStatus = (sessionId) => axios.get(`${API}/payments/status/${sessionId}`);
+export const getPaymentHistory = (gymId) => {
+  let url = `${API}/payments/history`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+
+// Stripe Config
+export const getStripeConfig = (gymId) => axios.get(`${API}/gyms/${gymId}/stripe-config`);
+export const updateStripeConfig = (gymId, data) => axios.put(`${API}/gyms/${gymId}/stripe-config`, data);
+export const gymHasPayments = (gymId) => axios.get(`${API}/gyms/${gymId}/has-payments`);
 
 // Validation (for Raspberry Pi - no auth needed)
 export const validateAccess = (data) => axios.post(`${API}/access/validate`, data);

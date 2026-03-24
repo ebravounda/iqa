@@ -1,18 +1,19 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getDashboardStats, getAccessLogs, getExpiringMemberships } from '../../lib/api';
+import { getDashboardStats, getAccessLogs, getExpiringMemberships, getDailyAccessStats } from '../../lib/api';
 import { formatDateTime, formatCurrency } from '../../lib/utils';
 import { 
   Users, TrendingUp, Calendar, DollarSign, 
-  ArrowUpRight, ArrowDownRight, Clock, AlertTriangle
+  ArrowUpRight, Clock, AlertTriangle
 } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
 export default function AdminDashboard() {
   const { admin, isSuperAdmin } = useAuth();
   const [stats, setStats] = useState(null);
   const [recentAccess, setRecentAccess] = useState([]);
   const [expiringMemberships, setExpiringMemberships] = useState([]);
+  const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,31 +22,22 @@ export default function AdminDashboard() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, accessRes, expiringRes] = await Promise.all([
+      const [statsRes, accessRes, expiringRes, dailyRes] = await Promise.all([
         getDashboardStats(),
         getAccessLogs(null, null, null, null, 10),
-        getExpiringMemberships(10)
+        getExpiringMemberships(10),
+        getDailyAccessStats(null, 7)
       ]);
       setStats(statsRes.data);
       setRecentAccess(accessRes.data);
       setExpiringMemberships(expiringRes.data);
+      setChartData(dailyRes.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
       setLoading(false);
     }
   };
-
-  // Mock chart data
-  const chartData = [
-    { name: 'Lun', accesos: 45 },
-    { name: 'Mar', accesos: 52 },
-    { name: 'Mie', accesos: 38 },
-    { name: 'Jue', accesos: 65 },
-    { name: 'Vie', accesos: 78 },
-    { name: 'Sab', accesos: 92 },
-    { name: 'Dom', accesos: 35 },
-  ];
 
   if (loading) {
     return (
@@ -71,7 +63,7 @@ export default function AdminDashboard() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="stat-card">
+        <div className="stat-card" data-testid="stat-active-members">
           <div className="flex items-center justify-between mb-4">
             <span className="text-zinc-400 text-sm font-medium">Socios Activos</span>
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
@@ -85,7 +77,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" data-testid="stat-today-accesses">
           <div className="flex items-center justify-between mb-4">
             <span className="text-zinc-400 text-sm font-medium">Accesos Hoy</span>
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
@@ -98,7 +90,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" data-testid="stat-active-memberships">
           <div className="flex items-center justify-between mb-4">
             <span className="text-zinc-400 text-sm font-medium">Membresías Activas</span>
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
@@ -111,7 +103,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" data-testid="stat-revenue">
           <div className="flex items-center justify-between mb-4">
             <span className="text-zinc-400 text-sm font-medium">Ingresos del Mes</span>
             <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'rgba(225, 255, 1, 0.1)' }}>
@@ -127,7 +119,17 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      {/* Capacity Bar (when gym has max_members set) */}
+      {/* Suspended Members Alert */}
+      {stats?.suspended_members > 0 && (
+        <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 flex items-center gap-3" data-testid="suspended-alert">
+          <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+          <p className="text-sm text-amber-400">
+            <span className="font-bold">{stats.suspended_members}</span> socios suspendidos
+          </p>
+        </div>
+      )}
+
+      {/* Capacity Bar */}
       {stats?.capacity && (
         <div className="stat-card" data-testid="capacity-bar">
           <div className="flex items-center justify-between mb-3">
@@ -163,48 +165,49 @@ export default function AdminDashboard() {
 
       {/* Charts and Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart */}
-        <div className="lg:col-span-2 chart-container">
+        {/* Chart - Real Data */}
+        <div className="lg:col-span-2 chart-container" data-testid="access-chart">
           <h3 className="font-bold mb-6">Accesos de la Semana</h3>
           <ResponsiveContainer width="100%" height={250}>
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="colorAccesos" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--gym-primary)" stopOpacity={0.3}/>
-                  <stop offset="95%" stopColor="var(--gym-primary)" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <XAxis 
-                dataKey="name" 
-                axisLine={false} 
-                tickLine={false}
-                tick={{ fill: '#71717A', fontSize: 12 }}
-              />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false}
-                tick={{ fill: '#71717A', fontSize: 12 }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: '#18181B', 
-                  border: '1px solid #27272A',
-                  borderRadius: '8px'
-                }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="accesos" 
-                stroke="var(--gym-primary)" 
-                fillOpacity={1} 
-                fill="url(#colorAccesos)" 
-              />
-            </AreaChart>
+            {chartData.length > 0 ? (
+              <BarChart data={chartData}>
+                <XAxis 
+                  dataKey="day_name" 
+                  axisLine={false} 
+                  tickLine={false}
+                  tick={{ fill: '#71717A', fontSize: 12 }}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false}
+                  tick={{ fill: '#71717A', fontSize: 12 }}
+                  allowDecimals={false}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#18181B', 
+                    border: '1px solid #27272A',
+                    borderRadius: '8px'
+                  }}
+                  formatter={(value, name) => [value, name === 'entradas' ? 'Entradas' : 'Total Accesos']}
+                />
+                <Bar dataKey="entradas" fill="var(--gym-primary)" radius={[4, 4, 0, 0]} name="Entradas" />
+                <Bar dataKey="accesos" fill="#3B82F6" radius={[4, 4, 0, 0]} opacity={0.4} name="Total" />
+              </BarChart>
+            ) : (
+              <AreaChart data={[{ day_name: '-', accesos: 0 }]}>
+                <XAxis dataKey="day_name" />
+                <Area type="monotone" dataKey="accesos" />
+              </AreaChart>
+            )}
           </ResponsiveContainer>
+          {chartData.length === 0 && (
+            <p className="text-center text-zinc-500 text-sm mt-2">Sin datos de acceso esta semana</p>
+          )}
         </div>
 
         {/* Expiring Memberships */}
-        <div className="stat-card">
+        <div className="stat-card" data-testid="expiring-memberships">
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle size={18} className="text-amber-500" />
             <h3 className="font-bold">Por Vencer</h3>
@@ -230,7 +233,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Access */}
-      <div className="stat-card">
+      <div className="stat-card" data-testid="recent-access-table">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Clock size={18} className="text-zinc-400" />
@@ -257,15 +260,15 @@ export default function AdminDashboard() {
               ) : (
                 recentAccess.map((log) => (
                   <tr key={log.id}>
-                    <td className="font-medium">{log.member_name}</td>
+                    <td className="font-medium">{log.member_name || log.guest_name || '-'}</td>
                     <td>
                       <code className="text-xs bg-zinc-800 px-2 py-1 rounded">
-                        {log.member_code}
+                        {log.member_code || log.guest_code || '-'}
                       </code>
                     </td>
                     <td>
                       <span className={`badge ${log.direction === 'entrada' ? 'badge-success' : 'badge-primary'}`}>
-                        {log.direction === 'entrada' ? '→ Entrada' : '← Salida'}
+                        {log.direction === 'entrada' ? 'Entrada' : 'Salida'}
                       </span>
                     </td>
                     <td className="text-zinc-400 text-sm">{formatDateTime(log.timestamp)}</td>

@@ -18,6 +18,8 @@ import secrets
 import bcrypt
 from jose import jwt, JWTError
 
+import asyncio
+
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
@@ -63,6 +65,8 @@ class GymUpdate(BaseModel):
     primary_color: Optional[str] = None
     qr_refresh_seconds: Optional[int] = None
     max_members: Optional[int] = None
+    stripe_secret_key: Optional[str] = None
+    stripe_currency: Optional[str] = None
     smtp_host: Optional[str] = None
     smtp_port: Optional[int] = None
     smtp_user: Optional[str] = None
@@ -904,6 +908,105 @@ async def get_access_stats(gym_id: Optional[str] = None, admin: dict = Depends(g
         "active_memberships": active_memberships
     }
 
+@api_router.get("/access/stats/daily")
+async def get_daily_access_stats(gym_id: Optional[str] = None, days: int = 7, admin: dict = Depends(get_current_admin)):
+    """Get daily access count for the last N days for charts"""
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    today = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
+    start_date = (today - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    day_names_es = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
+    
+    daily_data = []
+    for i in range(days):
+        day = start_date + timedelta(days=i)
+        day_end = day.replace(hour=23, minute=59, second=59)
+        day_query = {**query, "timestamp": {"$gte": day.isoformat(), "$lte": day_end.isoformat()}}
+        count = await db.access_logs.count_documents(day_query)
+        
+        # Count unique entries (entrada only)
+        entry_query = {**day_query, "direction": "entrada"}
+        entries = await db.access_logs.count_documents(entry_query)
+        
+        daily_data.append({
+            "date": day.strftime("%Y-%m-%d"),
+            "day_name": day_names_es[day.weekday()],
+            "accesos": count,
+            "entradas": entries
+        })
+    
+    return daily_data
+
+@api_router.get("/access/stats/member/{member_id}")
+async def get_member_access_stats(member_id: str, days: int = 30, admin: dict = Depends(get_current_admin)):
+    """Get access statistics for a specific member"""
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    today = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
+    start_date = (today - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Get all logs for period
+    logs = await db.access_logs.find(
+        {"member_id": member_id, "timestamp": {"$gte": start_date.isoformat()}},
+        {"_id": 0}
+    ).sort("timestamp", -1).to_list(1000)
+    
+    # Daily breakdown
+    daily = {}
+    for log in logs:
+        day = log["timestamp"][:10]
+        if day not in daily:
+            daily[day] = {"entradas": 0, "salidas": 0}
+        if log.get("direction") == "entrada":
+            daily[day]["entradas"] += 1
+        else:
+            daily[day]["salidas"] += 1
+    
+    # Total stats
+    total_entries = sum(d["entradas"] for d in daily.values())
+    days_attended = len(daily)
+    
+    return {
+        "member": {"id": member["id"], "name": member["name"], "code": member["code"]},
+        "total_entries": total_entries,
+        "days_attended": days_attended,
+        "period_days": days,
+        "attendance_rate": round((days_attended / days * 100), 1) if days > 0 else 0,
+        "daily_breakdown": [{"date": k, **v} for k, v in sorted(daily.items())],
+        "recent_logs": logs[:20]
+    }
+
+@api_router.get("/access/stats/hourly")
+async def get_hourly_access_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    """Get hourly access distribution for today"""
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    query["timestamp"] = {"$gte": today_start.isoformat()}
+    
+    logs = await db.access_logs.find(query, {"_id": 0, "timestamp": 1}).to_list(10000)
+    
+    hourly = {f"{h:02d}:00": 0 for h in range(24)}
+    for log in logs:
+        try:
+            hour = log["timestamp"][11:13]
+            hourly[f"{hour}:00"] = hourly.get(f"{hour}:00", 0) + 1
+        except (IndexError, KeyError):
+            pass
+    
+    return [{"hour": k, "accesos": v} for k, v in hourly.items()]
+
 # ==================== DEVICE ROUTES ====================
 
 @api_router.post("/devices")
@@ -964,7 +1067,14 @@ async def create_checkout(
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
     
-    api_key = os.environ.get("STRIPE_API_KEY")
+    # Use gym-specific Stripe key if available, otherwise fallback to global
+    gym = await db.gyms.find_one({"id": plan["gym_id"]}, {"_id": 0})
+    api_key = (gym or {}).get("stripe_secret_key") or os.environ.get("STRIPE_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=400, detail="No se ha configurado la pasarela de pagos para este gimnasio")
+    
+    currency = (gym or {}).get("stripe_currency") or "usd"
+    
     host_url = str(request.base_url).rstrip('/')
     webhook_url = f"{host_url}/api/webhook/stripe"
     
@@ -976,7 +1086,7 @@ async def create_checkout(
     
     checkout_request = CheckoutSessionRequest(
         amount=float(plan["price"]),
-        currency="usd",
+        currency=currency,
         success_url=success_url,
         cancel_url=cancel_url,
         metadata={
@@ -996,7 +1106,7 @@ async def create_checkout(
         "plan_id": plan_id,
         "gym_id": plan["gym_id"],
         "amount": plan["price"],
-        "currency": "usd",
+        "currency": currency,
         "status": "pending",
         "payment_status": "initiated",
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -1010,7 +1120,14 @@ async def get_payment_status(session_id: str, credentials: HTTPAuthorizationCred
     """Check payment status and activate membership if paid"""
     from emergentintegrations.payments.stripe.checkout import StripeCheckout
     
+    # Get transaction to find gym_id and use gym-specific Stripe key
+    transaction = await db.payment_transactions.find_one({"session_id": session_id}, {"_id": 0})
     api_key = os.environ.get("STRIPE_API_KEY")
+    if transaction:
+        gym = await db.gyms.find_one({"id": transaction.get("gym_id")}, {"_id": 0})
+        if gym and gym.get("stripe_secret_key"):
+            api_key = gym["stripe_secret_key"]
+    
     stripe_checkout = StripeCheckout(api_key=api_key, webhook_url="")
     
     status = await stripe_checkout.get_checkout_status(session_id)
@@ -1073,6 +1190,78 @@ async def stripe_webhook(request: Request):
     except Exception as e:
         logger.error(f"Webhook error: {e}")
         return {"status": "error"}
+
+# ==================== STRIPE CONFIG ROUTES ====================
+
+@api_router.get("/gyms/{gym_id}/stripe-config")
+async def get_stripe_config(gym_id: str, admin: dict = Depends(get_current_admin)):
+    """Get Stripe configuration status for a gym (does not return the full key)"""
+    if admin["role"] not in ["super_admin", "gym_admin"] or (admin["role"] == "gym_admin" and admin.get("gym_id") != gym_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym not found")
+    
+    has_key = bool(gym.get("stripe_secret_key"))
+    masked_key = ""
+    if has_key:
+        key = gym["stripe_secret_key"]
+        masked_key = key[:7] + "..." + key[-4:] if len(key) > 11 else "****"
+    
+    return {
+        "has_stripe_key": has_key,
+        "masked_key": masked_key,
+        "currency": gym.get("stripe_currency", "usd")
+    }
+
+@api_router.put("/gyms/{gym_id}/stripe-config")
+async def update_stripe_config(gym_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    """Update Stripe configuration for a gym"""
+    if admin["role"] not in ["super_admin", "gym_admin"] or (admin["role"] == "gym_admin" and admin.get("gym_id") != gym_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    update_data = {}
+    if "stripe_secret_key" in body and body["stripe_secret_key"]:
+        update_data["stripe_secret_key"] = body["stripe_secret_key"]
+    if "stripe_currency" in body:
+        update_data["stripe_currency"] = body["stripe_currency"]
+    
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.gyms.update_one({"id": gym_id}, {"$set": update_data})
+    return {"message": "Stripe configuration updated"}
+
+@api_router.get("/gyms/{gym_id}/has-payments")
+async def gym_has_payments(gym_id: str):
+    """Public check if gym has payments configured (for member PWA)"""
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        return {"has_payments": False}
+    has_key = bool(gym.get("stripe_secret_key")) or bool(os.environ.get("STRIPE_API_KEY"))
+    return {"has_payments": has_key, "currency": gym.get("stripe_currency", "usd")}
+
+@api_router.get("/payments/history")
+async def get_payment_history(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    """Get payment transaction history for admin"""
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    transactions = await db.payment_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    
+    # Enrich with member info
+    for t in transactions:
+        member = await db.members.find_one({"id": t.get("member_id")}, {"_id": 0, "name": 1, "code": 1, "email": 1})
+        t["member"] = member
+        plan = await db.plans.find_one({"id": t.get("plan_id")}, {"_id": 0, "name": 1})
+        t["plan"] = plan
+    
+    return transactions
 
 # ==================== DASHBOARD ROUTES ====================
 
@@ -1942,6 +2131,34 @@ async def init_super_admin():
         }
         await db.admins.insert_one(admin)
         logger.info("Super admin created: admin@gymaccess.com / admin123")
+
+# Background task: auto-suspend expired memberships every 60 minutes
+async def auto_suspend_expired_memberships():
+    while True:
+        try:
+            await asyncio.sleep(3600)  # Run every 60 minutes
+            now = datetime.now(timezone.utc).isoformat()
+            active_memberships = await db.memberships.find({"status": "active"}, {"_id": 0}).to_list(10000)
+            suspended_count = 0
+            for m in active_memberships:
+                if m.get("end_date") and m["end_date"] < now:
+                    await db.memberships.update_one({"id": m["id"]}, {"$set": {"status": "expired"}})
+                    other_active = await db.memberships.find_one({"member_id": m["member_id"], "status": "active"})
+                    if not other_active:
+                        await db.members.update_one({"id": m["member_id"]}, {"$set": {
+                            "status": "suspended",
+                            "suspension_reason": "Membresía vencida (automático)",
+                            "suspended_at": now
+                        }})
+                        suspended_count += 1
+            if suspended_count > 0:
+                logger.info(f"Auto-suspended {suspended_count} members with expired memberships")
+        except Exception as e:
+            logger.error(f"Error in auto-suspend task: {e}")
+
+@app.on_event("startup")
+async def start_background_tasks():
+    asyncio.create_task(auto_suspend_expired_memberships())
 
 app.include_router(api_router)
 
