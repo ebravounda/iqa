@@ -4,7 +4,7 @@ import json
 from datetime import datetime
 
 class GymAccessAPITester:
-    def __init__(self, base_url="https://gym-access-hub-4.preview.emergentagent.com"):
+    def __init__(self, base_url="https://stripe-gym-payments.preview.emergentagent.com"):
         self.base_url = base_url
         self.admin_token = None
         self.member_token = None
