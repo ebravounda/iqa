@@ -121,47 +121,6 @@ export default function AdminGyms() {
     );
   }
 
-  const GymFormFields = ({ data, setData }) => (
-    <div className="space-y-4">
-      <div>
-        <label className="text-sm text-zinc-400 mb-1 block">Nombre</label>
-        <Input value={data.name} onChange={(e) => setData({ ...data, name: e.target.value })}
-          placeholder="Nombre del gimnasio" className="input-dark" data-testid="gym-name-input" />
-      </div>
-      <div>
-        <label className="text-sm text-zinc-400 mb-1 block">Email</label>
-        <Input type="email" value={data.email} onChange={(e) => setData({ ...data, email: e.target.value })}
-          placeholder="email@gimnasio.com" className="input-dark" />
-      </div>
-      <div>
-        <label className="text-sm text-zinc-400 mb-1 block">Dirección</label>
-        <Input value={data.address} onChange={(e) => setData({ ...data, address: e.target.value })}
-          placeholder="Dirección" className="input-dark" />
-      </div>
-      <div>
-        <label className="text-sm text-zinc-400 mb-1 block">Teléfono</label>
-        <Input value={data.phone} onChange={(e) => setData({ ...data, phone: e.target.value })}
-          placeholder="Teléfono" className="input-dark" />
-      </div>
-      <div>
-        <label className="text-sm text-zinc-400 mb-1 block">Capacidad máxima de socios</label>
-        <Input type="number" value={data.max_members || ''} onChange={(e) => setData({ ...data, max_members: e.target.value ? parseInt(e.target.value) : null })}
-          placeholder="Ej: 100, 500, 2000" className="input-dark" data-testid="gym-max-members-input" />
-        <p className="text-xs text-zinc-500 mt-1">Límite de socios activos. Dejar vacío = sin límite.</p>
-      </div>
-      <div>
-        <label className="text-sm text-zinc-400 mb-1 block">Color Principal</label>
-        <div className="flex gap-2">
-          <input type="color" value={data.primary_color}
-            onChange={(e) => setData({ ...data, primary_color: e.target.value })}
-            className="w-10 h-10 rounded cursor-pointer" />
-          <Input value={data.primary_color} onChange={(e) => setData({ ...data, primary_color: e.target.value })}
-            className="input-dark font-mono" />
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <div className="space-y-6" data-testid="admin-gyms">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -179,7 +138,40 @@ export default function AdminGyms() {
           <DialogContent className="bg-zinc-900 border-zinc-800">
             <DialogHeader><DialogTitle>Crear Nuevo Gimnasio</DialogTitle></DialogHeader>
             <div className="mt-4">
-              <GymFormFields data={newGym} setData={setNewGym} />
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Nombre</label>
+                  <Input value={newGym.name} onChange={(e) => setNewGym({ ...newGym, name: e.target.value })}
+                    placeholder="Nombre del gimnasio" className="input-dark" data-testid="gym-name-input" />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Email</label>
+                  <Input type="email" value={newGym.email} onChange={(e) => setNewGym({ ...newGym, email: e.target.value })}
+                    placeholder="email@gimnasio.com" className="input-dark" />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Dirección</label>
+                  <Input value={newGym.address} onChange={(e) => setNewGym({ ...newGym, address: e.target.value })}
+                    placeholder="Dirección" className="input-dark" />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Teléfono</label>
+                  <Input value={newGym.phone} onChange={(e) => setNewGym({ ...newGym, phone: e.target.value })}
+                    placeholder="Teléfono" className="input-dark" />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Capacidad máxima de socios</label>
+                  <Input type="number" value={newGym.max_members || ''} onChange={(e) => setNewGym({ ...newGym, max_members: e.target.value ? parseInt(e.target.value) : null })}
+                    placeholder="Ej: 100, 500, 2000" className="input-dark" />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Color Principal</label>
+                  <div className="flex gap-2">
+                    <input type="color" value={newGym.primary_color} onChange={(e) => setNewGym({ ...newGym, primary_color: e.target.value })} className="w-10 h-10 rounded cursor-pointer" />
+                    <Input value={newGym.primary_color} onChange={(e) => setNewGym({ ...newGym, primary_color: e.target.value })} className="input-dark font-mono" />
+                  </div>
+                </div>
+              </div>
               <Button onClick={handleCreateGym} className="w-full btn-gym-primary mt-4" data-testid="save-gym-btn">
                 <Building2 size={20} className="mr-2" /> Crear Gimnasio
               </Button>
@@ -271,7 +263,40 @@ export default function AdminGyms() {
         <DialogContent className="bg-zinc-900 border-zinc-800">
           <DialogHeader><DialogTitle>Editar Gimnasio</DialogTitle></DialogHeader>
           <div className="mt-4">
-            <GymFormFields data={editGym} setData={setEditGym} />
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Nombre</label>
+                <Input value={editGym.name} onChange={(e) => setEditGym({ ...editGym, name: e.target.value })}
+                  placeholder="Nombre del gimnasio" className="input-dark" />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Email</label>
+                <Input type="email" value={editGym.email} onChange={(e) => setEditGym({ ...editGym, email: e.target.value })}
+                  placeholder="email@gimnasio.com" className="input-dark" />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Dirección</label>
+                <Input value={editGym.address} onChange={(e) => setEditGym({ ...editGym, address: e.target.value })}
+                  placeholder="Dirección" className="input-dark" />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Teléfono</label>
+                <Input value={editGym.phone} onChange={(e) => setEditGym({ ...editGym, phone: e.target.value })}
+                  placeholder="Teléfono" className="input-dark" />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Capacidad máxima de socios</label>
+                <Input type="number" value={editGym.max_members || ''} onChange={(e) => setEditGym({ ...editGym, max_members: e.target.value ? parseInt(e.target.value) : null })}
+                  placeholder="Ej: 100, 500, 2000" className="input-dark" />
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Color Principal</label>
+                <div className="flex gap-2">
+                  <input type="color" value={editGym.primary_color} onChange={(e) => setEditGym({ ...editGym, primary_color: e.target.value })} className="w-10 h-10 rounded cursor-pointer" />
+                  <Input value={editGym.primary_color} onChange={(e) => setEditGym({ ...editGym, primary_color: e.target.value })} className="input-dark font-mono" />
+                </div>
+              </div>
+            </div>
             <Button onClick={handleUpdateGym} className="w-full btn-gym-primary mt-4" data-testid="update-gym-btn">
               <Pencil size={20} className="mr-2" /> Guardar Cambios
             </Button>

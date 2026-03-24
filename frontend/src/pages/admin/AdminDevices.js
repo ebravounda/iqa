@@ -1,20 +1,22 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getDevices, createDevice, getGym } from '../../lib/api';
+import { getDevices, createDevice, getGym, getGyms } from '../../lib/api';
 import { formatDateTime } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Plus, Cpu, Copy, RefreshCw, Check, Wifi, WifiOff } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
 
 export default function AdminDevices() {
   const { admin, isSuperAdmin } = useAuth();
   const [devices, setDevices] = useState([]);
   const [gym, setGym] = useState(null);
+  const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newDevice, setNewDevice] = useState({ name: '', location: '' });
+  const [newDevice, setNewDevice] = useState({ name: '', location: '', gym_id: admin?.gym_id || '' });
   const [copiedToken, setCopiedToken] = useState(false);
 
   useEffect(() => {
@@ -24,16 +26,37 @@ export default function AdminDevices() {
   const fetchData = async () => {
     try {
       const gymId = admin?.gym_id;
-      const [devicesRes, gymRes] = await Promise.all([
-        getDevices(isSuperAdmin ? null : gymId),
-        gymId ? getGym(gymId) : Promise.resolve({ data: null })
+      const [devicesRes] = await Promise.all([
+        getDevices(isSuperAdmin ? null : gymId)
       ]);
       setDevices(devicesRes.data);
-      setGym(gymRes.data);
+      
+      if (isSuperAdmin) {
+        const gymsRes = await getGyms();
+        setGyms(gymsRes.data);
+        if (gymsRes.data.length > 0 && !newDevice.gym_id) {
+          setNewDevice(prev => ({ ...prev, gym_id: gymsRes.data[0].id }));
+          const gymRes = await getGym(gymsRes.data[0].id);
+          setGym(gymRes.data);
+        }
+      } else if (gymId) {
+        const gymRes = await getGym(gymId);
+        setGym(gymRes.data);
+      }
     } catch (error) {
       console.error('Error fetching devices:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGymChange = async (gymId) => {
+    setNewDevice(prev => ({ ...prev, gym_id: gymId }));
+    try {
+      const gymRes = await getGym(gymId);
+      setGym(gymRes.data);
+    } catch (error) {
+      console.error('Error fetching gym:', error);
     }
   };
 
@@ -43,12 +66,17 @@ export default function AdminDevices() {
       return;
     }
 
+    const gymId = admin?.gym_id || newDevice.gym_id;
+    if (!gymId) {
+      toast.error('Selecciona un gimnasio');
+      return;
+    }
+
     try {
-      const gymId = admin?.gym_id;
       await createDevice({ ...newDevice, gym_id: gymId });
       toast.success('Dispositivo registrado');
       setShowCreateModal(false);
-      setNewDevice({ name: '', location: '' });
+      setNewDevice({ name: '', location: '', gym_id: gymId });
       fetchData();
     } catch (error) {
       toast.error('Error al registrar dispositivo');
@@ -90,6 +118,21 @@ export default function AdminDevices() {
               <DialogTitle>Registrar Nuevo Dispositivo</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
+              {isSuperAdmin && (
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Gimnasio</label>
+                  <Select value={newDevice.gym_id} onValueChange={handleGymChange}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="device-gym-select">
+                      <SelectValue placeholder="Seleccionar gimnasio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      {gyms.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <label className="text-sm text-zinc-400 mb-1 block">Nombre</label>
                 <Input
