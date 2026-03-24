@@ -1,92 +1,107 @@
-# GymAccess - Sistema de Control de Acceso para Gimnasios
+# GymAccess - Sistema SaaS de Control de Acceso para Gimnasios
 
-## Fecha: 24/03/2026
+## Fecha de última actualización: 24/03/2026
 
 ## Problem Statement Original
-Sistema de control de acceso para gimnasios multi-tenant con:
-- Panel Admin para gestionar socios, membresías, planes, accesos, dispositivos Raspberry Pi
-- PWA para socios con QR dinámico (5-15 segundos configurable)
-- Integración con Raspberry Pi 3B+ con 2 relés (entrada/salida)
+Sistema SaaS de control de acceso para gimnasios multi-tenant con:
+- Panel Admin para gestionar múltiples gimnasios, socios, membresías, clases, horarios
+- Sistema de roles: Super Admin, Admin de Gym, Gestor, Entrenador
+- PWA para socios con QR dinámico y reserva de clases
+- Integración con Raspberry Pi para control de tornos
 - Pagos online con Stripe
 - Emails configurables con plantillas editables
-- Multi-gym: una app para todos los gimnasios con branding dinámico
 
-## User Personas
-1. **Super Admin**: Gestiona múltiples gimnasios
-2. **Admin de Gimnasio**: Gestiona su propio gym, socios, planes
-3. **Socio**: Usa la PWA para acceder con QR
+## Arquitectura SaaS Multi-Tenant
+```
+Super Admin (TÚ)
+    └── Gym 1 (FitZone)
+    │       ├── Admin
+    │       ├── Gestores
+    │       ├── Entrenadores
+    │       └── Socios
+    └── Gym 2 (otro gym)
+    │       ├── ...
+    └── Gym N...
+```
 
-## Arquitectura
-- **Backend**: FastAPI + MongoDB
-- **Frontend**: React + Tailwind + Shadcn
-- **PWA**: Instalable en Android/iOS
-- **Hardware**: Raspberry Pi 3B+ con módulo de 2 relés
+## Sistema de Roles
+
+| Rol | Permisos |
+|-----|----------|
+| **super_admin** | Todo: todos los gyms, configuración global, crear gyms |
+| **gym_admin** | Su gym: todo, incluyendo configuración, personal, dispositivos |
+| **gym_manager** | Su gym: socios, clases, horarios, accesos (sin config ni personal) |
+| **trainer** | Solo ver sus clases asignadas y lista de asistentes |
 
 ## Funcionalidades Implementadas ✅
 
 ### Panel de Administración
-- [x] Login con JWT
-- [x] Dashboard con estadísticas
+- [x] Dashboard con estadísticas (socios, accesos, ingresos, clases)
 - [x] Gestión de gimnasios (Super Admin)
 - [x] Gestión de socios (CRUD, aprobar, bloquear)
-- [x] Planes de membresía configurables
-- [x] Asignación de membresías
-- [x] Historial de accesos con filtros y exportación CSV
-- [x] Configuración de dispositivos Raspberry Pi
+- [x] Planes de membresía
+- [x] **Sistema de Clases** (crear clases recurrentes o únicas)
+- [x] **Horarios de Clases** (vista semanal, agregar horarios)
+- [x] **Gestión de Personal** (crear admins, gestores, entrenadores)
+- [x] Historial de accesos con filtros y exportación
+- [x] Configuración de Raspberry Pi
 - [x] Plantillas de email personalizables
-- [x] Configuración de branding (logo, color)
-- [x] Configuración de tiempo QR (5/10/15/30 seg)
+- [x] Configuración de branding
+
+### Sistema de Reservas
+- [x] Clases recurrentes (días de la semana)
+- [x] Clases únicas (fecha específica)
+- [x] Capacidad máxima configurable
+- [x] Asignación de entrenador
+- [x] Generación automática de horarios (4 semanas)
+- [x] Lista de asistentes por clase
+- [x] Reserva desde PWA
+- [x] Cancelación de reservas
 
 ### PWA para Socios
-- [x] Login con código de socio (6 caracteres)
-- [x] QR dinámico con countdown visual
-- [x] Modo pantalla completa para QR
-- [x] Historial de accesos personal
+- [x] QR dinámico con countdown
+- [x] **Reserva de clases** (vista semanal, reservar, cancelar)
+- [x] Historial de accesos
 - [x] Información de membresía
 - [x] Renovación con Stripe
-- [x] Perfil del socio
-- [x] Botón "Crear Acceso Directo" (instalación PWA)
+- [x] Botón "Crear Acceso Directo"
 - [x] Branding dinámico por gimnasio
 
 ### Backend/API
-- [x] Autenticación JWT para admin/socio
-- [x] CRUD completo de gyms, members, plans, memberships
-- [x] Generación de QR dinámico encriptado
-- [x] Endpoint de validación para Raspberry Pi
-- [x] Logs de acceso
-- [x] Estadísticas de dashboard
-- [x] Integración Stripe para pagos
+- [x] Autenticación JWT con roles
+- [x] CRUD completo (gyms, members, plans, classes, schedules, bookings)
+- [x] QR dinámico encriptado
+- [x] Validación para Raspberry Pi
+- [x] Stripe para pagos
 
-### Raspberry Pi
-- [x] Script Python completo
-- [x] Control de GPIO para relés
-- [x] Validación de QR contra servidor
-- [x] Heartbeat/ping al servidor
-- [x] Documentación de instalación
+## Credenciales de Prueba
 
-## Backlog P0/P1/P2
+| Usuario | Email | Contraseña | Rol |
+|---------|-------|------------|-----|
+| Super Admin | admin@gymaccess.com | admin123 | super_admin |
+| Entrenador | carlos@trainer.com | trainer123 | trainer |
+| Socio | - | Código: LRF4HL | member |
 
-### P0 - Crítico
-- (Completado)
+## Backlog
 
 ### P1 - Alta Prioridad
-- [ ] Sistema de emails real (SMTP)
-- [ ] Cron job para enviar recordatorios de vencimiento
-- [ ] Notificaciones push en PWA
+- [ ] Vista específica para entrenadores (mejorar UX)
+- [ ] SMTP real para envío de emails
+- [ ] Cron para recordatorios automáticos
 
-### P2 - Media Prioridad
+### P2 - Media Prioridad  
+- [ ] Check-in de asistencia en clases (confirmar que el socio llegó)
+- [ ] Notificaciones push
 - [ ] Reportes avanzados con gráficos
-- [ ] Exportación de datos a PDF
-- [ ] Sistema de backup de datos
-- [ ] Modo offline mejorado para Raspberry Pi
-- [ ] Panel de recepcionista (rol intermedio)
+- [ ] Exportación PDF
 
-## Credenciales por Defecto
-- Admin: admin@gymaccess.com / admin123
-- Test Member Code: LRF4HL
+### P3 - Baja Prioridad
+- [ ] App nativa (migrar PWA a React Native)
+- [ ] Integración con wearables
+- [ ] Gamificación (logros, puntos)
 
-## Próximos Pasos
-1. Configurar SMTP real para emails
-2. Implementar cron para recordatorios automáticos
-3. Agregar más reportes y estadísticas
-4. Probar en Raspberry Pi física
+## Próximos Pasos Inmediatos
+1. Configurar SMTP para emails reales
+2. Probar flujo completo de entrenador
+3. Desplegar en servidor de producción
+4. Configurar Raspberry Pi física
