@@ -1,0 +1,91 @@
+{
+  "project_name": "Multi-Tenant Gym Access System",
+  "theme": "dark",
+  "typography": {
+    "fonts": {
+      "headings": "Chivo",
+      "body": "Manrope",
+      "mono": "JetBrains Mono"
+    },
+    "guidelines": "Do not use Inter, Roboto, or Open Sans for headings. Headings must use tracking-tight and font-black for an athletic, elite feel. Body uses font-medium with leading-relaxed."
+  },
+  "colors": {
+    "archetype": "THE PERFORMANCE PRO",
+    "strategy": "Deep Obsidian primary background with Volt Yellow/Electric Lime as the default dynamic gym brand color. The system must use CSS variables (e.g. var(--gym-primary)) for all accents so it can be dynamically injected based on the gym's database settings.",
+    "palette": {
+      "background": "#09090B",
+      "surface": "#18181B",
+      "surface_hover": "#27272A",
+      "border": "#27272A",
+      "primary_default": "#E1FF01",
+      "primary_foreground": "#000000",
+      "text_primary": "#FFFFFF",
+      "text_secondary": "#A1A1AA",
+      "success": "#10B981",
+      "danger": "#EF4444"
+    }
+  },
+  "visual_enhancers": {
+    "surfaces": "Use Glassmorphism (Crystal Variant) for the PWA Bottom Nav and Sticky Headers: 'backdrop-blur-xl bg-zinc-950/70 border-t border-white/10'. Never use fully transparent backgrounds for overlays.",
+    "qr_container": "Treat the QR Code in the PWA like a premium Apple Wallet pass. Encase it in a Glassmorphic card, but the QR code itself MUST have a pure white background and pure black dots for scanner compatibility.",
+    "textures": "Apply a subtle noise overlay (mix-blend-overlay) to the Auth screens to eliminate digital flatness."
+  },
+  "grids_and_layouts": {
+    "admin_dashboard": "High Density Grid (Mode B). 'grid-cols-1 md:grid-cols-3 lg:grid-cols-4' with tight 'gap-4'. Cards must be flat, cardless styling with 1px border-zinc-800.",
+    "member_pwa": "Mobile-first, responsive stack. Large generous spacing ('p-6', 'p-8'). Content must not feel cramped. Use a fixed bottom navigation bar instead of a sidebar.",
+    "spacing_scale": "Use 2x normal spacing. Avoid 'p-4', use 'p-6' or 'p-8' inside dashboard cards to give breathing room."
+  },
+  "components": {
+    "dynamic_qr": "Must show a visual countdown ring (SVG stroke-dasharray) that ticks down 5/10/15 seconds, synchronized with the backend. Use a Framer Motion 3D flip animation ('rotateY: 180') when the code refreshes.",
+    "pwa_install_prompt": "Use the 'Tracing Beam' border effect (animated glowing border) on a bottom-sheet modal or top banner to draw attention without breaking the layout.",
+    "tables": "Admin tables must use Shadcn, but customize with left-aligned columns, row-borders only, and sticky headers. No vertical cell dividers.",
+    "buttons": "PWA uses pill-shaped ('rounded-full') for a consumer-app feel. Admin uses crisp rectangular ('rounded-md') for precision.",
+    "email_editor": "Use a clean bento grid for listing email templates. The editor itself should look like a modern rich text area with a dark mode toolbar."
+  },
+  "motion": {
+    "general": "Fast, precise, no lag. Use 'transition-transform duration-200 ease-out'.",
+    "interactions": "All buttons and cards must have an 'active:scale-[0.98]' state. Hover states must explicitly define text and background color changes.",
+    "page_load": "Staggered fade-up for list items (e.g., access history) using Framer Motion."
+  },
+  "accessibility": {
+    "contrast": "Text over the dynamic 'primary' color MUST be calculated. If primary is bright (like #E1FF01), text must be black.",
+    "testing": "All interactive and key informational elements MUST include a 'data-testid' attribute (e.g. 'data-testid=\"qr-refresh-timer\"')."
+  },
+  "media": {
+    "image_urls": [
+      {
+        "url": "https://images.pexels.com/photos/6388373/pexels-photo-6388373.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Moody gym interior featuring various workout equipment in a spacious industrial setting",
+        "category": "auth_background"
+      }
+    ],
+    "icons": "Use '@phosphor-icons/react'. Use 'duotone' weight for the PWA navigation to feel premium, and 'regular' weight for the dense Admin panel."
+  },
+  "instructions_to_main_agent": [
+    "Initialize Tailwind and Framer Motion.",
+    "Install specific fonts: '@fontsource/chivo' and '@fontsource/manrope'.",
+    "Install '@phosphor-icons/react' for all icons.",
+    "Use 'sonner' for all toast notifications.",
+    "Structure the project into two distinct layout trees: '/admin' (Sidebar layout for Super Admin & Gym Admin) and '/app' (PWA bottom nav layout for Members).",
+    "Setup CSS variables in index.css for '--gym-primary' and '--gym-primary-foreground' so they can be overridden via JS when a gym configuration is loaded to support the requested dynamic multi-tenant branding.",
+    "Implement the dynamic QR code using 'qrcode.react' combined with an animated SVG countdown timer.",
+    "The Raspberry Pi config page must have mono-spaced fonts for API key displays and clear 'Copy to Clipboard' buttons.",
+    "Implement Stripe UI securely, keeping the dark modern aesthetic during the checkout flow.",
+    "Make sure all files use .js/.jsx extensions as per project requirements, not .tsx."
+  ],
+  "UNIVERSAL GUIDELINES FOR MAIN AGENT": [
+    "You tend to converge toward generic, 'on distribution' outputs. Avoid this: make creative, distinctive frontends that surprise and delight.",
+    "Dark colors look good when used independently without gradients. DO NOT use dark colors as gradients.",
+    "Don't make generic centered layouts, simplistic gradients, and uniform styling.",
+    "Create depth through layered design elements with z-index hierarchy.",
+    "Use glass-morphism effects with backdrop filters (12-24px blur).",
+    "You MUST NOT apply universal transition (e.g., 'transition: all'). Always add transitions for specific interactive elements like button, input excluding transforms.",
+    "You MUST NOT center align the app container. Do not add '.App { text-align: center; }' in the css file.",
+    "Always use modern button styles like pill-shaped, or sharp button with interaction animations & color relevant to the app style.",
+    "NEVER use AI assistant Emoji characters for icons.",
+    "Every interaction needs micro-animations - hover states, transitions, and entrance animations. Static = dead.",
+    "Use 2-3x more spacing than feels comfortable. Cramped designs look cheap.",
+    "All interactive and key informational elements MUST include a 'data-testid' attribute to facilitate robust automated testing.",
+    "Components MUST use named exports, Pages MUST use default exports."
+  ]
+}
