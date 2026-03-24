@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getPlans, createPlan, deletePlan } from '../../lib/api';
+import { getPlans, createPlan, deletePlan, getGyms } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Plus, Trash2, Calendar, DollarSign, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -18,8 +19,24 @@ export default function AdminPlans() {
     description: '',
     price: '',
     duration_days: '',
-    access_type: 'unlimited'
+    access_type: 'unlimited',
+    gym_id: ''
   });
+  const [gyms, setGyms] = useState([]);
+
+  useEffect(() => {
+    fetchPlans();
+    if (isSuperAdmin) fetchGyms();
+  }, []);
+
+  const fetchGyms = async () => {
+    try {
+      const response = await getGyms();
+      setGyms(response.data);
+    } catch (error) {
+      console.error('Error fetching gyms:', error);
+    }
+  };
 
   useEffect(() => {
     fetchPlans();
@@ -43,8 +60,13 @@ export default function AdminPlans() {
       return;
     }
 
+    const gymId = isSuperAdmin ? newPlan.gym_id : admin?.gym_id;
+    if (!gymId) {
+      toast.error('Selecciona un gimnasio');
+      return;
+    }
+
     try {
-      const gymId = isSuperAdmin ? newPlan.gym_id : admin?.gym_id;
       await createPlan({
         ...newPlan,
         gym_id: gymId,
@@ -53,7 +75,7 @@ export default function AdminPlans() {
       });
       toast.success('Plan creado exitosamente');
       setShowCreateModal(false);
-      setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited' });
+      setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '' });
       fetchPlans();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al crear plan');
@@ -102,6 +124,22 @@ export default function AdminPlans() {
               <DialogTitle>Crear Nuevo Plan</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
+              {isSuperAdmin && (
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Gimnasio *</label>
+                  <Select value={newPlan.gym_id || "none"} onValueChange={(v) => setNewPlan({ ...newPlan, gym_id: v === "none" ? "" : v })}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="plan-gym-select">
+                      <SelectValue placeholder="Seleccionar gimnasio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      <SelectItem value="none">Seleccionar...</SelectItem>
+                      {gyms.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <label className="text-sm text-zinc-400 mb-1 block">Nombre del Plan</label>
                 <Input

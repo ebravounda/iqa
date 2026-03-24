@@ -172,12 +172,12 @@ export default function AdminClasses() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm text-zinc-400 mb-1 block">Entrenador</label>
-                  <Select value={newClass.trainer_id} onValueChange={(v) => setNewClass({ ...newClass, trainer_id: v })}>
+                  <Select value={newClass.trainer_id || "none"} onValueChange={(v) => setNewClass({ ...newClass, trainer_id: v === "none" ? "" : v })}>
                     <SelectTrigger className="bg-zinc-800 border-zinc-700">
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-900 border-zinc-700">
-                      <SelectItem value="">Sin asignar</SelectItem>
+                      <SelectItem value="none">Sin asignar</SelectItem>
                       {trainers.map((t) => (
                         <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                       ))}
