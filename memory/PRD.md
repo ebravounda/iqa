@@ -11,63 +11,38 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 - PWA para socios: QR dinámico, reservas, notificaciones, invitados
 - Roles: super_admin, gym_admin, gym_manager, trainer
 - Raspberry Pi: script de control de tornos con relés GPIO
-- Badge "Made with Emergent" eliminado
-- Sidebar scrollable
-- Notificaciones: fix para super_admin sin gym_id
-- Build de producción compilado para gym.ticketpro.es / gymapi.ticketpro.es
-- **Configuración de Stripe por Gimnasio** (cada gym admin configura su propia clave)
-- **Selector de moneda** (USD, EUR, MXN, ARS, CLP, COP, PEN, BRL, GBP)
-- **Gráficos de accesos reales** en Dashboard (BarChart con datos diarios reales)
-- **Estadísticas de acceso por socio** (modal con gráfico de asistencia)
+- Sidebar scrollable, Badge Emergent eliminado
+- **Configuración de Stripe por Gimnasio** (cada gym admin configura su propia clave + moneda)
+- **Gráficos de accesos reales** en Dashboard (BarChart diario)
+- **Estadísticas de acceso por socio** (modal con gráfico de asistencia 30 días)
 - **Alerta de pago en PWA** cuando membresía por vencer/vencida con botón "Pagar Ahora"
 - **Auto-suspensión automática** de membresías expiradas (background task cada 60 min)
-- **Endpoints de estadísticas**: daily, hourly, member attendance
-- **Historial de pagos** con enriquecimiento de datos de socio y plan
-- **Tabla de accesos mejorada** con stats summary, tipo (socio/invitado), acciones
+- **Credenciales automáticas por gimnasio**: Al crear un gym, se auto-crea un gym_admin con email/contraseña
+- **Impersonación de gym**: Super Admin puede "Iniciar sesión como Admin" en cualquier gym, con barra azul y botón "Volver a Super Admin"
+- **PWA responsive mejorada**: Diseño adaptable a cualquier dispositivo (mobile-first)
+- **Endpoints de estadísticas**: daily, hourly, member attendance, payment history
 
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123
-- Gym Admin: admin@fitzone.com / admin123
-- Trainer: carlos@trainer.com / trainer123
+- Gym Admin FitZone: admin@fitzone.com / admin123
+- Gym Admin PowerFit: admin@powerfit.com / powerfit123
 - Member: LRF4HL
-
-## Bugs Corregidos
-- Schedule creation: SelectItem value="" → "default"
-- Notificaciones: super_admin sin gym_id → selector de gym agregado
-- Sidebar overflow → scrollbar-thin
-- Badge Emergent → eliminado de index.html
-- Dashboard chart mock data → datos reales de API
-
-## Backlog
-### P1
-- SMTP real para emails
-- Cron para recordatorios de expiración por email
-- Vista mejorada para trainers
-- Check-in de asistencia a clases
-
-### P2
-- Push notifications (Firebase)
-- Reportes PDF
-- Historial de pagos detallado en el admin panel
-
-### P3
-- App nativa
-- Wearables
-- Gamificación
 
 ## Arquitectura
 ```
 /app
 ├── backend/
-│   ├── server.py              # FastAPI (2100+ lines)
-│   ├── requirements-prod.txt
+│   ├── server.py              # FastAPI (2200+ lines)
+│   ├── tests/                 # pytest tests
 │   └── .env
 ├── frontend/
 │   ├── src/
-│   │   ├── lib/api.js         # API calls
-│   │   ├── context/AuthContext.js
-│   │   ├── pages/admin/       # Admin: Dashboard, Settings, Access, Gyms, Members...
-│   │   └── pages/pwa/         # PWA: Home, Membership, Classes...
+│   │   ├── lib/api.js
+│   │   ├── context/AuthContext.js  # impersonateGym(), exitImpersonation()
+│   │   ├── layouts/AdminLayout.js  # Impersonation banner
+│   │   ├── layouts/PWALayout.js    # Responsive mobile design
+│   │   ├── pages/admin/
+│   │   └── pages/pwa/
 ├── memory/PRD.md
 ├── raspberry_access_control.py
 └── GUIA_PLESK_RASPBERRY.md
@@ -75,6 +50,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 
 ## Key API Endpoints
 - POST /api/auth/admin/login
+- POST /api/auth/admin/impersonate/{gym_id}
 - POST /api/auth/member/login
 - PUT /api/gyms/{id}/stripe-config
 - GET /api/gyms/{id}/stripe-config
@@ -88,3 +64,19 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 
 ## DB Collections
 - gyms, admins, members, memberships, plans, classes, class_schedules, bookings, notifications, guests, access_logs, devices, payment_transactions
+
+## Backlog
+### P1
+- SMTP real para emails de recordatorio
+- Check-in de asistencia a clases
+- Vista mejorada para trainers
+
+### P2
+- Push notifications (Firebase)
+- Reportes PDF
+- Historial de pagos detallado en admin
+
+### P3
+- App nativa
+- Wearables
+- Gamificación
