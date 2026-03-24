@@ -1,13 +1,13 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { QrCode, User, CreditCard, History, Plus, Calendar } from 'lucide-react';
+import { QrCode, User, CreditCard, History, Plus, Calendar, Bell, UserPlus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
   { path: '/app', icon: QrCode, label: 'QR' },
   { path: '/app/classes', icon: Calendar, label: 'Clases' },
-  { path: '/app/history', icon: History, label: 'Historial' },
-  { path: '/app/membership', icon: CreditCard, label: 'Membresía' },
+  { path: '/app/guests', icon: UserPlus, label: 'Invitados' },
+  { path: '/app/notifications', icon: Bell, label: 'Avisos' },
   { path: '/app/profile', icon: User, label: 'Perfil' },
 ];
 

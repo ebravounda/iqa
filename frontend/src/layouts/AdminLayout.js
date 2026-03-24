@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Users, CreditCard, History, 
   Settings, LogOut, Menu, X, Building2, Cpu, FileText,
-  Calendar, CalendarDays, UserCog
+  Calendar, CalendarDays, UserCog, Bell, UserPlus
 } from 'lucide-react';
 
 const navItems = [
@@ -15,6 +15,8 @@ const navItems = [
   { path: '/admin/classes', icon: Calendar, label: 'Clases', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
   { path: '/admin/schedules', icon: CalendarDays, label: 'Horarios', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
   { path: '/admin/staff', icon: UserCog, label: 'Personal', roles: ['super_admin', 'gym_admin'] },
+  { path: '/admin/notifications', icon: Bell, label: 'Notificaciones', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+  { path: '/admin/guests', icon: UserPlus, label: 'Invitados', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
   { path: '/admin/access', icon: History, label: 'Accesos', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
   { path: '/admin/devices', icon: Cpu, label: 'Dispositivos', roles: ['super_admin', 'gym_admin'] },
   { path: '/admin/templates', icon: FileText, label: 'Plantillas Email', roles: ['super_admin', 'gym_admin'] },

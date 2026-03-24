@@ -96,6 +96,8 @@ class MemberUpdate(BaseModel):
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
     status: Optional[str] = None  # active, blocked, pending
+    can_bring_guests: Optional[bool] = None  # Permission to bring guests
+    max_guests_per_month: Optional[int] = None  # Maximum guests allowed per month
 
 class PlanCreate(BaseModel):
     gym_id: str
@@ -167,6 +169,22 @@ class TrainerCreate(BaseModel):
     specialties: Optional[List[str]] = None
     bio: Optional[str] = None
     avatar_url: Optional[str] = None
+
+# ==================== NOTIFICATION MODELS ====================
+
+class NotificationCreate(BaseModel):
+    gym_id: str
+    title: str
+    message: str
+    notification_type: str = "general"  # general, class, membership, promotion
+    target: str = "all"  # all, active_members, expiring_members
+
+# ==================== GUEST MODELS ====================
+
+class GuestCreate(BaseModel):
+    name: str
+    phone: Optional[str] = None
+    valid_days: int = 1  # Number of days the guest pass is valid
 
 # ==================== UTILITIES ====================
 
@@ -599,7 +617,7 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
 
 @api_router.post("/access/validate")
 async def validate_access(validation: AccessValidation):
-    """Validate QR code from Raspberry Pi"""
+    """Validate QR code from Raspberry Pi (supports members and guests)"""
     # Verify gym token
     gym = await db.gyms.find_one({"api_token": validation.gym_token}, {"_id": 0})
     if not gym:
@@ -615,8 +633,54 @@ async def validate_access(validation: AccessValidation):
     if result["gym_id"] != gym["id"]:
         return {"valid": False, "reason": "QR code not for this gym"}
     
-    # Check member
-    member = await db.members.find_one({"id": result["member_id"]}, {"_id": 0})
+    member_id = result["member_id"]
+    
+    # Check if it's a guest QR
+    if member_id.startswith("GUEST:"):
+        guest_id = member_id.replace("GUEST:", "")
+        guest = await db.guests.find_one({"id": guest_id}, {"_id": 0})
+        
+        if not guest:
+            return {"valid": False, "reason": "Guest not found"}
+        
+        # Check expiry
+        valid_until = datetime.fromisoformat(guest["valid_until"].replace('Z', '+00:00'))
+        if valid_until < datetime.now(timezone.utc):
+            await db.guests.update_one({"id": guest_id}, {"$set": {"status": "expired"}})
+            return {"valid": False, "reason": "Guest pass expired"}
+        
+        if guest["status"] != "active":
+            return {"valid": False, "reason": f"Guest pass is {guest['status']}"}
+        
+        # Log access
+        access_log = {
+            "id": str(uuid.uuid4()),
+            "guest_id": guest_id,
+            "guest_name": guest["name"],
+            "guest_code": guest["code"],
+            "invited_by": guest["invited_by"],
+            "invited_by_name": guest["invited_by_name"],
+            "gym_id": gym["id"],
+            "direction": validation.direction,
+            "is_guest": True,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await db.access_logs.insert_one(access_log)
+        
+        # Update guest accesses count
+        await db.guests.update_one({"id": guest_id}, {"$inc": {"accesses": 1}})
+        
+        return {
+            "valid": True,
+            "is_guest": True,
+            "guest_name": guest["name"],
+            "guest_code": guest["code"],
+            "invited_by": guest["invited_by_name"],
+            "direction": validation.direction
+        }
+    
+    # Regular member validation
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
     if not member:
         return {"valid": False, "reason": "Member not found"}
     
@@ -1460,6 +1524,283 @@ async def get_schedule_attendees(schedule_id: str, admin: dict = Depends(get_cur
     ).to_list(100)
     
     return bookings
+
+# ==================== NOTIFICATION ROUTES ====================
+
+@api_router.post("/notifications")
+async def create_notification(notification: NotificationCreate, admin: dict = Depends(get_current_admin)):
+    """Create a notification for gym members"""
+    check_role(admin, ["super_admin", "gym_admin", "gym_manager"], notification.gym_id)
+    
+    notification_dict = {
+        "id": str(uuid.uuid4()),
+        "gym_id": notification.gym_id,
+        "title": notification.title,
+        "message": notification.message,
+        "notification_type": notification.notification_type,
+        "target": notification.target,
+        "created_by": admin["id"],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "read_by": []
+    }
+    
+    await db.notifications.insert_one(notification_dict)
+    notification_dict.pop("_id", None)
+    return notification_dict
+
+@api_router.get("/notifications")
+async def get_notifications(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    """Get notifications for admin view"""
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    notifications = await db.notifications.find(query, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return notifications
+
+@api_router.get("/notifications/member")
+async def get_member_notifications(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get notifications for current member"""
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    gym_id = payload.get("gym_id")
+    
+    # Get member to check status
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        return []
+    
+    # Get notifications for this gym
+    query = {"gym_id": gym_id}
+    notifications = await db.notifications.find(query, {"_id": 0}).sort("created_at", -1).to_list(50)
+    
+    # Add read status
+    for n in notifications:
+        n["is_read"] = member_id in n.get("read_by", [])
+    
+    return notifications
+
+@api_router.post("/notifications/{notification_id}/read")
+async def mark_notification_read(notification_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Mark notification as read"""
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    
+    await db.notifications.update_one(
+        {"id": notification_id},
+        {"$addToSet": {"read_by": member_id}}
+    )
+    return {"message": "Marked as read"}
+
+@api_router.delete("/notifications/{notification_id}")
+async def delete_notification(notification_id: str, admin: dict = Depends(get_current_admin)):
+    """Delete a notification"""
+    check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
+    await db.notifications.delete_one({"id": notification_id})
+    return {"message": "Notification deleted"}
+
+# ==================== GUEST PASS ROUTES ====================
+
+@api_router.post("/guests")
+async def create_guest_pass(guest: GuestCreate, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Create a guest pass (member creates for their guest)"""
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    
+    # Get member info
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    
+    # Check if member can bring guests
+    if not member.get("can_bring_guests", False):
+        raise HTTPException(status_code=403, detail="No tienes permiso para traer invitados. Consulta con administración.")
+    
+    # Check monthly guest limit
+    month_start = datetime.now(timezone.utc).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    guests_this_month = await db.guests.count_documents({
+        "invited_by": member_id,
+        "created_at": {"$gte": month_start.isoformat()}
+    })
+    
+    max_guests = member.get("max_guests_per_month", 2)
+    if guests_this_month >= max_guests:
+        raise HTTPException(status_code=400, detail=f"Has alcanzado el límite de {max_guests} invitados este mes")
+    
+    # Generate guest code
+    guest_code = "G" + generate_member_code()
+    
+    # Calculate expiry
+    valid_until = datetime.now(timezone.utc) + timedelta(days=guest.valid_days)
+    
+    guest_dict = {
+        "id": str(uuid.uuid4()),
+        "code": guest_code,
+        "name": guest.name,
+        "phone": guest.phone,
+        "invited_by": member_id,
+        "invited_by_name": member["name"],
+        "gym_id": member["gym_id"],
+        "valid_until": valid_until.isoformat(),
+        "valid_days": guest.valid_days,
+        "status": "active",  # active, used, expired
+        "accesses": 0,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    await db.guests.insert_one(guest_dict)
+    guest_dict.pop("_id", None)
+    return guest_dict
+
+@api_router.get("/guests/member")
+async def get_member_guests(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Get guests invited by current member"""
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    
+    guests = await db.guests.find(
+        {"invited_by": member_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+    
+    # Update status for expired guests
+    now = datetime.now(timezone.utc)
+    for g in guests:
+        valid_until = datetime.fromisoformat(g["valid_until"].replace('Z', '+00:00'))
+        if valid_until < now and g["status"] == "active":
+            g["status"] = "expired"
+            await db.guests.update_one({"id": g["id"]}, {"$set": {"status": "expired"}})
+    
+    return guests
+
+@api_router.get("/guests")
+async def get_all_guests(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    """Get all guests for admin view"""
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    guests = await db.guests.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
+    return guests
+
+@api_router.get("/guests/{guest_code}/qr")
+async def get_guest_qr(guest_code: str):
+    """Generate QR code for guest (public endpoint for guest to access)"""
+    guest = await db.guests.find_one({"code": guest_code.upper()}, {"_id": 0})
+    if not guest:
+        raise HTTPException(status_code=404, detail="Guest not found")
+    
+    # Check if expired
+    valid_until = datetime.fromisoformat(guest["valid_until"].replace('Z', '+00:00'))
+    if valid_until < datetime.now(timezone.utc):
+        raise HTTPException(status_code=400, detail="Guest pass expired")
+    
+    if guest["status"] != "active":
+        raise HTTPException(status_code=400, detail=f"Guest pass is {guest['status']}")
+    
+    # Generate QR
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    qr_data = generate_qr_data(f"GUEST:{guest['id']}", guest["gym_id"], timestamp)
+    
+    # Get gym for refresh time
+    gym = await db.gyms.find_one({"id": guest["gym_id"]}, {"_id": 0})
+    refresh_seconds = gym.get("qr_refresh_seconds", 10) if gym else 10
+    
+    return {
+        "qr_code": qr_data,
+        "guest": guest,
+        "expires_at": timestamp + refresh_seconds,
+        "refresh_seconds": refresh_seconds
+    }
+
+@api_router.post("/access/validate/guest")
+async def validate_guest_access(validation: AccessValidation):
+    """Validate guest QR code from Raspberry Pi"""
+    # Verify gym token
+    gym = await db.gyms.find_one({"api_token": validation.gym_token}, {"_id": 0})
+    if not gym:
+        return {"valid": False, "reason": "Invalid gym token"}
+    
+    # Validate QR
+    max_age = gym.get("qr_refresh_seconds", 10) + 5
+    result = validate_qr_data(validation.qr_code, max_age)
+    
+    if not result["valid"]:
+        return result
+    
+    member_id = result["member_id"]
+    
+    # Check if it's a guest QR
+    if member_id.startswith("GUEST:"):
+        guest_id = member_id.replace("GUEST:", "")
+        guest = await db.guests.find_one({"id": guest_id}, {"_id": 0})
+        
+        if not guest:
+            return {"valid": False, "reason": "Guest not found"}
+        
+        if guest["gym_id"] != gym["id"]:
+            return {"valid": False, "reason": "Guest not valid for this gym"}
+        
+        # Check expiry
+        valid_until = datetime.fromisoformat(guest["valid_until"].replace('Z', '+00:00'))
+        if valid_until < datetime.now(timezone.utc):
+            await db.guests.update_one({"id": guest_id}, {"$set": {"status": "expired"}})
+            return {"valid": False, "reason": "Guest pass expired"}
+        
+        if guest["status"] != "active":
+            return {"valid": False, "reason": f"Guest pass is {guest['status']}"}
+        
+        # Log access
+        access_log = {
+            "id": str(uuid.uuid4()),
+            "guest_id": guest_id,
+            "guest_name": guest["name"],
+            "guest_code": guest["code"],
+            "invited_by": guest["invited_by"],
+            "gym_id": gym["id"],
+            "direction": validation.direction,
+            "is_guest": True,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await db.access_logs.insert_one(access_log)
+        
+        # Update guest accesses count
+        await db.guests.update_one({"id": guest_id}, {"$inc": {"accesses": 1}})
+        
+        return {
+            "valid": True,
+            "is_guest": True,
+            "guest_name": guest["name"],
+            "guest_code": guest["code"],
+            "invited_by": guest["invited_by_name"],
+            "direction": validation.direction
+        }
+    
+    # Regular member validation continues in original endpoint
+    return {"valid": False, "reason": "Use /access/validate for members"}
+
+@api_router.put("/members/{member_id}/guest-permission")
+async def update_guest_permission(
+    member_id: str, 
+    can_bring_guests: bool,
+    max_guests_per_month: int = 2,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update member's permission to bring guests"""
+    check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
+    
+    await db.members.update_one(
+        {"id": member_id},
+        {"$set": {
+            "can_bring_guests": can_bring_guests,
+            "max_guests_per_month": max_guests_per_month
+        }}
+    )
+    return {"message": "Guest permission updated"}
 
 # ==================== INIT & HEALTH ====================
 
