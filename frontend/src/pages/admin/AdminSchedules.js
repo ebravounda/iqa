@@ -224,12 +224,12 @@ export default function AdminSchedules() {
 
                 <div>
                   <label className="text-sm text-zinc-400 mb-1 block">Entrenador (opcional)</label>
-                  <Select value={newSchedule.trainer_id} onValueChange={(v) => setNewSchedule({ ...newSchedule, trainer_id: v })}>
+                  <Select value={newSchedule.trainer_id} onValueChange={(v) => setNewSchedule({ ...newSchedule, trainer_id: v === "default" ? "" : v })}>
                     <SelectTrigger className="bg-zinc-800 border-zinc-700">
                       <SelectValue placeholder="Seleccionar" />
                     </SelectTrigger>
                     <SelectContent className="bg-zinc-900 border-zinc-700">
-                      <SelectItem value="">Usar default de clase</SelectItem>
+                      <SelectItem value="default">Usar default de clase</SelectItem>
                       {trainers.map((t) => (
                         <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                       ))}
