@@ -28,16 +28,30 @@ export default function AdminNotifications() {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [gyms, setGyms] = useState([]);
   const [newNotification, setNewNotification] = useState({
     title: '',
     message: '',
     notification_type: 'general',
-    target: 'all'
+    target: 'all',
+    gym_id: admin?.gym_id || ''
   });
 
   useEffect(() => {
     fetchNotifications();
+    if (admin?.role === 'super_admin') {
+      fetchGyms();
+    }
   }, []);
+
+  const fetchGyms = async () => {
+    try {
+      const response = await axios.get(`${API}/gyms`);
+      setGyms(response.data);
+    } catch (error) {
+      console.error('Error fetching gyms:', error);
+    }
+  };
 
   const fetchNotifications = async () => {
     try {
@@ -56,8 +70,13 @@ export default function AdminNotifications() {
       return;
     }
 
+    const gymId = admin?.gym_id || newNotification.gym_id;
+    if (!gymId) {
+      toast.error('Selecciona un gimnasio');
+      return;
+    }
+
     try {
-      const gymId = admin?.gym_id;
       await axios.post(`${API}/notifications`, {
         ...newNotification,
         gym_id: gymId
@@ -68,7 +87,8 @@ export default function AdminNotifications() {
         title: '',
         message: '',
         notification_type: 'general',
-        target: 'all'
+        target: 'all',
+        gym_id: admin?.gym_id || ''
       });
       fetchNotifications();
     } catch (error) {
@@ -118,6 +138,24 @@ export default function AdminNotifications() {
               <DialogTitle>Enviar Notificación</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
+              {admin?.role === 'super_admin' && (
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Gimnasio</label>
+                  <Select 
+                    value={newNotification.gym_id} 
+                    onValueChange={(v) => setNewNotification({ ...newNotification, gym_id: v })}
+                  >
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="notification-gym-select">
+                      <SelectValue placeholder="Seleccionar gimnasio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      {gyms.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <label className="text-sm text-zinc-400 mb-1 block">Título</label>
                 <Input
