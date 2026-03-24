@@ -9,7 +9,7 @@
 /coverage
 
 # production
-/build
+# /build   ← REMOVIDO para incluir build en el repo
 
 # misc
 .DS_Store
