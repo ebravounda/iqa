@@ -1,53 +1,177 @@
 import { useEffect } from "react";
-import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import "@fontsource/chivo/400.css";
+import "@fontsource/chivo/700.css";
+import "@fontsource/chivo/900.css";
+import "@fontsource/manrope/400.css";
+import "@fontsource/manrope/500.css";
+import "@fontsource/manrope/600.css";
+import "@fontsource/manrope/700.css";
+import "./App.css";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from "sonner";
+import { AuthProvider, useAuth } from "./context/AuthContext";
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
-const API = `${BACKEND_URL}/api`;
+// Layouts
+import { AdminLayout } from "./layouts/AdminLayout";
+import { PWALayout } from "./layouts/PWALayout";
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+// Admin Pages
+import AdminLogin from "./pages/admin/AdminLogin";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import AdminMembers from "./pages/admin/AdminMembers";
+import AdminPlans from "./pages/admin/AdminPlans";
+import AdminAccess from "./pages/admin/AdminAccess";
+import AdminDevices from "./pages/admin/AdminDevices";
+import AdminSettings from "./pages/admin/AdminSettings";
+import AdminTemplates from "./pages/admin/AdminTemplates";
+import AdminGyms from "./pages/admin/AdminGyms";
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+// PWA Pages
+import MemberLogin from "./pages/pwa/MemberLogin";
+import MemberHome from "./pages/pwa/MemberHome";
+import MemberHistory from "./pages/pwa/MemberHistory";
+import MemberMembership from "./pages/pwa/MemberMembership";
+import MemberProfile from "./pages/pwa/MemberProfile";
+import PaymentSuccess from "./pages/pwa/PaymentSuccess";
 
+// Protected Route Components
+const AdminRoute = ({ children }) => {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--gym-primary)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated || !isAdmin) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  
+  return <AdminLayout>{children}</AdminLayout>;
+};
+
+const MemberRoute = ({ children }) => {
+  const { isAuthenticated, isMember, loading } = useAuth();
+  
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--gym-primary)] border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated || !isMember) {
+    return <Navigate to="/app/login" replace />;
+  }
+  
+  return <PWALayout>{children}</PWALayout>;
+};
+
+// Landing Page
+const LandingPage = () => {
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+    <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center p-8 noise-overlay">
+      <div 
+        className="absolute inset-0 bg-cover bg-center opacity-5"
+        style={{ backgroundImage: 'url(https://images.pexels.com/photos/6388373/pexels-photo-6388373.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940)' }}
+      />
+      
+      <div className="relative z-10 text-center max-w-xl">
+        <h1 className="text-5xl sm:text-6xl font-black tracking-tight mb-4">
+          <span style={{ color: 'var(--gym-primary)' }}>GYM</span>ACCESS
+        </h1>
+        <p className="text-zinc-400 text-lg mb-12">
+          Sistema de control de acceso inteligente para gimnasios
+        </p>
+        
+        <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <a 
+            href="/admin/login"
+            className="btn-gym-primary text-center"
+            data-testid="admin-access-btn"
+          >
+            Panel de Administración
+          </a>
+          <a 
+            href="/app/login"
+            className="px-6 py-3 rounded-full border border-zinc-700 hover:border-zinc-500 text-white font-semibold transition-colors text-center"
+            data-testid="member-access-btn"
+          >
+            Acceso Socios
+          </a>
+        </div>
+        
+        <div className="mt-16 grid grid-cols-3 gap-8 text-center">
+          <div>
+            <p className="text-3xl font-black" style={{ color: 'var(--gym-primary)' }}>QR</p>
+            <p className="text-zinc-500 text-sm">Dinámico</p>
+          </div>
+          <div>
+            <p className="text-3xl font-black" style={{ color: 'var(--gym-primary)' }}>24/7</p>
+            <p className="text-zinc-500 text-sm">Acceso</p>
+          </div>
+          <div>
+            <p className="text-3xl font-black" style={{ color: 'var(--gym-primary)' }}>100%</p>
+            <p className="text-zinc-500 text-sm">Seguro</p>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };
 
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* Landing */}
+      <Route path="/" element={<LandingPage />} />
+      
+      {/* Admin Routes */}
+      <Route path="/admin/login" element={<AdminLogin />} />
+      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/admin/gyms" element={<AdminRoute><AdminGyms /></AdminRoute>} />
+      <Route path="/admin/members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
+      <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
+      <Route path="/admin/access" element={<AdminRoute><AdminAccess /></AdminRoute>} />
+      <Route path="/admin/devices" element={<AdminRoute><AdminDevices /></AdminRoute>} />
+      <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
+      <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+      
+      {/* PWA/Member Routes */}
+      <Route path="/app/login" element={<MemberLogin />} />
+      <Route path="/app" element={<MemberRoute><MemberHome /></MemberRoute>} />
+      <Route path="/app/history" element={<MemberRoute><MemberHistory /></MemberRoute>} />
+      <Route path="/app/membership" element={<MemberRoute><MemberMembership /></MemberRoute>} />
+      <Route path="/app/profile" element={<MemberRoute><MemberProfile /></MemberRoute>} />
+      <Route path="/app/payment-success" element={<MemberRoute><PaymentSuccess /></MemberRoute>} />
+      
+      {/* Catch all */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppRoutes />
+        <Toaster 
+          position="top-center" 
+          toastOptions={{
+            style: {
+              background: '#18181B',
+              border: '1px solid #27272A',
+              color: '#FAFAFA',
+            },
+          }}
+        />
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 
