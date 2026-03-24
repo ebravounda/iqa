@@ -147,9 +147,9 @@ export default function MemberHome() {
         className="qr-container text-center"
         data-testid="qr-container"
       >
-        <div className="mb-6">
-          <h2 className="text-xl font-bold">{member?.name}</h2>
-          <p className="text-zinc-400 font-mono text-sm">{member?.code}</p>
+        <div className="mb-4 sm:mb-6">
+          <h2 className="text-lg sm:text-xl font-bold">{member?.name}</h2>
+          <p className="text-zinc-400 font-mono text-xs sm:text-sm">{member?.code}</p>
         </div>
 
         <div 
@@ -158,20 +158,20 @@ export default function MemberHome() {
           data-testid="qr-expand-btn"
         >
           {loading ? (
-            <div className="w-[200px] h-[200px] bg-zinc-800 rounded-2xl animate-pulse" />
+            <div className="w-[180px] h-[180px] sm:w-[200px] sm:h-[200px] bg-zinc-800 rounded-2xl animate-pulse" />
           ) : error ? (
-            <div className="w-[200px] h-[200px] bg-zinc-800 rounded-2xl flex items-center justify-center">
+            <div className="w-[180px] h-[180px] sm:w-[200px] sm:h-[200px] bg-zinc-800 rounded-2xl flex items-center justify-center">
               <p className="text-red-500 text-sm">{error}</p>
             </div>
           ) : (
-            <QRDisplay size={200} />
+            <QRDisplay size={typeof window !== 'undefined' && window.innerWidth < 380 ? 160 : 200} />
           )}
         </div>
 
-        <div className="mt-6 flex items-center justify-center gap-2">
-          <span className="text-zinc-500 text-sm">Actualiza en</span>
+        <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2">
+          <span className="text-zinc-500 text-xs sm:text-sm">Actualiza en</span>
           <span 
-            className="font-mono font-bold text-lg"
+            className="font-mono font-bold text-base sm:text-lg"
             style={{ color: 'var(--gym-primary)' }}
             data-testid="qr-countdown"
           >
@@ -181,9 +181,9 @@ export default function MemberHome() {
 
         <button
           onClick={() => setFullscreen(true)}
-          className="mt-4 text-zinc-400 hover:text-white flex items-center gap-2 mx-auto text-sm transition-colors"
+          className="mt-3 sm:mt-4 text-zinc-400 hover:text-white flex items-center gap-2 mx-auto text-xs sm:text-sm transition-colors"
         >
-          <Maximize2 size={16} />
+          <Maximize2 size={14} />
           Pantalla completa
         </button>
       </motion.div>

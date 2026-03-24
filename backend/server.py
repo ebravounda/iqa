@@ -55,6 +55,9 @@ class GymCreate(BaseModel):
     primary_color: str = "#E1FF01"
     qr_refresh_seconds: int = 10
     max_members: Optional[int] = None
+    admin_email: Optional[EmailStr] = None
+    admin_password: Optional[str] = None
+    admin_name: Optional[str] = None
 
 class GymUpdate(BaseModel):
     name: Optional[str] = None
@@ -225,6 +228,15 @@ async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(
     admin = await db.admins.find_one({"id": payload.get("sub")}, {"_id": 0})
     if not admin:
         raise HTTPException(status_code=401, detail="Admin not found")
+    
+    # If impersonating, override role and gym_id from token
+    if payload.get("impersonating"):
+        admin = dict(admin)  # Make a copy to avoid modifying cached data
+        admin["role"] = payload.get("role", admin.get("role"))
+        admin["gym_id"] = payload.get("gym_id")
+        admin["impersonating"] = True
+        admin["original_role"] = payload.get("original_role")
+    
     return admin
 
 def generate_qr_data(member_id: str, gym_id: str, timestamp: int) -> str:
@@ -290,6 +302,39 @@ async def login_admin(login: AdminLogin):
     
     admin_data = {k: v for k, v in admin.items() if k not in ["_id", "password"]}
     return {"admin": admin_data, "token": token}
+
+@api_router.post("/auth/admin/impersonate/{gym_id}")
+async def impersonate_gym(gym_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Super admin impersonates a gym admin to manage a specific gym"""
+    payload = decode_jwt_token(credentials.credentials)
+    if payload.get("role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo el super admin puede usar esta función")
+    
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    
+    original_admin = await db.admins.find_one({"id": payload.get("sub")}, {"_id": 0})
+    if not original_admin:
+        raise HTTPException(status_code=404, detail="Admin no encontrado")
+    
+    # Create impersonation token with the gym_id
+    impersonation_token = create_jwt_token({
+        "sub": payload.get("sub"),
+        "role": "gym_admin",
+        "gym_id": gym_id,
+        "impersonating": True,
+        "original_role": "super_admin"
+    })
+    
+    admin_data = {k: v for k, v in original_admin.items() if k not in ["_id", "password"]}
+    admin_data["role"] = "gym_admin"
+    admin_data["gym_id"] = gym_id
+    admin_data["impersonating"] = True
+    admin_data["original_role"] = "super_admin"
+    admin_data["gym_name"] = gym.get("name", "")
+    
+    return {"admin": admin_data, "token": impersonation_token, "gym": gym}
 
 @api_router.post("/auth/member/login")
 async def login_member(code: str):
@@ -366,12 +411,50 @@ async def create_gym(gym: GymCreate, admin: dict = Depends(get_current_admin)):
     
     await db.gyms.insert_one(gym_dict)
     gym_dict.pop("_id", None)
+    
+    # Auto-create gym admin if credentials provided
+    admin_email = gym.admin_email
+    admin_password = gym.admin_password
+    admin_name = gym.admin_name or f"Admin {gym.name}"
+    
+    if admin_email and admin_password:
+        existing_admin = await db.admins.find_one({"email": admin_email})
+        if existing_admin:
+            raise HTTPException(status_code=400, detail=f"Ya existe un administrador con el email {admin_email}")
+        
+        gym_admin = {
+            "id": str(uuid.uuid4()),
+            "email": admin_email,
+            "password": hash_password(admin_password),
+            "name": admin_name,
+            "role": "gym_admin",
+            "gym_id": gym_dict["id"],
+            "is_active": True,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.admins.insert_one(gym_admin)
+        gym_dict["admin_created"] = True
+        gym_dict["admin_email"] = admin_email
+        logger.info(f"Gym admin created for {gym.name}: {admin_email}")
+    
+    # Remove internal fields
+    for key in ["admin_email", "admin_password", "admin_name"]:
+        gym_dict.pop(key, None)
+    
     return gym_dict
 
 @api_router.get("/gyms")
 async def get_gyms(admin: dict = Depends(get_current_admin)):
     if admin["role"] == "super_admin":
         gyms = await db.gyms.find({}, {"_id": 0}).to_list(100)
+        # Enrich with admin info for each gym
+        for gym in gyms:
+            gym_admin = await db.admins.find_one(
+                {"gym_id": gym["id"], "role": "gym_admin"}, 
+                {"_id": 0, "email": 1, "name": 1}
+            )
+            gym["gym_admin_email"] = gym_admin["email"] if gym_admin else None
+            gym["gym_admin_name"] = gym_admin["name"] if gym_admin else None
     else:
         gyms = await db.gyms.find({"id": admin.get("gym_id")}, {"_id": 0}).to_list(1)
     return gyms

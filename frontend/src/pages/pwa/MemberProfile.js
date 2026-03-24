@@ -62,10 +62,10 @@ export default function MemberProfile() {
   };
 
   return (
-    <div className="space-y-6" data-testid="member-profile">
+    <div className="space-y-5 sm:space-y-6" data-testid="member-profile">
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Mi Perfil</h1>
-        <p className="text-zinc-400 text-sm">Información de tu cuenta</p>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight">Mi Perfil</h1>
+        <p className="text-zinc-400 text-xs sm:text-sm">Información de tu cuenta</p>
       </div>
 
       {/* Profile Card */}

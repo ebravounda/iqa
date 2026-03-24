@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(localStorage.getItem('token'));
   const [userType, setUserType] = useState(localStorage.getItem('userType'));
   const [loading, setLoading] = useState(true);
+  const [isImpersonating, setIsImpersonating] = useState(false);
 
   useEffect(() => {
     if (token) {
@@ -40,10 +41,11 @@ export const AuthProvider = ({ children }) => {
 
   const fetchAdminData = async () => {
     try {
-      // Admin data is stored locally after login
       const storedAdmin = localStorage.getItem('admin');
       if (storedAdmin) {
-        setAdmin(JSON.parse(storedAdmin));
+        const parsed = JSON.parse(storedAdmin);
+        setAdmin(parsed);
+        setIsImpersonating(!!parsed.impersonating);
       }
     } catch (error) {
       console.error('Error fetching admin data:', error);
@@ -61,7 +63,6 @@ export const AuthProvider = ({ children }) => {
       setMembership(response.data.membership);
       setPlan(response.data.plan);
       
-      // Update gym branding
       if (response.data.gym?.primary_color) {
         document.documentElement.style.setProperty('--gym-primary', response.data.gym.primary_color);
       }
@@ -84,9 +85,49 @@ export const AuthProvider = ({ children }) => {
     setToken(newToken);
     setUserType('admin');
     setAdmin(adminData);
+    setIsImpersonating(false);
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     
     return adminData;
+  };
+
+  const impersonateGym = async (gymId) => {
+    // Save current super admin state before impersonating
+    const currentAdmin = localStorage.getItem('admin');
+    const currentToken = localStorage.getItem('token');
+    localStorage.setItem('original_admin', currentAdmin);
+    localStorage.setItem('original_token', currentToken);
+    
+    const response = await axios.post(`${API}/auth/admin/impersonate/${gymId}`);
+    const { admin: adminData, token: newToken } = response.data;
+    
+    localStorage.setItem('token', newToken);
+    localStorage.setItem('admin', JSON.stringify(adminData));
+    
+    setToken(newToken);
+    setAdmin(adminData);
+    setIsImpersonating(true);
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    
+    return adminData;
+  };
+
+  const exitImpersonation = () => {
+    const originalAdmin = localStorage.getItem('original_admin');
+    const originalToken = localStorage.getItem('original_token');
+    
+    if (originalAdmin && originalToken) {
+      localStorage.setItem('token', originalToken);
+      localStorage.setItem('admin', originalAdmin);
+      localStorage.removeItem('original_admin');
+      localStorage.removeItem('original_token');
+      
+      const parsed = JSON.parse(originalAdmin);
+      setToken(originalToken);
+      setAdmin(parsed);
+      setIsImpersonating(false);
+      axios.defaults.headers.common['Authorization'] = `Bearer ${originalToken}`;
+    }
   };
 
   const loginMember = async (code) => {
@@ -103,7 +144,6 @@ export const AuthProvider = ({ children }) => {
     setMembership(membershipData);
     axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     
-    // Update gym branding
     if (gymData?.primary_color) {
       document.documentElement.style.setProperty('--gym-primary', gymData.primary_color);
     }
@@ -115,6 +155,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('userType');
     localStorage.removeItem('admin');
+    localStorage.removeItem('original_admin');
+    localStorage.removeItem('original_token');
     setToken(null);
     setUserType(null);
     setAdmin(null);
@@ -122,9 +164,9 @@ export const AuthProvider = ({ children }) => {
     setGym(null);
     setMembership(null);
     setPlan(null);
+    setIsImpersonating(false);
     delete axios.defaults.headers.common['Authorization'];
     
-    // Reset gym branding
     document.documentElement.style.setProperty('--gym-primary', '#E1FF01');
   };
 
@@ -148,10 +190,13 @@ export const AuthProvider = ({ children }) => {
       loginMember,
       logout,
       refreshMemberData,
+      impersonateGym,
+      exitImpersonation,
+      isImpersonating,
       isAuthenticated: !!token,
       isAdmin: userType === 'admin',
       isMember: userType === 'member',
-      isSuperAdmin: admin?.role === 'super_admin'
+      isSuperAdmin: admin?.role === 'super_admin' && !admin?.impersonating
     }}>
       {children}
     </AuthContext.Provider>

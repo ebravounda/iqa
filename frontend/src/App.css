@@ -59,18 +59,28 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 80px;
+  height: 72px;
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  background: rgba(9, 9, 11, 0.85);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(9, 9, 11, 0.9);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 50;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
 .pwa-content {
-  padding-bottom: 100px;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom) + 16px);
   min-height: 100vh;
+  min-height: 100dvh;
+}
+
+@media (max-width: 380px) {
+  .pwa-bottom-nav {
+    height: 64px;
+  }
+  .pwa-content {
+    padding-bottom: calc(64px + env(safe-area-inset-bottom) + 16px);
+  }
 }
 
 /* Card Styles */

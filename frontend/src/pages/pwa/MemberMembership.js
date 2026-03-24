@@ -115,10 +115,10 @@ export default function MemberMembership() {
   }
 
   return (
-    <div className="space-y-6" data-testid="member-membership">
+    <div className="space-y-5 sm:space-y-6" data-testid="member-membership">
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Mi Membresía</h1>
-        <p className="text-zinc-400 text-sm">Gestiona tu plan y pagos</p>
+        <h1 className="text-xl sm:text-2xl font-black tracking-tight">Mi Membresía</h1>
+        <p className="text-zinc-400 text-xs sm:text-sm">Gestiona tu plan y pagos</p>
       </div>
 
       {/* Current Membership */}

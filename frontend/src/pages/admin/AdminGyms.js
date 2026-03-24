@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { getGyms, createGym, updateGym } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
@@ -8,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { 
   Plus, Building2, Search, MoreVertical, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle
+  AlertTriangle, LogIn, Users, Mail, Shield
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -16,7 +17,8 @@ import axios from 'axios';
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function AdminGyms() {
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, impersonateGym } = useAuth();
+  const navigate = useNavigate();
   const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -24,8 +26,10 @@ export default function AdminGyms() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedGym, setSelectedGym] = useState(null);
+  const [impersonating, setImpersonating] = useState(null);
   const [newGym, setNewGym] = useState({
-    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null
+    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null,
+    admin_email: '', admin_password: '', admin_name: ''
   });
   const [editGym, setEditGym] = useState({
     name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null
@@ -46,11 +50,14 @@ export default function AdminGyms() {
 
   const handleCreateGym = async () => {
     if (!newGym.name) { toast.error('El nombre es requerido'); return; }
+    if (newGym.admin_email && !newGym.admin_password) { toast.error('Ingresa una contraseña para el administrador'); return; }
     try {
       await createGym(newGym);
-      toast.success('Gimnasio creado exitosamente');
+      toast.success(newGym.admin_email 
+        ? 'Gimnasio creado con administrador' 
+        : 'Gimnasio creado exitosamente');
       setShowCreateModal(false);
-      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null });
+      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, admin_email: '', admin_password: '', admin_name: '' });
       fetchGyms();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al crear gimnasio');
@@ -109,8 +116,22 @@ export default function AdminGyms() {
     }
   };
 
+  const handleImpersonate = async (gym) => {
+    setImpersonating(gym.id);
+    try {
+      await impersonateGym(gym.id);
+      toast.success(`Sesión iniciada en ${gym.name}`);
+      navigate('/admin');
+    } catch (error) {
+      toast.error('Error al iniciar sesión en el gimnasio');
+    } finally {
+      setImpersonating(null);
+    }
+  };
+
   const filteredGyms = gyms.filter(g =>
-    g.name.toLowerCase().includes(search.toLowerCase())
+    g.name.toLowerCase().includes(search.toLowerCase()) ||
+    (g.gym_admin_email || '').toLowerCase().includes(search.toLowerCase())
   );
 
   if (!isSuperAdmin) {
@@ -135,44 +156,76 @@ export default function AdminGyms() {
               <Plus size={20} className="mr-2" /> Nuevo Gimnasio
             </Button>
           </DialogTrigger>
-          <DialogContent className="bg-zinc-900 border-zinc-800">
+          <DialogContent className="bg-zinc-900 border-zinc-800 max-h-[90vh] overflow-y-auto">
             <DialogHeader><DialogTitle>Crear Nuevo Gimnasio</DialogTitle></DialogHeader>
             <div className="mt-4">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Nombre</label>
+                  <label className="text-sm text-zinc-400 mb-1 block">Nombre del Gimnasio *</label>
                   <Input value={newGym.name} onChange={(e) => setNewGym({ ...newGym, name: e.target.value })}
-                    placeholder="Nombre del gimnasio" className="input-dark" data-testid="gym-name-input" />
+                    placeholder="Ej: PowerFit Gym" className="input-dark" data-testid="gym-name-input" />
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Email</label>
+                  <label className="text-sm text-zinc-400 mb-1 block">Email del Gimnasio</label>
                   <Input type="email" value={newGym.email} onChange={(e) => setNewGym({ ...newGym, email: e.target.value })}
-                    placeholder="email@gimnasio.com" className="input-dark" />
+                    placeholder="contacto@gimnasio.com" className="input-dark" />
                 </div>
-                <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Dirección</label>
-                  <Input value={newGym.address} onChange={(e) => setNewGym({ ...newGym, address: e.target.value })}
-                    placeholder="Dirección" className="input-dark" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-1 block">Dirección</label>
+                    <Input value={newGym.address} onChange={(e) => setNewGym({ ...newGym, address: e.target.value })}
+                      placeholder="Dirección" className="input-dark" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-1 block">Teléfono</label>
+                    <Input value={newGym.phone} onChange={(e) => setNewGym({ ...newGym, phone: e.target.value })}
+                      placeholder="Teléfono" className="input-dark" />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Teléfono</label>
-                  <Input value={newGym.phone} onChange={(e) => setNewGym({ ...newGym, phone: e.target.value })}
-                    placeholder="Teléfono" className="input-dark" />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-1 block">Capacidad máxima</label>
+                    <Input type="number" value={newGym.max_members || ''} onChange={(e) => setNewGym({ ...newGym, max_members: e.target.value ? parseInt(e.target.value) : null })}
+                      placeholder="Ej: 500" className="input-dark" />
+                  </div>
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-1 block">Color Principal</label>
+                    <div className="flex gap-2">
+                      <input type="color" value={newGym.primary_color} onChange={(e) => setNewGym({ ...newGym, primary_color: e.target.value })} className="w-10 h-10 rounded cursor-pointer" />
+                      <Input value={newGym.primary_color} onChange={(e) => setNewGym({ ...newGym, primary_color: e.target.value })} className="input-dark font-mono" />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Capacidad máxima de socios</label>
-                  <Input type="number" value={newGym.max_members || ''} onChange={(e) => setNewGym({ ...newGym, max_members: e.target.value ? parseInt(e.target.value) : null })}
-                    placeholder="Ej: 100, 500, 2000" className="input-dark" />
-                </div>
-                <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Color Principal</label>
-                  <div className="flex gap-2">
-                    <input type="color" value={newGym.primary_color} onChange={(e) => setNewGym({ ...newGym, primary_color: e.target.value })} className="w-10 h-10 rounded cursor-pointer" />
-                    <Input value={newGym.primary_color} onChange={(e) => setNewGym({ ...newGym, primary_color: e.target.value })} className="input-dark font-mono" />
+
+                {/* Admin Credentials Section */}
+                <div className="pt-4 border-t border-zinc-800">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Shield size={16} className="text-blue-400" />
+                    <label className="text-sm font-bold text-zinc-300">Credenciales del Administrador</label>
+                  </div>
+                  <p className="text-xs text-zinc-500 mb-3">
+                    Se creará un usuario administrador para este gimnasio
+                  </p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="text-sm text-zinc-400 mb-1 block">Nombre del Admin</label>
+                      <Input value={newGym.admin_name} onChange={(e) => setNewGym({ ...newGym, admin_name: e.target.value })}
+                        placeholder="Ej: Juan Pérez" className="input-dark" data-testid="admin-name-input" />
+                    </div>
+                    <div>
+                      <label className="text-sm text-zinc-400 mb-1 block">Email del Admin *</label>
+                      <Input type="email" value={newGym.admin_email} onChange={(e) => setNewGym({ ...newGym, admin_email: e.target.value })}
+                        placeholder="admin@gimnasio.com" className="input-dark" data-testid="admin-email-input" />
+                    </div>
+                    <div>
+                      <label className="text-sm text-zinc-400 mb-1 block">Contraseña del Admin *</label>
+                      <Input type="password" value={newGym.admin_password} onChange={(e) => setNewGym({ ...newGym, admin_password: e.target.value })}
+                        placeholder="Mínimo 6 caracteres" className="input-dark" data-testid="admin-password-input" />
+                    </div>
                   </div>
                 </div>
               </div>
-              <Button onClick={handleCreateGym} className="w-full btn-gym-primary mt-4" data-testid="save-gym-btn">
+              <Button onClick={handleCreateGym} className="w-full btn-gym-primary mt-6" data-testid="save-gym-btn">
                 <Building2 size={20} className="mr-2" /> Crear Gimnasio
               </Button>
             </div>
@@ -183,7 +236,7 @@ export default function AdminGyms() {
       <div className="relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
         <Input value={search} onChange={(e) => setSearch(e.target.value)}
-          placeholder="Buscar gimnasios..." className="input-dark pl-10" />
+          placeholder="Buscar por nombre o email admin..." className="input-dark pl-10" />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -206,25 +259,25 @@ export default function AdminGyms() {
             }`}>
               {gym.status === 'suspended' && (
                 <div className="absolute top-3 right-14 px-2 py-0.5 bg-red-500/20 border border-red-500/40 rounded text-red-400 text-xs font-bold" data-testid={`gym-suspended-badge-${gym.id}`}>
-                  GYM SUSPENDIDO
+                  SUSPENDIDO
                 </div>
               )}
               
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl"
+                  <div className="w-12 h-12 rounded-xl flex items-center justify-center font-black text-xl shrink-0"
                     style={{ backgroundColor: gym.primary_color, color: '#000' }}>
                     {gym.name.charAt(0)}
                   </div>
-                  <div>
-                    <h3 className="font-bold">{gym.name}</h3>
-                    <p className="text-xs text-zinc-500">{gym.email || 'Sin email'}</p>
+                  <div className="min-w-0">
+                    <h3 className="font-bold truncate">{gym.name}</h3>
+                    <p className="text-xs text-zinc-500 truncate">{gym.email || 'Sin email'}</p>
                   </div>
                 </div>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0" data-testid={`gym-actions-${gym.id}`}>
+                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0 shrink-0" data-testid={`gym-actions-${gym.id}`}>
                       <MoreVertical size={16} />
                     </Button>
                   </DropdownMenuTrigger>
@@ -245,6 +298,14 @@ export default function AdminGyms() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
+
+              {/* Admin Info */}
+              {gym.gym_admin_email && (
+                <div className="flex items-center gap-2 mb-3 p-2 rounded-lg bg-zinc-800/50 text-xs">
+                  <Mail size={14} className="text-blue-400 shrink-0" />
+                  <span className="text-zinc-400 truncate">{gym.gym_admin_email}</span>
+                </div>
+              )}
               
               <div className="space-y-2 text-sm">
                 {gym.address && <p className="text-zinc-400 truncate">{gym.address}</p>}
@@ -253,6 +314,23 @@ export default function AdminGyms() {
                   <span className="text-zinc-400">{formatDate(gym.created_at)}</span>
                 </div>
               </div>
+
+              {/* Login as Gym Admin Button */}
+              <Button
+                onClick={() => handleImpersonate(gym)}
+                disabled={impersonating === gym.id || gym.status === 'suspended'}
+                className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white h-10 rounded-xl font-semibold text-sm"
+                data-testid={`impersonate-gym-${gym.id}`}
+              >
+                {impersonating === gym.id ? (
+                  <span className="animate-pulse">Iniciando sesión...</span>
+                ) : (
+                  <>
+                    <LogIn size={16} className="mr-2" />
+                    Iniciar sesión como Admin
+                  </>
+                )}
+              </Button>
             </div>
           ))
         )}
