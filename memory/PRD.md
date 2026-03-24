@@ -10,17 +10,22 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 - CRUD de Gimnasios con Editar/Suspender/Eliminar (con confirmación)
 - PWA para socios: QR dinámico, reservas, notificaciones, invitados
 - Roles: super_admin, gym_admin, gym_manager, trainer
-- Raspberry Pi: script de control de tornos con relés GPIO
+- Raspberry Pi: script de control de tornos con relés GPIO (evdev + RPi.GPIO)
 - Sidebar scrollable, Badge Emergent eliminado
-- **Configuración de Stripe por Gimnasio** (cada gym admin configura su propia clave + moneda)
-- **Gráficos de accesos reales** en Dashboard (BarChart diario)
-- **Estadísticas de acceso por socio** (modal con gráfico de asistencia 30 días)
-- **Alerta de pago en PWA** cuando membresía por vencer/vencida con botón "Pagar Ahora"
-- **Auto-suspensión automática** de membresías expiradas (background task cada 60 min)
-- **Credenciales automáticas por gimnasio**: Al crear un gym, se auto-crea un gym_admin con email/contraseña
-- **Impersonación de gym**: Super Admin puede "Iniciar sesión como Admin" en cualquier gym, con barra azul y botón "Volver a Super Admin"
-- **PWA responsive mejorada**: Diseño adaptable a cualquier dispositivo (mobile-first)
-- **Endpoints de estadísticas**: daily, hourly, member attendance, payment history
+- Configuración de Stripe por Gimnasio (cada gym admin configura su propia clave + moneda)
+- Gráficos de accesos reales en Dashboard (BarChart diario)
+- Estadísticas de acceso por socio (modal con gráfico de asistencia 30 días)
+- Alerta de pago en PWA cuando membresía por vencer/vencida con botón "Pagar Ahora"
+- Auto-suspensión automática de membresías expiradas (background task cada 60 min)
+- Credenciales automáticas por gimnasio: Al crear un gym, se auto-crea un gym_admin
+- Impersonación de gym: Super Admin puede "Iniciar sesión como Admin" en cualquier gym
+- PWA responsive mejorada: Diseño adaptable a cualquier dispositivo (mobile-first)
+- Endpoints de estadísticas: daily, hourly, member attendance, payment history
+- **Eliminación de dispositivos**: DELETE endpoint + botón en UI
+- **Configuración guardable**: Fix de validación EmailStr para campos vacíos
+- **QR sin rotación**: Animación simplificada (scale/opacity en vez de rotateY)
+- **Clases con selector de gym**: Super admin puede seleccionar gym al crear clases
+- **Export CSV ordenado**: Datos ordenados por fecha ascendente
 
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123
@@ -32,15 +37,15 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 ```
 /app
 ├── backend/
-│   ├── server.py              # FastAPI (2200+ lines)
+│   ├── server.py              # FastAPI (2270+ lines)
 │   ├── tests/                 # pytest tests
 │   └── .env
 ├── frontend/
 │   ├── src/
 │   │   ├── lib/api.js
-│   │   ├── context/AuthContext.js  # impersonateGym(), exitImpersonation()
-│   │   ├── layouts/AdminLayout.js  # Impersonation banner
-│   │   ├── layouts/PWALayout.js    # Responsive mobile design
+│   │   ├── context/AuthContext.js
+│   │   ├── layouts/AdminLayout.js
+│   │   ├── layouts/PWALayout.js
 │   │   ├── pages/admin/
 │   │   └── pages/pwa/
 ├── memory/PRD.md
@@ -52,9 +57,10 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 - POST /api/auth/admin/login
 - POST /api/auth/admin/impersonate/{gym_id}
 - POST /api/auth/member/login
+- PUT /api/gyms/{id}
 - PUT /api/gyms/{id}/stripe-config
 - GET /api/gyms/{id}/stripe-config
-- GET /api/gyms/{id}/has-payments
+- DELETE /api/devices/{device_id}
 - GET /api/access/stats/daily
 - GET /api/access/stats/hourly
 - GET /api/access/stats/member/{id}
@@ -63,20 +69,25 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 - POST /api/access/validate
 
 ## DB Collections
-- gyms, admins, members, memberships, plans, classes, class_schedules, bookings, notifications, guests, access_logs, devices, payment_transactions
+gyms, admins, members, memberships, plans, classes, class_schedules, bookings, notifications, guests, access_logs, devices, payment_transactions
 
 ## Backlog
 ### P1
-- SMTP real para emails de recordatorio
+- Opción QR estático/dinámico por gym
+- Integración SMTP para emails del sistema
+- Página pública de auto-registro para socios
+- Contador de accesos recientes en dashboard super admin
+- Exportar a Excel (XLSX) en vez de CSV
 - Check-in de asistencia a clases
-- Vista mejorada para trainers
 
 ### P2
+- Módulo Kiosko (controlado por super admin por gym)
+- Planes SaaS con tiers para gimnasios
+- Vista mejorada para trainers
 - Push notifications (Firebase)
-- Reportes PDF
-- Historial de pagos detallado en admin
 
 ### P3
+- Reportes PDF
 - App nativa
 - Wearables
 - Gamificación
