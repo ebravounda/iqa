@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -29,11 +29,17 @@ export default function AdminMembers() {
   const [showMembershipModal, setShowMembershipModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [suspendReason, setSuspendReason] = useState('');
-  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: '' });
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: admin?.gym_id || '' });
   const [editData, setEditData] = useState({ name: '', email: '', phone: '' });
   const [selectedPlan, setSelectedPlan] = useState('');
+  const [gyms, setGyms] = useState([]);
 
-  useEffect(() => { fetchMembers(); fetchPlans(); }, [statusFilter]);
+  useEffect(() => { fetchMembers(); fetchPlans(); if (isSuperAdmin) fetchGyms(); }, [statusFilter]);
+
+  const fetchGyms = async () => {
+    try { const res = await getGyms(); setGyms(res.data); if (res.data.length > 0 && !newMember.gym_id) setNewMember(prev => ({ ...prev, gym_id: res.data[0].id })); }
+    catch (error) { console.error('Error fetching gyms:', error); }
+  };
 
   const fetchMembers = async () => {
     try {
@@ -163,6 +169,21 @@ export default function AdminMembers() {
             <DialogContent className="bg-zinc-900 border-zinc-800">
               <DialogHeader><DialogTitle>Crear Nuevo Socio</DialogTitle></DialogHeader>
               <div className="space-y-4 mt-4">
+                {isSuperAdmin && (
+                  <div>
+                    <label className="text-sm text-zinc-400 mb-1 block">Gimnasio</label>
+                    <Select value={newMember.gym_id} onValueChange={(v) => setNewMember({ ...newMember, gym_id: v })}>
+                      <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="member-gym-select">
+                        <SelectValue placeholder="Seleccionar gimnasio" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-zinc-900 border-zinc-700">
+                        {gyms.map((g) => (
+                          <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <label className="text-sm text-zinc-400 mb-1 block">Nombre</label>
                   <Input value={newMember.name} onChange={(e) => setNewMember({ ...newMember, name: e.target.value })}

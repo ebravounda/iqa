@@ -240,10 +240,17 @@ export default function AdminDevices() {
                 </div>
               </div>
               
-              <div className="text-sm text-zinc-400">
-                <p>ID: <code className="bg-zinc-800 px-2 py-0.5 rounded text-xs">{device.id.slice(0, 8)}...</code></p>
+              <div className="text-sm text-zinc-400 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span>ID:</span>
+                  <code className="bg-zinc-800 px-2 py-0.5 rounded text-xs flex-1 overflow-x-auto">{device.id}</code>
+                  <Button variant="ghost" size="sm" className="h-7 w-7 p-0 shrink-0" data-testid={`copy-device-id-${device.id}`}
+                    onClick={() => { navigator.clipboard.writeText(device.id); toast.success('Device ID copiado'); }}>
+                    <Copy size={14} />
+                  </Button>
+                </div>
                 {device.last_ping && (
-                  <p className="mt-1">Último ping: {formatDateTime(device.last_ping)}</p>
+                  <p>Último ping: {formatDateTime(device.last_ping)}</p>
                 )}
               </div>
             </div>
