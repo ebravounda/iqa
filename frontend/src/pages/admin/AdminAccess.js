@@ -79,8 +79,11 @@ export default function AdminAccess() {
   });
 
   const exportToCSV = () => {
+    const sortedLogs = [...filteredLogs].sort((a, b) => 
+      new Date(a.timestamp) - new Date(b.timestamp)
+    );
     const headers = ['Fecha/Hora', 'Socio', 'Código', 'Dirección', 'Tipo'];
-    const rows = filteredLogs.map(log => [
+    const rows = sortedLogs.map(log => [
       formatDateTime(log.timestamp),
       log.member_name || log.guest_name || '-',
       log.member_code || log.guest_code || '-',

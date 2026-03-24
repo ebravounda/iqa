@@ -468,7 +468,10 @@ async def get_gym(gym_id: str, admin: dict = Depends(get_current_admin)):
 
 @api_router.put("/gyms/{gym_id}")
 async def update_gym(gym_id: str, gym_update: GymUpdate, admin: dict = Depends(get_current_admin)):
-    update_data = {k: v for k, v in gym_update.model_dump().items() if v is not None}
+    update_data = {}
+    for k, v in gym_update.model_dump().items():
+        if v is not None:
+            update_data[k] = v
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
     
@@ -1114,6 +1117,17 @@ async def get_devices(gym_id: Optional[str] = None, admin: dict = Depends(get_cu
     
     devices = await db.devices.find(query, {"_id": 0}).to_list(100)
     return devices
+
+@api_router.delete("/devices/{device_id}")
+async def delete_device(device_id: str, admin: dict = Depends(get_current_admin)):
+    """Delete a device"""
+    device = await db.devices.find_one({"id": device_id}, {"_id": 0})
+    if not device:
+        raise HTTPException(status_code=404, detail="Device not found")
+    if admin["role"] != "super_admin" and device.get("gym_id") != admin.get("gym_id"):
+        raise HTTPException(status_code=403, detail="Access denied")
+    await db.devices.delete_one({"id": device_id})
+    return {"message": "Device deleted"}
 
 @api_router.post("/devices/{device_id}/ping")
 async def ping_device(device_id: str, gym_token: str):

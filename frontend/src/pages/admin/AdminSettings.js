@@ -73,7 +73,13 @@ export default function AdminSettings() {
   const handleSave = async () => {
     setSaving(true);
     try {
-      await updateGym(admin.gym_id, formData);
+      const cleanData = {};
+      for (const [key, value] of Object.entries(formData)) {
+        if (value !== '' && value !== null && value !== undefined) {
+          cleanData[key] = value;
+        }
+      }
+      await updateGym(admin.gym_id, cleanData);
       toast.success('Configuración guardada');
       document.documentElement.style.setProperty('--gym-primary', formData.primary_color);
     } catch (error) {

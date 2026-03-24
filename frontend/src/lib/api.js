@@ -94,6 +94,7 @@ export const getDevices = (gymId) => {
   return axios.get(url);
 };
 export const createDevice = (data) => axios.post(`${API}/devices`, data);
+export const deleteDevice = (id) => axios.delete(`${API}/devices/${id}`);
 
 // Dashboard
 export const getDashboardStats = () => axios.get(`${API}/dashboard/stats`);

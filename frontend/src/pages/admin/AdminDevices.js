@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getDevices, createDevice, getGym, getGyms } from '../../lib/api';
+import { getDevices, createDevice, deleteDevice, getGym, getGyms } from '../../lib/api';
 import { formatDateTime } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { Plus, Cpu, Copy, RefreshCw, Check, Wifi, WifiOff } from 'lucide-react';
+import { Plus, Cpu, Copy, RefreshCw, Check, Wifi, WifiOff, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
 
@@ -96,6 +96,17 @@ export default function AdminDevices() {
     if (!lastPing) return false;
     const diff = Date.now() - new Date(lastPing).getTime();
     return diff < 5 * 60 * 1000; // 5 minutes
+  };
+
+  const handleDeleteDevice = async (deviceId) => {
+    if (!window.confirm('¿Estás seguro de eliminar este dispositivo?')) return;
+    try {
+      await deleteDevice(deviceId);
+      toast.success('Dispositivo eliminado');
+      fetchData();
+    } catch (error) {
+      toast.error('Error al eliminar dispositivo');
+    }
   };
 
   return (
@@ -252,6 +263,18 @@ export default function AdminDevices() {
                 {device.last_ping && (
                   <p>Último ping: {formatDateTime(device.last_ping)}</p>
                 )}
+              </div>
+              <div className="mt-4 pt-3 border-t border-zinc-800">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteDevice(device.id)}
+                  className="text-red-500 hover:text-red-400 hover:bg-red-500/10 w-full justify-center"
+                  data-testid={`delete-device-${device.id}`}
+                >
+                  <Trash2 size={16} className="mr-2" />
+                  Eliminar Dispositivo
+                </Button>
               </div>
             </div>
           ))

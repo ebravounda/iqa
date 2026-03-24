@@ -25,11 +25,13 @@ const DAYS_OF_WEEK = [
 ];
 
 export default function AdminClasses() {
-  const { admin } = useAuth();
+  const { admin, isSuperAdmin } = useAuth();
   const [classes, setClasses] = useState([]);
   const [trainers, setTrainers] = useState([]);
+  const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [selectedGymId, setSelectedGymId] = useState(admin?.gym_id || '');
   const [newClass, setNewClass] = useState({
     name: '',
     description: '',
@@ -47,6 +49,7 @@ export default function AdminClasses() {
   useEffect(() => {
     fetchClasses();
     fetchTrainers();
+    if (isSuperAdmin) fetchGyms();
   }, []);
 
   const fetchClasses = async () => {
@@ -69,6 +72,18 @@ export default function AdminClasses() {
     }
   };
 
+  const fetchGyms = async () => {
+    try {
+      const response = await axios.get(`${API}/gyms`);
+      setGyms(response.data);
+      if (response.data.length > 0 && !selectedGymId) {
+        setSelectedGymId(response.data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching gyms:', error);
+    }
+  };
+
   const handleCreateClass = async () => {
     if (!newClass.name) {
       toast.error('El nombre es requerido');
@@ -76,7 +91,11 @@ export default function AdminClasses() {
     }
 
     try {
-      const gymId = admin?.gym_id;
+      const gymId = admin?.gym_id || selectedGymId;
+      if (!gymId) {
+        toast.error('Selecciona un gimnasio');
+        return;
+      }
       const payload = {
         ...newClass,
         gym_id: gymId,
@@ -148,6 +167,21 @@ export default function AdminClasses() {
               <DialogTitle>Crear Nueva Clase</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
+              {isSuperAdmin && (
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Gimnasio</label>
+                  <Select value={selectedGymId} onValueChange={setSelectedGymId}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="class-gym-select">
+                      <SelectValue placeholder="Seleccionar gimnasio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      {gyms.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div>
                 <label className="text-sm text-zinc-400 mb-1 block">Nombre de la Clase</label>
                 <Input

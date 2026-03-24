@@ -77,10 +77,10 @@ export default function MemberHome() {
       <AnimatePresence mode="wait">
         <motion.div
           key={qrCode}
-          initial={{ opacity: 0, rotateY: 180 }}
-          animate={{ opacity: 1, rotateY: 0 }}
-          exit={{ opacity: 0, rotateY: -180 }}
-          transition={{ duration: 0.3 }}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.2 }}
           className="bg-white p-4 rounded-2xl"
         >
           {qrCode ? (
