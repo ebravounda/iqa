@@ -7,6 +7,8 @@ export const getGyms = () => axios.get(`${API}/gyms`);
 export const getGym = (id) => axios.get(`${API}/gyms/${id}`);
 export const createGym = (data) => axios.post(`${API}/gyms`, data);
 export const updateGym = (id, data) => axios.put(`${API}/gyms/${id}`, data);
+export const suspendGym = (id) => axios.put(`${API}/gyms/${id}/suspend`);
+export const deleteGym = (id) => axios.delete(`${API}/gyms/${id}`);
 export const updateEmailTemplate = (gymId, type, data) => axios.put(`${API}/gyms/${gymId}/templates/${type}`, data);
 export const regenerateGymToken = (id) => axios.post(`${API}/gyms/${id}/regenerate-token`);
 

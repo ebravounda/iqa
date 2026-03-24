@@ -401,6 +401,39 @@ async def regenerate_gym_token(gym_id: str, admin: dict = Depends(get_current_ad
     await db.gyms.update_one({"id": gym_id}, {"$set": {"api_token": new_token}})
     return {"api_token": new_token}
 
+@api_router.put("/gyms/{gym_id}/suspend")
+async def suspend_gym(gym_id: str, admin: dict = Depends(get_current_admin)):
+    """Suspend or reactivate a gym"""
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admin can suspend gyms")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym not found")
+    new_status = "active" if gym.get("status") == "suspended" else "suspended"
+    await db.gyms.update_one({"id": gym_id}, {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    return {"message": f"Gym {'reactivated' if new_status == 'active' else 'suspended'}", "status": new_status}
+
+@api_router.delete("/gyms/{gym_id}")
+async def delete_gym(gym_id: str, admin: dict = Depends(get_current_admin)):
+    """Delete a gym and all its data"""
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admin can delete gyms")
+    gym = await db.gyms.find_one({"id": gym_id})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym not found")
+    await db.gyms.delete_one({"id": gym_id})
+    await db.members.delete_many({"gym_id": gym_id})
+    await db.memberships.delete_many({"gym_id": gym_id})
+    await db.classes.delete_many({"gym_id": gym_id})
+    await db.class_schedules.delete_many({"gym_id": gym_id})
+    await db.bookings.delete_many({"gym_id": gym_id})
+    await db.notifications.delete_many({"gym_id": gym_id})
+    await db.guests.delete_many({"gym_id": gym_id})
+    await db.access_logs.delete_many({"gym_id": gym_id})
+    await db.devices.delete_many({"gym_id": gym_id})
+    await db.admins.delete_many({"gym_id": gym_id})
+    return {"message": "Gym and all related data deleted"}
+
 # ==================== MEMBER ROUTES ====================
 
 @api_router.post("/members")
