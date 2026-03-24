@@ -61,7 +61,7 @@ export const AdminLayout = ({ children }) => {
           <p className="text-xs text-zinc-500 mt-1">Panel de Administración</p>
         </div>
 
-        <nav className="flex-1 p-4 space-y-1">
+        <nav className="flex-1 p-4 space-y-1 overflow-y-auto scrollbar-thin">
           {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.path;
             const Icon = item.icon;

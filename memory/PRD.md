@@ -33,20 +33,22 @@ Super Admin (TÚ)
 | **gym_manager** | Su gym: socios, clases, horarios, accesos (sin config ni personal) |
 | **trainer** | Solo ver sus clases asignadas y lista de asistentes |
 
-## Funcionalidades Implementadas ✅
+## Funcionalidades Implementadas
 
 ### Panel de Administración
 - [x] Dashboard con estadísticas (socios, accesos, ingresos, clases)
 - [x] Gestión de gimnasios (Super Admin)
 - [x] Gestión de socios (CRUD, aprobar, bloquear)
 - [x] Planes de membresía
-- [x] **Sistema de Clases** (crear clases recurrentes o únicas)
-- [x] **Horarios de Clases** (vista semanal, agregar horarios)
-- [x] **Gestión de Personal** (crear admins, gestores, entrenadores)
+- [x] Sistema de Clases (crear clases recurrentes o únicas)
+- [x] Horarios de Clases (vista semanal, agregar horarios)
+- [x] Gestión de Personal (crear admins, gestores, entrenadores)
 - [x] Historial de accesos con filtros y exportación
 - [x] Configuración de Raspberry Pi
 - [x] Plantillas de email personalizables
 - [x] Configuración de branding
+- [x] Notificaciones a socios (con selector de gym para super_admin)
+- [x] Gestión de pases de invitados
 
 ### Sistema de Reservas
 - [x] Clases recurrentes (días de la semana)
@@ -60,19 +62,24 @@ Super Admin (TÚ)
 
 ### PWA para Socios
 - [x] QR dinámico con countdown
-- [x] **Reserva de clases** (vista semanal, reservar, cancelar)
+- [x] Reserva de clases (vista semanal, reservar, cancelar)
 - [x] Historial de accesos
 - [x] Información de membresía
 - [x] Renovación con Stripe
 - [x] Botón "Crear Acceso Directo"
 - [x] Branding dinámico por gimnasio
+- [x] Notificaciones in-app
+- [x] Pases de invitados
 
 ### Backend/API
 - [x] Autenticación JWT con roles
 - [x] CRUD completo (gyms, members, plans, classes, schedules, bookings)
 - [x] QR dinámico encriptado
 - [x] Validación para Raspberry Pi
-- [x] Stripe para pagos
+- [x] Stripe para pagos (MOCKED)
+
+### UI/UX
+- [x] Sidebar scrollable con scrollbar sutil
 
 ## Credenciales de Prueba
 
@@ -82,16 +89,21 @@ Super Admin (TÚ)
 | Entrenador | carlos@trainer.com | trainer123 | trainer |
 | Socio | - | Código: LRF4HL | member |
 
+## Bugs Corregidos
+- [x] Schedule creation: SelectItem con value="" causaba error (cambiado a "default")
+- [x] Notificaciones: super_admin no podía enviar porque no tiene gym_id (agregado selector de gym)
+- [x] Sidebar no scrolleable: items cortados en pantallas pequeñas (agregado overflow-y-auto)
+
 ## Backlog
 
 ### P1 - Alta Prioridad
 - [ ] Vista específica para entrenadores (mejorar UX)
 - [ ] SMTP real para envío de emails
-- [ ] Cron para recordatorios automáticos
+- [ ] Cron para recordatorios automáticos de expiración
 
 ### P2 - Media Prioridad  
-- [ ] Check-in de asistencia en clases (confirmar que el socio llegó)
-- [ ] Notificaciones push
+- [ ] Check-in de asistencia en clases
+- [ ] Notificaciones push reales (Firebase/PWA Push API)
 - [ ] Reportes avanzados con gráficos
 - [ ] Exportación PDF
 
@@ -100,8 +112,6 @@ Super Admin (TÚ)
 - [ ] Integración con wearables
 - [ ] Gamificación (logros, puntos)
 
-## Próximos Pasos Inmediatos
-1. Configurar SMTP para emails reales
-2. Probar flujo completo de entrenador
-3. Desplegar en servidor de producción
-4. Configurar Raspberry Pi física
+## Documentos Generados
+- INSTALLATION_GUIDE.md - Guía de despliegue en VPS/Plesk/Cloud + Raspberry Pi
+- raspberry_access_control.py - Script para control de tornos con Raspberry Pi
