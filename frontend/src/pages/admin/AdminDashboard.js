@@ -127,6 +127,40 @@ export default function AdminDashboard() {
         </div>
       </div>
 
+      {/* Capacity Bar (when gym has max_members set) */}
+      {stats?.capacity && (
+        <div className="stat-card" data-testid="capacity-bar">
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-bold text-lg">Capacidad de Socios</h3>
+              <p className="text-zinc-400 text-sm">
+                {stats.capacity.active_members} de {stats.capacity.max_members} socios
+              </p>
+            </div>
+            <span className={`text-2xl font-black ${
+              stats.capacity.usage_percent >= 90 ? 'text-red-500' : 
+              stats.capacity.usage_percent >= 70 ? 'text-amber-500' : 'text-emerald-500'
+            }`}>
+              {stats.capacity.usage_percent}%
+            </span>
+          </div>
+          <div className="w-full bg-zinc-800 rounded-full h-4 overflow-hidden">
+            <div 
+              className={`h-full rounded-full transition-all duration-500 ${
+                stats.capacity.usage_percent >= 90 ? 'bg-red-500' : 
+                stats.capacity.usage_percent >= 70 ? 'bg-amber-500' : 'bg-emerald-500'
+              }`}
+              style={{ width: `${Math.min(stats.capacity.usage_percent, 100)}%` }}
+            />
+          </div>
+          <div className="flex justify-between mt-2 text-xs text-zinc-500">
+            <span>0</span>
+            <span>{Math.round(stats.capacity.max_members / 2)}</span>
+            <span>{stats.capacity.max_members}</span>
+          </div>
+        </div>
+      )}
+
       {/* Charts and Tables */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart */}

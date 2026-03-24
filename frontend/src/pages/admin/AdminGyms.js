@@ -25,10 +25,10 @@ export default function AdminGyms() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedGym, setSelectedGym] = useState(null);
   const [newGym, setNewGym] = useState({
-    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01'
+    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null
   });
   const [editGym, setEditGym] = useState({
-    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01'
+    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null
   });
 
   useEffect(() => { fetchGyms(); }, []);
@@ -50,7 +50,7 @@ export default function AdminGyms() {
       await createGym(newGym);
       toast.success('Gimnasio creado exitosamente');
       setShowCreateModal(false);
-      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01' });
+      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null });
       fetchGyms();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al crear gimnasio');
@@ -64,7 +64,8 @@ export default function AdminGyms() {
       address: gym.address || '',
       phone: gym.phone || '',
       email: gym.email || '',
-      primary_color: gym.primary_color || '#E1FF01'
+      primary_color: gym.primary_color || '#E1FF01',
+      max_members: gym.max_members || null
     });
     setShowEditModal(true);
   };
@@ -141,6 +142,12 @@ export default function AdminGyms() {
         <label className="text-sm text-zinc-400 mb-1 block">Teléfono</label>
         <Input value={data.phone} onChange={(e) => setData({ ...data, phone: e.target.value })}
           placeholder="Teléfono" className="input-dark" />
+      </div>
+      <div>
+        <label className="text-sm text-zinc-400 mb-1 block">Capacidad máxima de socios</label>
+        <Input type="number" value={data.max_members || ''} onChange={(e) => setData({ ...data, max_members: e.target.value ? parseInt(e.target.value) : null })}
+          placeholder="Ej: 100, 500, 2000" className="input-dark" data-testid="gym-max-members-input" />
+        <p className="text-xs text-zinc-500 mt-1">Límite de socios activos. Dejar vacío = sin límite.</p>
       </div>
       <div>
         <label className="text-sm text-zinc-400 mb-1 block">Color Principal</label>

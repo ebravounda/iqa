@@ -52,6 +52,7 @@ class GymCreate(BaseModel):
     logo_url: Optional[str] = None
     primary_color: str = "#E1FF01"
     qr_refresh_seconds: int = 10
+    max_members: Optional[int] = None
 
 class GymUpdate(BaseModel):
     name: Optional[str] = None
@@ -61,6 +62,7 @@ class GymUpdate(BaseModel):
     logo_url: Optional[str] = None
     primary_color: Optional[str] = None
     qr_refresh_seconds: Optional[int] = None
+    max_members: Optional[int] = None
     smtp_host: Optional[str] = None
     smtp_port: Optional[int] = None
     smtp_user: Optional[str] = None
@@ -93,11 +95,13 @@ class MemberCreate(BaseModel):
 
 class MemberUpdate(BaseModel):
     name: Optional[str] = None
+    email: Optional[EmailStr] = None
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
-    status: Optional[str] = None  # active, blocked, pending
-    can_bring_guests: Optional[bool] = None  # Permission to bring guests
-    max_guests_per_month: Optional[int] = None  # Maximum guests allowed per month
+    status: Optional[str] = None  # active, blocked, pending, suspended
+    can_bring_guests: Optional[bool] = None
+    max_guests_per_month: Optional[int] = None
+    suspension_reason: Optional[str] = None
 
 class PlanCreate(BaseModel):
     gym_id: str
@@ -522,6 +526,67 @@ async def approve_member(member_id: str, admin: dict = Depends(get_current_admin
 async def block_member(member_id: str, admin: dict = Depends(get_current_admin)):
     await db.members.update_one({"id": member_id}, {"$set": {"status": "blocked"}})
     return {"message": "Member blocked"}
+
+@api_router.post("/members/{member_id}/suspend")
+async def suspend_member(member_id: str, body: dict = {}, admin: dict = Depends(get_current_admin)):
+    """Suspend a member with a reason"""
+    reason = body.get("reason", "Sin motivo especificado") if isinstance(body, dict) else "Sin motivo especificado"
+    await db.members.update_one({"id": member_id}, {"$set": {
+        "status": "suspended",
+        "suspension_reason": reason,
+        "suspended_at": datetime.now(timezone.utc).isoformat(),
+        "suspended_by": admin.get("name", admin.get("email", ""))
+    }})
+    return {"message": "Member suspended", "reason": reason}
+
+@api_router.delete("/members/{member_id}")
+async def delete_member(member_id: str, admin: dict = Depends(get_current_admin)):
+    """Delete a member and all related data"""
+    member = await db.members.find_one({"id": member_id})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    await db.members.delete_one({"id": member_id})
+    await db.memberships.delete_many({"member_id": member_id})
+    await db.bookings.delete_many({"member_id": member_id})
+    await db.guests.delete_many({"member_id": member_id})
+    await db.access_logs.delete_many({"member_id": member_id})
+    return {"message": "Member deleted"}
+
+@api_router.post("/members/check-expired-memberships")
+async def check_expired_memberships(admin: dict = Depends(get_current_admin)):
+    """Check and suspend members with expired memberships"""
+    now = datetime.now(timezone.utc).isoformat()
+    active_memberships = await db.memberships.find({"status": "active"}, {"_id": 0}).to_list(10000)
+    suspended_count = 0
+    for m in active_memberships:
+        if m.get("end_date") and m["end_date"] < now:
+            await db.memberships.update_one({"id": m["id"]}, {"$set": {"status": "expired"}})
+            other_active = await db.memberships.find_one({"member_id": m["member_id"], "status": "active"})
+            if not other_active:
+                await db.members.update_one({"id": m["member_id"]}, {"$set": {
+                    "status": "suspended",
+                    "suspension_reason": "Membresía vencida",
+                    "suspended_at": now
+                }})
+                suspended_count += 1
+    return {"message": f"{suspended_count} members suspended due to expired memberships"}
+
+@api_router.get("/gyms/{gym_id}/capacity")
+async def get_gym_capacity(gym_id: str, admin: dict = Depends(get_current_admin)):
+    """Get gym member capacity usage"""
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym not found")
+    active_count = await db.members.count_documents({"gym_id": gym_id, "status": "active"})
+    total_count = await db.members.count_documents({"gym_id": gym_id})
+    max_members = gym.get("max_members", 0)
+    return {
+        "gym_id": gym_id,
+        "active_members": active_count,
+        "total_members": total_count,
+        "max_members": max_members,
+        "usage_percent": round((active_count / max_members * 100), 1) if max_members > 0 else 0
+    }
 
 # ==================== PLAN ROUTES ====================
 
@@ -1048,15 +1113,32 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
     # Today's bookings
     today_bookings = await db.bookings.count_documents({"date": today, "status": "confirmed", **({} if not gym_id else {"gym_id": gym_id})})
     
+    # Capacity info
+    capacity_info = None
+    if gym_id:
+        gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0, "max_members": 1})
+        max_members = gym.get("max_members", 0) if gym else 0
+        if max_members > 0:
+            capacity_info = {
+                "max_members": max_members,
+                "active_members": active_members,
+                "usage_percent": round((active_members / max_members * 100), 1)
+            }
+
+    # Suspended members count
+    suspended_members = await db.members.count_documents({**query, "status": "suspended"})
+
     return {
         "total_members": total_members,
         "active_members": active_members,
         "pending_members": pending_members,
+        "suspended_members": suspended_members,
         "gyms_count": gyms_count,
         "month_revenue": month_revenue,
         "classes_count": classes_count,
         "today_schedules": today_schedules,
         "today_bookings": today_bookings,
+        "capacity": capacity_info,
         **access_stats
     }
 

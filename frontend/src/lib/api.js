@@ -26,6 +26,9 @@ export const createMember = (data) => axios.post(`${API}/members`, data);
 export const updateMember = (id, data) => axios.put(`${API}/members/${id}`, data);
 export const approveMember = (id) => axios.post(`${API}/members/${id}/approve`);
 export const blockMember = (id) => axios.post(`${API}/members/${id}/block`);
+export const suspendMember = (id, reason) => axios.post(`${API}/members/${id}/suspend`, { reason });
+export const deleteMember = (id) => axios.delete(`${API}/members/${id}`);
+export const checkExpiredMemberships = () => axios.post(`${API}/members/check-expired-memberships`);
 export const registerMember = (data) => axios.post(`${API}/members/register`, data);
 
 // Plans
