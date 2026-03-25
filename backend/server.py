@@ -3064,6 +3064,14 @@ async def download_frontend_build():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=str(file_path), filename="build.tar.gz", media_type="application/gzip")
 
+@api_router.get("/download/test-gpio")
+async def download_test_gpio():
+    """Download GPIO test script"""
+    file_path = ROOT_DIR / "downloads" / "test_gpio.py"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path=str(file_path), filename="test_gpio.py", media_type="text/plain")
+
 app.include_router(api_router)
 
 app.add_middleware(
