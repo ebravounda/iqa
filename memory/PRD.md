@@ -1,51 +1,57 @@
 # GymAccess - PRD
 
-## Fecha: 24/03/2026
+## Última actualización: 25/03/2026
 
 ## Problem Statement
-Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, pagos con Stripe, roles multi-tenant, y control de tornos con Raspberry Pi.
+Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico/estático, pagos con Stripe, roles multi-tenant, página de auto-registro público, y control de tornos con Raspberry Pi.
 
 ## Funcionalidades Implementadas
-- Panel Admin con dashboard, gestión de gyms/socios/planes/clases/horarios/personal
-- CRUD de Gimnasios con Editar/Suspender/Eliminar (con confirmación)
-- PWA para socios: QR dinámico, reservas, notificaciones, invitados
+
+### Core
+- Panel Admin: dashboard, gestión de gyms/socios/planes/clases/horarios/personal
+- PWA para socios: QR dinámico/estático, reservas, notificaciones, invitados
 - Roles: super_admin, gym_admin, gym_manager, trainer
-- Raspberry Pi: script de control de tornos con relés GPIO (evdev + RPi.GPIO)
-- Sidebar scrollable, Badge Emergent eliminado
-- Configuración de Stripe por Gimnasio (cada gym admin configura su propia clave + moneda)
+- JWT Authentication + Impersonación
+- Raspberry Pi: script de control de tornos con relés GPIO
+
+### SaaS Multi-tenant
+- Configuración de Stripe por Gimnasio (cada gym configura su propia clave)
+- Auto-creación de gym admin al crear gimnasio
+- Impersonación: Super Admin puede "Iniciar sesión como Admin" en cualquier gym
+- CRUD completo: Gimnasios (Editar/Suspender/Eliminar), Socios, Planes, Clases, Dispositivos
+
+### QR y Accesos
+- **QR Dinámico**: cambia cada X segundos (5/10/15/30 configurable)
+- **QR Estático**: código fijo por socio (opción por gym)
 - Gráficos de accesos reales en Dashboard (BarChart diario)
-- Estadísticas de acceso por socio (modal con gráfico de asistencia 30 días)
-- Alerta de pago en PWA cuando membresía por vencer/vencida con botón "Pagar Ahora"
-- Auto-suspensión automática de membresías expiradas (background task cada 60 min)
-- Credenciales automáticas por gimnasio: Al crear un gym, se auto-crea un gym_admin
-- Impersonación de gym: Super Admin puede "Iniciar sesión como Admin" en cualquier gym
-- PWA responsive mejorada: Diseño adaptable a cualquier dispositivo (mobile-first)
-- Endpoints de estadísticas: daily, hourly, member attendance, payment history
-- **Eliminación de dispositivos**: DELETE endpoint + botón en UI
-- **Configuración guardable**: Fix de validación EmailStr para campos vacíos
-- **QR sin rotación**: Animación simplificada (scale/opacity en vez de rotateY)
-- **Clases con selector de gym**: Super admin puede seleccionar gym al crear clases
-- **Export CSV ordenado**: Datos ordenados por fecha ascendente
+- Estadísticas de acceso por socio
+- Auto-suspensión automática de membresías expiradas
+
+### Nuevas funcionalidades (25/03/2026)
+- **Página de Registro Público**: `/register/{gym_id}` - socios se registran, eligen plan, reciben código QR y acceso inmediato
+- **QR Estático/Dinámico**: cada gym elige si el QR de sus socios es fijo o dinámico
+- **Dashboard Super Admin mejorado**: accesos recientes con nombre del gimnasio
+- **Exportar a Excel (XLSX)**: reemplaza CSV con archivo Excel formateado
+- **Enlace de Registro Público**: visible en configuración del gym con botón copiar
+- **Eliminación de dispositivos**: DELETE endpoint + botón UI
+- **Corrección de 6 bugs**: login/impersonación, config guardable, QR sin rotación, clases sin pantalla negra, export ordenado
 
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123
 - Gym Admin FitZone: admin@fitzone.com / admin123
-- Gym Admin PowerFit: admin@powerfit.com / powerfit123
-- Member: LRF4HL
 
 ## Arquitectura
 ```
 /app
 ├── backend/
-│   ├── server.py              # FastAPI (2270+ lines)
-│   ├── tests/                 # pytest tests
+│   ├── server.py              # FastAPI (2360+ lines)
+│   ├── tests/
 │   └── .env
 ├── frontend/
+│   ├── build/                 # Production build
 │   ├── src/
 │   │   ├── lib/api.js
 │   │   ├── context/AuthContext.js
-│   │   ├── layouts/AdminLayout.js
-│   │   ├── layouts/PWALayout.js
 │   │   ├── pages/admin/
 │   │   └── pages/pwa/
 ├── memory/PRD.md
@@ -53,41 +59,19 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico, 
 └── GUIA_PLESK_RASPBERRY.md
 ```
 
-## Key API Endpoints
-- POST /api/auth/admin/login
-- POST /api/auth/admin/impersonate/{gym_id}
-- POST /api/auth/member/login
-- PUT /api/gyms/{id}
-- PUT /api/gyms/{id}/stripe-config
-- GET /api/gyms/{id}/stripe-config
-- DELETE /api/devices/{device_id}
-- GET /api/access/stats/daily
-- GET /api/access/stats/hourly
-- GET /api/access/stats/member/{id}
-- GET /api/payments/history
-- POST /api/payments/checkout
-- POST /api/access/validate
-
 ## DB Collections
 gyms, admins, members, memberships, plans, classes, class_schedules, bookings, notifications, guests, access_logs, devices, payment_transactions
 
 ## Backlog
 ### P1
-- Opción QR estático/dinámico por gym
-- Integración SMTP para emails del sistema
-- Página pública de auto-registro para socios
-- Contador de accesos recientes en dashboard super admin
-- Exportar a Excel (XLSX) en vez de CSV
+- Integración SMTP para emails del sistema (registro, reset password, recordatorios)
 - Check-in de asistencia a clases
 
 ### P2
-- Módulo Kiosko (controlado por super admin por gym)
+- Módulo Kiosko
 - Planes SaaS con tiers para gimnasios
 - Vista mejorada para trainers
 - Push notifications (Firebase)
 
 ### P3
-- Reportes PDF
-- App nativa
-- Wearables
-- Gamificación
+- Reportes PDF, App nativa, Wearables, Gamificación
