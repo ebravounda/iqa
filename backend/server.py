@@ -1037,8 +1037,12 @@ async def validate_access(validation: AccessValidation):
     if not gym:
         return {"valid": False, "reason": "Invalid gym token"}
     
-    # Validate QR
-    max_age = gym.get("qr_refresh_seconds", 10) + 5  # Small grace period
+    # Validate QR - use longer expiration for exit scans
+    base_age = gym.get("qr_refresh_seconds", 10) + 5
+    if validation.direction == "salida":
+        max_age = max(base_age, 300)  # 5 minutes minimum for exits
+    else:
+        max_age = base_age
     result = validate_qr_data(validation.qr_code, max_age)
     
     if not result["valid"]:
@@ -2366,8 +2370,12 @@ async def validate_guest_access(validation: AccessValidation):
     if not gym:
         return {"valid": False, "reason": "Invalid gym token"}
     
-    # Validate QR
-    max_age = gym.get("qr_refresh_seconds", 10) + 5
+    # Validate QR - use longer expiration for exit scans
+    base_age = gym.get("qr_refresh_seconds", 10) + 5
+    if validation.direction == "salida":
+        max_age = max(base_age, 300)
+    else:
+        max_age = base_age
     result = validate_qr_data(validation.qr_code, max_age)
     
     if not result["valid"]:
