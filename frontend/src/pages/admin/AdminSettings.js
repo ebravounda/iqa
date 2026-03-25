@@ -412,30 +412,41 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      {/* Public Registration Link */}
+      {/* Public Registration & Kiosk Links */}
       <div className="stat-card">
         <div className="flex items-center gap-2 mb-4">
           <Link2 size={20} className="text-emerald-400" />
-          <h3 className="font-bold text-lg">Enlace de Registro Público</h3>
+          <h3 className="font-bold text-lg">Enlaces Públicos</h3>
         </div>
         <p className="text-zinc-400 text-sm mb-4">
-          Comparte este enlace para que nuevos socios se registren directamente en tu gimnasio.
+          Comparte estos enlaces para registro de socios.
         </p>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 bg-zinc-800 px-4 py-3 rounded-lg font-mono text-sm text-emerald-400 overflow-x-auto" data-testid="public-register-link">
-            {window.location.origin}/register/{admin?.gym_id}
-          </code>
-          <Button
-            variant="outline"
-            className="border-zinc-700 shrink-0"
-            onClick={() => {
-              navigator.clipboard.writeText(`${window.location.origin}/register/${admin?.gym_id}`);
-              toast.success('Enlace copiado');
-            }}
-            data-testid="copy-register-link-btn"
-          >
-            <Copy size={18} />
-          </Button>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-zinc-400 mb-1 block">Registro desde teléfono</label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-zinc-800 px-4 py-3 rounded-lg font-mono text-sm text-emerald-400 overflow-x-auto" data-testid="public-register-link">
+                {window.location.origin}/register/{admin?.gym_id}
+              </code>
+              <Button variant="outline" className="border-zinc-700 shrink-0" data-testid="copy-register-link-btn"
+                onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/register/${admin?.gym_id}`); toast.success('Enlace copiado'); }}>
+                <Copy size={18} />
+              </Button>
+            </div>
+          </div>
+          <div>
+            <label className="text-sm text-zinc-400 mb-1 block">Modo Kiosko (pantalla táctil en recepción)</label>
+            <div className="flex items-center gap-2">
+              <code className="flex-1 bg-zinc-800 px-4 py-3 rounded-lg font-mono text-sm text-blue-400 overflow-x-auto" data-testid="kiosk-link">
+                {window.location.origin}/kiosk/{admin?.gym_id}
+              </code>
+              <Button variant="outline" className="border-zinc-700 shrink-0" data-testid="copy-kiosk-link-btn"
+                onClick={() => { navigator.clipboard.writeText(`${window.location.origin}/kiosk/${admin?.gym_id}`); toast.success('Enlace del kiosko copiado'); }}>
+                <Copy size={18} />
+              </Button>
+            </div>
+            <p className="text-xs text-zinc-500 mt-1">Abre este enlace en la tablet/PC del kiosko en modo pantalla completa</p>
+          </div>
         </div>
       </div>
 

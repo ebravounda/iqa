@@ -27,6 +27,8 @@ import AdminTemplates from "./pages/admin/AdminTemplates";
 import AdminGyms from "./pages/admin/AdminGyms";
 import AdminClasses from "./pages/admin/AdminClasses";
 import AdminAttendance from "./pages/admin/AdminAttendance";
+import AdminAccounting from "./pages/admin/AdminAccounting";
+import KioskPage from "./pages/pwa/KioskPage";
 import AdminSchedules from "./pages/admin/AdminSchedules";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminNotifications from "./pages/admin/AdminNotifications";
@@ -148,6 +150,7 @@ function AppRoutes() {
       <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />
       <Route path="/admin/classes" element={<AdminRoute><AdminClasses /></AdminRoute>} />
       <Route path="/admin/attendance" element={<AdminRoute><AdminAttendance /></AdminRoute>} />
+      <Route path="/admin/accounting" element={<AdminRoute><AdminAccounting /></AdminRoute>} />
       <Route path="/admin/schedules" element={<AdminRoute><AdminSchedules /></AdminRoute>} />
       <Route path="/admin/staff" element={<AdminRoute><AdminStaff /></AdminRoute>} />
       <Route path="/admin/notifications" element={<AdminRoute><AdminNotifications /></AdminRoute>} />
@@ -170,6 +173,9 @@ function AppRoutes() {
       
       {/* Public Registration */}
       <Route path="/register/:gymId" element={<PublicRegister />} />
+      
+      {/* Kiosk Mode */}
+      <Route path="/kiosk/:gymId" element={<KioskPage />} />
       
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />

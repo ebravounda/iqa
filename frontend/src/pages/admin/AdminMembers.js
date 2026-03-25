@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle, RefreshCw, PauseCircle
+  AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
@@ -27,11 +27,14 @@ export default function AdminMembers() {
   const [showSuspendModal, setShowSuspendModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showMembershipModal, setShowMembershipModal] = useState(false);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [suspendReason, setSuspendReason] = useState('');
   const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: admin?.gym_id || '' });
   const [editData, setEditData] = useState({ name: '', email: '', phone: '' });
   const [selectedPlan, setSelectedPlan] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentNotes, setPaymentNotes] = useState('');
   const [gyms, setGyms] = useState([]);
 
   useEffect(() => { fetchMembers(); fetchPlans(); if (isSuperAdmin) fetchGyms(); }, [statusFilter]);
@@ -134,6 +137,37 @@ export default function AdminMembers() {
       toast.success(res.data.message);
       fetchMembers();
     } catch (error) { toast.error('Error al verificar'); }
+  };
+
+  const handleOpenPayment = (member) => {
+    setSelectedMember(member);
+    setSelectedPlan('');
+    setPaymentMethod('cash');
+    setPaymentNotes('');
+    setShowPaymentModal(true);
+  };
+
+  const handleManualPayment = async () => {
+    if (!selectedPlan) { toast.error('Selecciona un plan'); return; }
+    const plan = plans.find(p => p.id === selectedPlan);
+    if (!plan) return;
+    try {
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      await fetch(`${API_URL}/payments/manual`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          member_id: selectedMember.id,
+          plan_id: selectedPlan,
+          payment_method: paymentMethod,
+          amount: plan.price,
+          notes: paymentNotes || null
+        })
+      }).then(r => r.json());
+      toast.success('Pago registrado y membresía activada');
+      setShowPaymentModal(false);
+      fetchMembers();
+    } catch (error) { toast.error('Error al registrar pago'); }
   };
 
   const filteredMembers = members.filter(m =>
@@ -282,6 +316,9 @@ export default function AdminMembers() {
                           <DropdownMenuItem onClick={() => { setSelectedMember(member); setShowMembershipModal(true); }} className="cursor-pointer">
                             <CreditCard size={16} className="mr-2" /> Asignar Membresía
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenPayment(member)} className="cursor-pointer text-emerald-400" data-testid={`member-payment-${member.code}`}>
+                            <Banknote size={16} className="mr-2" /> Registrar Pago
+                          </DropdownMenuItem>
                           {member.status === 'pending' && (
                             <DropdownMenuItem onClick={() => handleApprove(member.id)} className="cursor-pointer text-emerald-500">
                               <CheckCircle size={16} className="mr-2" /> Aprobar
@@ -411,6 +448,69 @@ export default function AdminMembers() {
                 <Trash2 size={18} className="mr-2" /> Sí, Eliminar
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Manual Payment Modal */}
+      <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800">
+          <DialogHeader><DialogTitle>Registrar Pago</DialogTitle></DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div className="flex items-center gap-3 p-3 bg-emerald-500/10 rounded-lg border border-emerald-500/20">
+              <Receipt size={24} className="text-emerald-400 shrink-0" />
+              <div>
+                <p className="font-medium">{selectedMember?.name}</p>
+                <p className="text-sm text-zinc-400">Código: {selectedMember?.code}</p>
+              </div>
+            </div>
+            
+            <div>
+              <label className="text-sm text-zinc-400 mb-1 block">Plan</label>
+              <Select value={selectedPlan} onValueChange={setSelectedPlan}>
+                <SelectTrigger className="w-full bg-zinc-800 border-zinc-700" data-testid="payment-plan-select">
+                  <SelectValue placeholder="Seleccionar plan" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {plans.map((plan) => (
+                    <SelectItem key={plan.id} value={plan.id}>{plan.name} - ${plan.price} ({plan.duration_days} días)</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-sm text-zinc-400 mb-1 block">Método de Pago</label>
+              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                <SelectTrigger className="w-full bg-zinc-800 border-zinc-700" data-testid="payment-method-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  <SelectItem value="cash">Efectivo</SelectItem>
+                  <SelectItem value="card_reception">Tarjeta en Recepción</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            <div>
+              <label className="text-sm text-zinc-400 mb-1 block">Notas (opcional)</label>
+              <Input value={paymentNotes} onChange={(e) => setPaymentNotes(e.target.value)}
+                placeholder="Ej: Pago parcial, descuento aplicado..."
+                className="input-dark" data-testid="payment-notes-input" />
+            </div>
+            
+            {selectedPlan && (
+              <div className="p-4 bg-zinc-800 rounded-lg text-center">
+                <p className="text-sm text-zinc-400">Total a cobrar</p>
+                <p className="text-3xl font-black" style={{ color: 'var(--gym-primary)' }}>
+                  ${plans.find(p => p.id === selectedPlan)?.price?.toFixed(2) || '0.00'}
+                </p>
+              </div>
+            )}
+            
+            <Button onClick={handleManualPayment} className="w-full btn-gym-primary" data-testid="confirm-payment-btn">
+              <Banknote size={20} className="mr-2" /> Registrar Pago y Activar Membresía
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

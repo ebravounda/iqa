@@ -147,6 +147,13 @@ class EmailTemplateUpdate(BaseModel):
     subject: str
     body: str
 
+class ManualPayment(BaseModel):
+    member_id: str
+    plan_id: str
+    payment_method: str  # "cash", "card_reception"
+    amount: float
+    notes: Optional[str] = None
+
 # ==================== CLASS/BOOKING MODELS ====================
 
 class ClassCreate(BaseModel):
@@ -2498,6 +2505,348 @@ async def get_attendance_stats(
         "total_bookings": total_bookings,
         "total_checkins": total_checkins,
         "attendance_rate": round((total_checkins / total_bookings * 100), 1) if total_bookings > 0 else 0
+    }
+
+# ==================== MANUAL PAYMENTS ====================
+
+@api_router.post("/payments/manual")
+async def create_manual_payment(payment: ManualPayment, admin: dict = Depends(get_current_admin)):
+    """Register a cash or card-at-reception payment"""
+    check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
+    
+    member = await db.members.find_one({"id": payment.member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+    
+    plan = await db.plans.find_one({"id": payment.plan_id}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan no encontrado")
+    
+    gym_id = member.get("gym_id")
+    
+    # Create transaction
+    transaction = {
+        "id": str(uuid.uuid4()),
+        "member_id": payment.member_id,
+        "member_name": member.get("name"),
+        "plan_id": payment.plan_id,
+        "plan_name": plan.get("name"),
+        "gym_id": gym_id,
+        "amount": payment.amount,
+        "currency": "eur",
+        "payment_method": payment.payment_method,
+        "status": "completed",
+        "payment_status": "paid",
+        "notes": payment.notes,
+        "registered_by": admin["id"],
+        "registered_by_name": admin.get("name"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.payment_transactions.insert_one(transaction)
+    transaction.pop("_id", None)
+    
+    # Activate membership
+    await db.memberships.update_many(
+        {"member_id": payment.member_id, "status": "active"},
+        {"$set": {"status": "expired"}}
+    )
+    
+    start_date = datetime.now(timezone.utc)
+    end_date = start_date + timedelta(days=plan["duration_days"])
+    membership = {
+        "id": str(uuid.uuid4()),
+        "member_id": payment.member_id,
+        "plan_id": payment.plan_id,
+        "gym_id": gym_id,
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "status": "active",
+        "payment_id": transaction["id"],
+        "payment_method": payment.payment_method,
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.memberships.insert_one(membership)
+    membership.pop("_id", None)
+    
+    # Reactivate member if suspended
+    await db.members.update_one(
+        {"id": payment.member_id, "status": "suspended"},
+        {"$set": {"status": "active", "suspension_reason": None, "suspended_at": None}}
+    )
+    
+    return {"transaction": transaction, "membership": membership, "message": "Pago registrado y membresía activada"}
+
+# ==================== ACCOUNTING ====================
+
+@api_router.get("/accounting/report")
+async def get_accounting_report(
+    gym_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """Get accounting report with payment data"""
+    query = {"payment_status": "paid"}
+    
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    if date_from:
+        query["created_at"] = {"$gte": date_from}
+    if date_to:
+        if "created_at" in query:
+            query["created_at"]["$lte"] = date_to + "T23:59:59"
+        else:
+            query["created_at"] = {"$lte": date_to + "T23:59:59"}
+    
+    transactions = await db.payment_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(5000)
+    
+    total_revenue = sum(t.get("amount", 0) for t in transactions)
+    cash_total = sum(t.get("amount", 0) for t in transactions if t.get("payment_method") == "cash")
+    card_total = sum(t.get("amount", 0) for t in transactions if t.get("payment_method") == "card_reception")
+    stripe_total = sum(t.get("amount", 0) for t in transactions if t.get("payment_method") in (None, "stripe"))
+    
+    # Group by date for chart
+    daily_revenue = {}
+    for t in transactions:
+        date_key = t.get("created_at", "")[:10]
+        if date_key:
+            daily_revenue[date_key] = daily_revenue.get(date_key, 0) + t.get("amount", 0)
+    
+    daily_chart = [{"date": k, "amount": v} for k, v in sorted(daily_revenue.items())]
+    
+    return {
+        "transactions": transactions,
+        "summary": {
+            "total_revenue": total_revenue,
+            "total_transactions": len(transactions),
+            "cash_total": cash_total,
+            "card_total": card_total,
+            "stripe_total": stripe_total
+        },
+        "daily_chart": daily_chart
+    }
+
+@api_router.get("/accounting/pdf")
+async def generate_accounting_pdf(
+    gym_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """Generate accounting PDF report"""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from io import BytesIO
+    from fastapi.responses import StreamingResponse
+    
+    # Get data
+    query = {"payment_status": "paid"}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    if date_from:
+        query["created_at"] = {"$gte": date_from}
+    if date_to:
+        if "created_at" in query:
+            query["created_at"]["$lte"] = date_to + "T23:59:59"
+        else:
+            query["created_at"] = {"$lte": date_to + "T23:59:59"}
+    
+    transactions = await db.payment_transactions.find(query, {"_id": 0}).sort("created_at", 1).to_list(5000)
+    
+    # Get gym name
+    gym_name = "Todos los Gimnasios"
+    target_gym_id = admin.get("gym_id") or gym_id
+    if target_gym_id:
+        gym_doc = await db.gyms.find_one({"id": target_gym_id}, {"_id": 0, "name": 1})
+        gym_name = gym_doc.get("name", gym_name) if gym_doc else gym_name
+    
+    total = sum(t.get("amount", 0) for t in transactions)
+    
+    # Build PDF
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20*mm, bottomMargin=20*mm)
+    styles = getSampleStyleSheet()
+    
+    title_style = ParagraphStyle('CustomTitle', parent=styles['Title'], fontSize=18, spaceAfter=6)
+    subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['Normal'], fontSize=10, textColor=colors.grey)
+    
+    elements = []
+    elements.append(Paragraph(f"Informe de Contabilidad - {gym_name}", title_style))
+    
+    period = ""
+    if date_from:
+        period += f"Desde: {date_from} "
+    if date_to:
+        period += f"Hasta: {date_to}"
+    if not period:
+        period = "Todos los períodos"
+    
+    elements.append(Paragraph(period, subtitle_style))
+    elements.append(Spacer(1, 10*mm))
+    
+    # Summary
+    elements.append(Paragraph(f"<b>Total Recaudado: ${total:,.2f}</b>  |  Transacciones: {len(transactions)}", styles['Normal']))
+    elements.append(Spacer(1, 8*mm))
+    
+    # Table
+    if transactions:
+        table_data = [['Fecha', 'Socio', 'Plan', 'Método', 'Monto']]
+        for t in transactions:
+            method_map = {"cash": "Efectivo", "card_reception": "Tarjeta", "stripe": "Stripe Online"}
+            method = method_map.get(t.get("payment_method", "stripe"), "Stripe Online")
+            date_str = t.get("created_at", "")[:10]
+            table_data.append([
+                date_str,
+                t.get("member_name", "-"),
+                t.get("plan_name", "-"),
+                method,
+                f"${t.get('amount', 0):,.2f}"
+            ])
+        
+        col_widths = [70, 130, 100, 80, 70]
+        table = Table(table_data, colWidths=col_widths)
+        table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#18181B')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, 0), 9),
+            ('FONTSIZE', (0, 1), (-1, -1), 8),
+            ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(table)
+    else:
+        elements.append(Paragraph("No hay transacciones en este período.", styles['Normal']))
+    
+    doc.build(elements)
+    buffer.seek(0)
+    
+    filename = f"contabilidad_{gym_name.replace(' ', '_')}_{date_from or 'all'}_{date_to or 'all'}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+# ==================== EMAIL WITH TEMPLATES ====================
+
+async def send_templated_email(gym_id: str, template_type: str, to_email: str, variables: dict):
+    """Send an email using a gym's stored template"""
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        return False
+    
+    # Find template
+    template = None
+    for t in gym.get("email_templates", []):
+        if t["type"] == template_type:
+            template = t
+            break
+    
+    if not template:
+        return False
+    
+    subject = template["subject"]
+    body = template["body"]
+    
+    # Replace variables
+    for key, value in variables.items():
+        subject = subject.replace(key, str(value))
+        body = body.replace(key, str(value))
+    
+    # Convert body to HTML (preserve line breaks)
+    color = gym.get("primary_color", "#E1FF01")
+    html_body = f"""
+    <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
+        <div style="text-align:center;margin-bottom:20px;">
+            <h1 style="color:{color};margin:0;font-size:24px;">{gym.get('name','GymAccess')}</h1>
+        </div>
+        <div style="line-height:1.6;">
+            {body.replace(chr(10), '<br/>')}
+        </div>
+    </div>
+    """
+    
+    try:
+        await send_gym_email(gym_id, to_email, subject, html_body)
+        return True
+    except Exception as e:
+        logger.error(f"Template email error: {e}")
+        return False
+
+# ==================== KIOSK REGISTRATION ====================
+
+@api_router.post("/kiosk/register")
+async def kiosk_register(member: MemberPublicRegister):
+    """Kiosk registration - registers member and sends payment email"""
+    existing = await db.members.find_one({"email": member.email, "gym_id": member.gym_id})
+    if existing:
+        raise HTTPException(status_code=400, detail="Este email ya está registrado en este gimnasio")
+    
+    gym = await db.gyms.find_one({"id": member.gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    
+    member_dict = {
+        "id": str(uuid.uuid4()),
+        "email": member.email,
+        "name": member.name,
+        "phone": member.phone,
+        "gym_id": member.gym_id,
+        "code": generate_member_code(),
+        "status": "pending",
+        "registered_via": "kiosk",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    
+    while await db.members.find_one({"code": member_dict["code"]}):
+        member_dict["code"] = generate_member_code()
+    
+    await db.members.insert_one(member_dict)
+    member_dict.pop("_id", None)
+    
+    # Create token for payment
+    token = create_jwt_token({
+        "sub": member_dict["id"],
+        "type": "member",
+        "gym_id": member.gym_id
+    })
+    
+    # Try sending welcome email with payment link
+    email_sent = False
+    if gym.get("smtp_host") and gym.get("smtp_user"):
+        try:
+            plan = None
+            if member.plan_id:
+                plan = await db.plans.find_one({"id": member.plan_id}, {"_id": 0})
+            
+            variables = {
+                "{gym_name}": gym.get("name", ""),
+                "{member_name}": member.name,
+                "{member_code}": member_dict["code"],
+                "{member_email}": member.email,
+                "{plan_name}": plan.get("name", "") if plan else ""
+            }
+            email_sent = await send_templated_email(member.gym_id, "welcome", member.email, variables)
+        except Exception as e:
+            logger.error(f"Kiosk email error: {e}")
+    
+    return {
+        "member": member_dict,
+        "token": token,
+        "email_sent": email_sent,
+        "message": f"Registro exitoso. Código: {member_dict['code']}"
     }
 
 # ==================== INIT & HEALTH ====================
