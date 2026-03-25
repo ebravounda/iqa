@@ -3,61 +3,62 @@
 ## Última actualización: 25/03/2026
 
 ## Problem Statement
-Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico/estático, pagos con Stripe, roles multi-tenant, página de auto-registro público, check-in de asistencia, SMTP por gym, y control de tornos con Raspberry Pi.
+Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico/estático, pagos Stripe + efectivo + tarjeta, módulo kiosko, contabilidad con PDF, plantillas de email editables, check-in de asistencia, y control de tornos con Raspberry Pi.
 
-## Funcionalidades Implementadas
+## Todas las Funcionalidades Implementadas
 
 ### Core
-- Panel Admin completo: dashboard, gestión de gyms/socios/planes/clases/horarios/personal
-- PWA para socios: QR dinámico/estático, reservas, notificaciones, invitados
+- Panel Admin completo con 14 módulos en sidebar
+- PWA responsive para socios
 - Roles: super_admin, gym_admin, gym_manager, trainer
 - JWT Authentication + Impersonación
-- Raspberry Pi: script de control de tornos con relés GPIO (evdev + RPi.GPIO)
+- Raspberry Pi con GPIO para tornos
 
 ### SaaS Multi-tenant
-- Configuración de Stripe por Gimnasio
-- Configuración SMTP por Gimnasio (emails automáticos)
-- Auto-creación de gym admin al crear gimnasio
-- Impersonación: Super Admin puede "Iniciar sesión como Admin" en cualquier gym
+- Stripe por gym, SMTP por gym, plantillas email por gym
+- Auto-creación de gym admin
+- Impersonación de gym
 
 ### QR y Accesos
-- QR Dinámico (cambia cada X segundos) y Estático (código fijo)
-- Opción configurable por gym
-- Gráficos de accesos en Dashboard
-- Estadísticas de acceso por socio
-- Auto-suspensión de membresías expiradas
+- QR Dinámico/Estático (configurable por gym)
 - Exportación a Excel (XLSX)
+- Logs detallados con gráficos
+
+### Módulo Kiosko
+- Página `/kiosk/{gymId}` optimizada para tablets
+- Registro presencial, envío de email con código
+- Auto-reset de pantalla tras 30 segundos
+
+### Contabilidad
+- Dashboard financiero con gráficos por día y método de pago
+- Filtros rápidos (7d, semana, mes, todo) + rango fechas
+- Export a PDF con ReportLab
+- Tabla de transacciones detallada
+
+### Pagos Manuales
+- Efectivo y tarjeta en recepción desde panel admin
+- Modal en vista de Socios con selector de plan y método
+- Activa membresía y reactiva socios suspendidos
+
+### Plantillas Email
+- 6 plantillas editables por gym (bienvenida, vencimiento, pago)
+- Variables dinámicas ({gym_name}, {member_name}, {member_code}, etc.)
+- Panel de referencia de variables
 
 ### Check-in de Asistencia
-- Página /admin/attendance para registrar asistencia a clases
-- Botones de check-in/anular por reserva
-- Barra de progreso de asistencia
-- Accesible para trainers también
-
-### Email (SMTP por gym)
-- Configuración SMTP en panel del gym admin
-- Email de bienvenida con código QR
-- Botón de prueba SMTP
-- Soporte TLS/SSL
-
-### Registro Público
-- Página /register/{gym_id} para auto-registro de socios
-- Selección de plan, registro inmediato con código QR
-- Enlace copiable en configuración del gym
+- Página `/admin/attendance` para registrar asistencia
+- Botones check-in/anular por reserva
+- Barra de progreso
 
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123
 - Gym Admin FitZone: admin@fitzone.com / admin123
 
-## DB Collections
-gyms, admins, members, memberships, plans, classes, class_schedules, bookings, notifications, guests, access_logs, devices, payment_transactions
-
 ## Backlog
 ### P2
-- Módulo Kiosko (controlado por super admin por gym)
+- Módulo Kiosko: aceptar pagos directos
 - Planes SaaS con tiers para gimnasios
-- Vista mejorada para trainers
 - Push notifications (Firebase)
 
 ### P3
-- Reportes PDF, App nativa, Wearables, Gamificación
+- Reportes PDF avanzados, App nativa, Wearables, Gamificación
