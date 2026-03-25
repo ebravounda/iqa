@@ -4,7 +4,7 @@ import { getGym, updateGym, getStripeConfig, updateStripeConfig } from '../../li
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy } from 'lucide-react';
+import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminSettings() {
@@ -32,6 +32,18 @@ export default function AdminSettings() {
   const [showStripeKey, setShowStripeKey] = useState(false);
   const [savingStripe, setSavingStripe] = useState(false);
 
+  // SMTP config state
+  const [smtpData, setSmtpData] = useState({
+    smtp_host: '',
+    smtp_port: 587,
+    smtp_user: '',
+    smtp_password: '',
+    smtp_from_email: ''
+  });
+  const [savingSmtp, setSavingSmtp] = useState(false);
+  const [testingEmail, setTestingEmail] = useState(false);
+  const [showSmtpPassword, setShowSmtpPassword] = useState(false);
+
   useEffect(() => {
     if (admin?.gym_id) {
       fetchGym();
@@ -54,6 +66,13 @@ export default function AdminSettings() {
         primary_color: response.data.primary_color || '#E1FF01',
         qr_refresh_seconds: response.data.qr_refresh_seconds || 10,
         qr_mode: response.data.qr_mode || 'dynamic'
+      });
+      setSmtpData({
+        smtp_host: response.data.smtp_host || '',
+        smtp_port: response.data.smtp_port || 587,
+        smtp_user: response.data.smtp_user || '',
+        smtp_password: response.data.smtp_password || '',
+        smtp_from_email: response.data.smtp_from_email || ''
       });
     } catch (error) {
       toast.error('Error al cargar configuración');
@@ -416,6 +435,147 @@ export default function AdminSettings() {
             data-testid="copy-register-link-btn"
           >
             <Copy size={18} />
+          </Button>
+        </div>
+      </div>
+
+      {/* SMTP Configuration */}
+      <div className="stat-card">
+        <div className="flex items-center gap-2 mb-6">
+          <Mail size={20} className="text-orange-400" />
+          <h3 className="font-bold text-lg">Configuración de Email (SMTP)</h3>
+        </div>
+        <p className="text-zinc-400 text-sm mb-4">
+          Configura tu servidor SMTP para enviar emails automáticos a tus socios (bienvenida, recordatorios, etc.)
+        </p>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-sm text-zinc-400 mb-1 block">Servidor SMTP</label>
+            <Input
+              value={smtpData.smtp_host}
+              onChange={(e) => setSmtpData({ ...smtpData, smtp_host: e.target.value })}
+              placeholder="smtp.gmail.com"
+              className="input-dark"
+              data-testid="smtp-host-input"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-zinc-400 mb-1 block">Puerto</label>
+            <Select 
+              value={smtpData.smtp_port.toString()} 
+              onValueChange={(v) => setSmtpData({ ...smtpData, smtp_port: parseInt(v) })}
+            >
+              <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="smtp-port-select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectItem value="587">587 (TLS - Recomendado)</SelectItem>
+                <SelectItem value="465">465 (SSL)</SelectItem>
+                <SelectItem value="25">25 (Sin cifrado)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <label className="text-sm text-zinc-400 mb-1 block">Usuario SMTP</label>
+            <Input
+              value={smtpData.smtp_user}
+              onChange={(e) => setSmtpData({ ...smtpData, smtp_user: e.target.value })}
+              placeholder="tu@email.com"
+              className="input-dark"
+              data-testid="smtp-user-input"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-zinc-400 mb-1 block">Contraseña SMTP</label>
+            <div className="relative">
+              <Input
+                type={showSmtpPassword ? 'text' : 'password'}
+                value={smtpData.smtp_password}
+                onChange={(e) => setSmtpData({ ...smtpData, smtp_password: e.target.value })}
+                placeholder="Contraseña o App Password"
+                className="input-dark pr-10"
+                data-testid="smtp-password-input"
+              />
+              <Button
+                variant="ghost" size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 p-0"
+                onClick={() => setShowSmtpPassword(!showSmtpPassword)}
+              >
+                {showSmtpPassword ? <EyeOff size={14} /> : <Eye size={14} />}
+              </Button>
+            </div>
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm text-zinc-400 mb-1 block">Email remitente (From)</label>
+            <Input
+              value={smtpData.smtp_from_email}
+              onChange={(e) => setSmtpData({ ...smtpData, smtp_from_email: e.target.value })}
+              placeholder="noreply@tugimnasio.com (opcional, usa el usuario si está vacío)"
+              className="input-dark"
+              data-testid="smtp-from-input"
+            />
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 mt-6">
+          <Button 
+            onClick={async () => {
+              setSavingSmtp(true);
+              try {
+                const cleanSmtp = {};
+                for (const [key, value] of Object.entries(smtpData)) {
+                  if (value !== '' && value !== null && value !== undefined) {
+                    cleanSmtp[key] = value;
+                  }
+                }
+                await updateGym(admin.gym_id, cleanSmtp);
+                toast.success('Configuración SMTP guardada');
+              } catch (error) {
+                toast.error('Error al guardar SMTP');
+              } finally {
+                setSavingSmtp(false);
+              }
+            }}
+            disabled={savingSmtp}
+            className="btn-gym-primary"
+            data-testid="save-smtp-btn"
+          >
+            <Save size={16} className="mr-2" />
+            {savingSmtp ? 'Guardando...' : 'Guardar SMTP'}
+          </Button>
+          
+          <Button
+            variant="outline"
+            className="border-zinc-700"
+            onClick={async () => {
+              setTestingEmail(true);
+              try {
+                const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+                const response = await fetch(`${API_URL}/email/test`, {
+                  method: 'POST',
+                  headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                  }
+                });
+                const data = await response.json();
+                if (response.ok) {
+                  toast.success(data.message);
+                } else {
+                  toast.error(data.detail || 'Error al enviar email de prueba');
+                }
+              } catch (error) {
+                toast.error('Error al enviar email de prueba');
+              } finally {
+                setTestingEmail(false);
+              }
+            }}
+            disabled={testingEmail || !smtpData.smtp_host}
+            data-testid="test-email-btn"
+          >
+            {testingEmail ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={16} className="mr-2" />}
+            Enviar Email de Prueba
           </Button>
         </div>
       </div>

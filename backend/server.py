@@ -19,6 +19,9 @@ import bcrypt
 from jose import jwt, JWTError
 
 import asyncio
+import aiosmtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -2317,6 +2320,185 @@ async def update_guest_permission(
         }}
     )
     return {"message": "Guest permission updated"}
+
+# ==================== EMAIL UTILITY ====================
+
+async def send_gym_email(gym_id: str, to_email: str, subject: str, html_body: str):
+    """Send email using gym-specific SMTP config"""
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym not found")
+    
+    smtp_host = gym.get("smtp_host")
+    smtp_port = gym.get("smtp_port", 587)
+    smtp_user = gym.get("smtp_user")
+    smtp_password = gym.get("smtp_password")
+    smtp_from = gym.get("smtp_from_email", smtp_user)
+    
+    if not smtp_host or not smtp_user or not smtp_password:
+        raise HTTPException(status_code=400, detail="SMTP no configurado para este gimnasio")
+    
+    msg = MIMEMultipart("alternative")
+    msg["From"] = f"{gym.get('name', 'GymAccess')} <{smtp_from}>"
+    msg["To"] = to_email
+    msg["Subject"] = subject
+    msg.attach(MIMEText(html_body, "html"))
+    
+    try:
+        await aiosmtplib.send(
+            msg,
+            hostname=smtp_host,
+            port=smtp_port,
+            username=smtp_user,
+            password=smtp_password,
+            use_tls=smtp_port == 465,
+            start_tls=smtp_port != 465
+        )
+        return True
+    except Exception as e:
+        logger.error(f"Email send error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al enviar email: {str(e)}")
+
+@api_router.post("/email/test")
+async def test_email(admin: dict = Depends(get_current_admin)):
+    """Test SMTP configuration by sending a test email"""
+    gym_id = admin.get("gym_id")
+    if not gym_id:
+        raise HTTPException(status_code=400, detail="Selecciona un gimnasio")
+    
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    to_email = gym.get("smtp_from_email") or gym.get("smtp_user")
+    if not to_email:
+        raise HTTPException(status_code=400, detail="SMTP no configurado")
+    
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:20px;">
+        <h2 style="color:{gym.get('primary_color','#E1FF01')};">Prueba de Email</h2>
+        <p>Este es un correo de prueba desde <strong>{gym.get('name','GymAccess')}</strong>.</p>
+        <p>Si recibes este correo, tu configuración SMTP es correcta.</p>
+    </div>
+    """
+    await send_gym_email(gym_id, to_email, f"[{gym.get('name')}] Prueba de configuración SMTP", html)
+    return {"message": f"Email de prueba enviado a {to_email}"}
+
+@api_router.post("/email/welcome/{member_id}")
+async def send_welcome_email(member_id: str, admin: dict = Depends(get_current_admin)):
+    """Send welcome email to a member"""
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+    
+    gym_id = member.get("gym_id")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    
+    color = gym.get("primary_color", "#E1FF01")
+    html = f"""
+    <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
+        <div style="text-align:center;margin-bottom:20px;">
+            <h1 style="color:{color};margin:0;">{gym.get('name','GymAccess')}</h1>
+        </div>
+        <h2>Bienvenido/a, {member.get('name','Socio')}</h2>
+        <p>Tu registro en <strong>{gym.get('name')}</strong> ha sido completado con éxito.</p>
+        <div style="background:#18181B;padding:20px;border-radius:12px;text-align:center;margin:20px 0;">
+            <p style="color:#a1a1aa;margin:0 0 8px;">Tu código de acceso</p>
+            <p style="font-size:32px;font-weight:900;color:{color};font-family:monospace;letter-spacing:4px;margin:0;">
+                {member.get('code','------')}
+            </p>
+        </div>
+        <p style="color:#a1a1aa;font-size:14px;">Usa este código para acceder al gimnasio con tu QR.</p>
+    </div>
+    """
+    await send_gym_email(gym_id, member["email"], f"Bienvenido/a a {gym.get('name')}", html)
+    return {"message": f"Email de bienvenida enviado a {member['email']}"}
+
+# ==================== CHECK-IN / ATTENDANCE ====================
+
+@api_router.post("/bookings/{booking_id}/checkin")
+async def checkin_booking(booking_id: str, admin: dict = Depends(get_current_admin)):
+    """Mark a member as checked in for a class"""
+    booking = await db.bookings.find_one({"id": booking_id}, {"_id": 0})
+    if not booking:
+        raise HTTPException(status_code=404, detail="Reserva no encontrada")
+    
+    if booking["status"] != "confirmed":
+        raise HTTPException(status_code=400, detail="La reserva no está confirmada")
+    
+    await db.bookings.update_one({"id": booking_id}, {"$set": {
+        "checked_in": True,
+        "checked_in_at": datetime.now(timezone.utc).isoformat(),
+        "checked_in_by": admin["id"]
+    }})
+    return {"message": "Check-in registrado"}
+
+@api_router.post("/bookings/{booking_id}/checkout")
+async def checkout_booking(booking_id: str, admin: dict = Depends(get_current_admin)):
+    """Undo a check-in"""
+    await db.bookings.update_one({"id": booking_id}, {"$set": {
+        "checked_in": False,
+        "checked_in_at": None,
+        "checked_in_by": None
+    }})
+    return {"message": "Check-in anulado"}
+
+@api_router.get("/attendance/schedule/{schedule_id}")
+async def get_schedule_attendance(schedule_id: str, admin: dict = Depends(get_current_admin)):
+    """Get attendance list for a specific class schedule"""
+    schedule = await db.class_schedules.find_one({"id": schedule_id}, {"_id": 0})
+    if not schedule:
+        raise HTTPException(status_code=404, detail="Horario no encontrado")
+    
+    bookings = await db.bookings.find(
+        {"schedule_id": schedule_id, "status": "confirmed"},
+        {"_id": 0}
+    ).to_list(200)
+    
+    class_data = await db.classes.find_one({"id": schedule.get("class_id")}, {"_id": 0})
+    
+    total = len(bookings)
+    checked_in = sum(1 for b in bookings if b.get("checked_in"))
+    
+    return {
+        "schedule": schedule,
+        "class": class_data,
+        "bookings": bookings,
+        "total_booked": total,
+        "checked_in": checked_in,
+        "pending": total - checked_in
+    }
+
+@api_router.get("/attendance/stats")
+async def get_attendance_stats(
+    gym_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """Get attendance statistics"""
+    query = {"status": "confirmed"}
+    
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    if date_from:
+        query["date"] = {"$gte": date_from}
+    if date_to:
+        if "date" in query:
+            query["date"]["$lte"] = date_to
+        else:
+            query["date"] = {"$lte": date_to}
+    
+    all_bookings = await db.bookings.find(query, {"_id": 0}).to_list(5000)
+    
+    total_bookings = len(all_bookings)
+    total_checkins = sum(1 for b in all_bookings if b.get("checked_in"))
+    
+    return {
+        "total_bookings": total_bookings,
+        "total_checkins": total_checkins,
+        "attendance_rate": round((total_checkins / total_bookings * 100), 1) if total_bookings > 0 else 0
+    }
 
 # ==================== INIT & HEALTH ====================
 

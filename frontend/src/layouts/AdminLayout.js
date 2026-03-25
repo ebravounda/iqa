@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Users, CreditCard, Building2, UserCog, Settings, 
   Calendar, Clock, Bell, Shield, QrCode, Menu, X, ChevronLeft,
-  LogOut, Smartphone
+  LogOut, Smartphone, UserCheck
 } from 'lucide-react';
 
 const getNavItems = (role, isImpersonating) => {
@@ -16,6 +16,7 @@ const getNavItems = (role, isImpersonating) => {
     { path: '/admin/members', icon: Users, label: 'Socios', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/plans', icon: CreditCard, label: 'Planes', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/classes', icon: Calendar, label: 'Clases', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+    { path: '/admin/attendance', icon: UserCheck, label: 'Asistencia', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
     { path: '/admin/schedules', icon: Clock, label: 'Horarios', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
     { path: '/admin/access', icon: Shield, label: 'Accesos', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/staff', icon: UserCog, label: 'Personal', roles: ['super_admin', 'gym_admin'] },
