@@ -33,8 +33,8 @@ SERVER_URL = os.environ.get('GYMACCESS_SERVER_URL', 'https://gymapi.ticketpro.es
 GYM_TOKEN = os.environ.get('GYMACCESS_GYM_TOKEN', 'TU_TOKEN_AQUI')
 DEVICE_ID = os.environ.get('GYMACCESS_DEVICE_ID', 'TU_DEVICE_ID')
 SWAP_SCANNERS = os.environ.get('GYMACCESS_SWAP_SCANNERS', 'false').lower() == 'true'
-RELAY_ENTRADA = 11
-RELAY_SALIDA = 16
+RELAY_ENTRADA = int(os.environ.get('GYMACCESS_RELAY_ENTRADA', '11'))
+RELAY_SALIDA = int(os.environ.get('GYMACCESS_RELAY_SALIDA', '16'))
 TIEMPO_APERTURA = 3
 PING_INTERVAL = 60
 
@@ -84,15 +84,15 @@ class GPIOController:
     def abrir_torno(self, direccion):
         pin = RELAY_ENTRADA if direccion == 'entrada' else RELAY_SALIDA
         nombre = "ENTRADA" if direccion == 'entrada' else "SALIDA"
-        logger.info(f"Abriendo torno {nombre}...")
+        logger.info(f"Abriendo torno {nombre} - GPIO pin {pin}...")
         if self.initialized:
             GPIO.output(pin, GPIO.LOW)
             time.sleep(TIEMPO_APERTURA)
             GPIO.output(pin, GPIO.HIGH)
+            logger.info(f"Torno {nombre} - GPIO pin {pin} cerrado OK")
         else:
-            logger.info(f"[SIMULACION] Torno {nombre} abierto por {TIEMPO_APERTURA}s")
+            logger.info(f"[SIMULACION] Torno {nombre} pin {pin} abierto por {TIEMPO_APERTURA}s")
             time.sleep(TIEMPO_APERTURA)
-        logger.info(f"Torno {nombre} cerrado")
 
     def cleanup(self):
         if self.initialized:
