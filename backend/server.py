@@ -3035,6 +3035,14 @@ async def download_raspberry():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=str(file_path), filename="raspberry_access_control.py", media_type="text/plain")
 
+@api_router.get("/download/frontend-build")
+async def download_frontend_build():
+    """Download the frontend build.tar.gz"""
+    file_path = ROOT_DIR / "downloads" / "build.tar.gz"
+    if not file_path.exists():
+        raise HTTPException(status_code=404, detail="File not found")
+    return FileResponse(path=str(file_path), filename="build.tar.gz", media_type="application/gzip")
+
 app.include_router(api_router)
 
 app.add_middleware(
