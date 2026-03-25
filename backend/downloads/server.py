@@ -1,5 +1,4 @@
 from fastapi import FastAPI, APIRouter, HTTPException, Depends, Request, UploadFile, File
-from fastapi.responses import FileResponse
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
@@ -3017,23 +3016,6 @@ async def auto_suspend_expired_memberships():
 @app.on_event("startup")
 async def start_background_tasks():
     asyncio.create_task(auto_suspend_expired_memberships())
-
-# ==================== DOWNLOAD ENDPOINTS (TEMPORAL) ====================
-@api_router.get("/download/server-py")
-async def download_server():
-    """Download the latest server.py file"""
-    file_path = ROOT_DIR / "downloads" / "server.py"
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(path=str(file_path), filename="server.py", media_type="text/plain")
-
-@api_router.get("/download/raspberry-py")
-async def download_raspberry():
-    """Download the latest raspberry_access_control.py file"""
-    file_path = ROOT_DIR / "downloads" / "raspberry_access_control.py"
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(path=str(file_path), filename="raspberry_access_control.py", media_type="text/plain")
 
 app.include_router(api_router)
 
