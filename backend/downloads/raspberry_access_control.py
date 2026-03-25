@@ -39,6 +39,20 @@ import logging
 import threading
 from datetime import datetime
 from typing import Optional, Dict, Any
+from pathlib import Path
+
+# Cargar archivo .env automáticamente
+try:
+    from dotenv import load_dotenv
+    # Busca .env en la misma carpeta que este script
+    env_path = Path(__file__).parent / '.env'
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"Archivo .env cargado desde: {env_path}")
+    else:
+        print(f"AVISO: No se encontró .env en {env_path}")
+except ImportError:
+    print("python-dotenv no instalado. Ejecuta: pip3 install python-dotenv")
 
 # Configurar logging
 logging.basicConfig(
