@@ -32,6 +32,7 @@ import requests
 SERVER_URL = os.environ.get('GYMACCESS_SERVER_URL', 'https://gymapi.ticketpro.es')
 GYM_TOKEN = os.environ.get('GYMACCESS_GYM_TOKEN', 'TU_TOKEN_AQUI')
 DEVICE_ID = os.environ.get('GYMACCESS_DEVICE_ID', 'TU_DEVICE_ID')
+SWAP_SCANNERS = os.environ.get('GYMACCESS_SWAP_SCANNERS', 'false').lower() == 'true'
 RELAY_ENTRADA = 11
 RELAY_SALIDA = 16
 TIEMPO_APERTURA = 3
@@ -232,12 +233,20 @@ def main():
     threading.Thread(target=ping_loop, args=(client,), daemon=True).start()
 
     threads = []
+    if SWAP_SCANNERS:
+        dir_first = 'salida'
+        dir_second = 'entrada'
+        logger.info("Lectores INTERCAMBIADOS por config SWAP_SCANNERS=true")
+    else:
+        dir_first = 'entrada'
+        dir_second = 'salida'
+    
     if len(scanners) >= 1:
-        t1 = threading.Thread(target=read_scanner, args=(scanners[0], 'entrada', gpio, client), daemon=True)
+        t1 = threading.Thread(target=read_scanner, args=(scanners[0], dir_first, gpio, client), daemon=True)
         t1.start()
         threads.append(t1)
     if len(scanners) >= 2:
-        t2 = threading.Thread(target=read_scanner, args=(scanners[1], 'salida', gpio, client), daemon=True)
+        t2 = threading.Thread(target=read_scanner, args=(scanners[1], dir_second, gpio, client), daemon=True)
         t2.start()
         threads.append(t2)
 
