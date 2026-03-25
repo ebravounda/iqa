@@ -21,7 +21,7 @@ const getNavItems = (role, isImpersonating) => {
     { path: '/admin/access', icon: Shield, label: 'Accesos', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/accounting', icon: DollarSign, label: 'Contabilidad', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/staff', icon: UserCog, label: 'Personal', roles: ['super_admin', 'gym_admin'] },
-    { path: '/admin/devices', icon: Smartphone, label: 'Dispositivos', roles: ['super_admin', 'gym_admin'] },
+    { path: '/admin/devices', icon: Smartphone, label: 'Dispositivos', roles: ['super_admin'] },
     { path: '/admin/templates', icon: Mail, label: 'Plantillas Email', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/notifications', icon: Bell, label: 'Notificaciones', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/gyms', icon: Building2, label: 'Gimnasios', roles: ['super_admin'] },

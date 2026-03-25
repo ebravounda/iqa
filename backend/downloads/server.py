@@ -1115,6 +1115,18 @@ async def validate_access(validation: AccessValidation):
         await db.memberships.update_one({"id": membership["id"]}, {"$set": {"status": "expired"}})
         return {"valid": False, "reason": "Membership expired"}
     
+    # Anti-passback: prevent re-entry without exit (and vice versa)
+    last_log = await db.access_logs.find_one(
+        {"member_id": member["id"], "gym_id": gym["id"], "is_guest": {"$ne": True}},
+        {"_id": 0},
+        sort=[("timestamp", -1)]
+    )
+    if last_log:
+        last_direction = last_log.get("direction")
+        if last_direction == validation.direction:
+            action = "entrar" if validation.direction == "entrada" else "salir"
+            return {"valid": False, "reason": f"Ya registrado como {last_direction}. Debe {('salir' if validation.direction == 'entrada' else 'entrar')} primero"}
+    
     # Log access
     access_log = {
         "id": str(uuid.uuid4()),
@@ -1323,6 +1335,8 @@ async def get_hourly_access_stats(gym_id: Optional[str] = None, admin: dict = De
 
 @api_router.post("/devices")
 async def create_device(device: DeviceCreate, admin: dict = Depends(get_current_admin)):
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo super_admin puede gestionar dispositivos")
     device_dict = device.model_dump()
     device_dict["id"] = str(uuid.uuid4())
     device_dict["status"] = "offline"
@@ -1335,10 +1349,10 @@ async def create_device(device: DeviceCreate, admin: dict = Depends(get_current_
 
 @api_router.get("/devices")
 async def get_devices(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
-    query = {}
     if admin["role"] != "super_admin":
-        query["gym_id"] = admin.get("gym_id")
-    elif gym_id:
+        raise HTTPException(status_code=403, detail="Solo super_admin puede ver dispositivos")
+    query = {}
+    if gym_id:
         query["gym_id"] = gym_id
     
     devices = await db.devices.find(query, {"_id": 0}).to_list(100)
@@ -1347,11 +1361,11 @@ async def get_devices(gym_id: Optional[str] = None, admin: dict = Depends(get_cu
 @api_router.delete("/devices/{device_id}")
 async def delete_device(device_id: str, admin: dict = Depends(get_current_admin)):
     """Delete a device"""
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo super_admin puede eliminar dispositivos")
     device = await db.devices.find_one({"id": device_id}, {"_id": 0})
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
-    if admin["role"] != "super_admin" and device.get("gym_id") != admin.get("gym_id"):
-        raise HTTPException(status_code=403, detail="Access denied")
     await db.devices.delete_one({"id": device_id})
     return {"message": "Device deleted"}
 
