@@ -86,10 +86,14 @@ class GPIOController:
         nombre = "ENTRADA" if direccion == 'entrada' else "SALIDA"
         logger.info(f"Abriendo torno {nombre} - GPIO pin {pin}...")
         if self.initialized:
-            GPIO.output(pin, GPIO.LOW)
+            # Abrir AMBOS reles para diagnostico
+            logger.info(f"Activando AMBOS reles: pin {RELAY_ENTRADA} y pin {RELAY_SALIDA}")
+            GPIO.output(RELAY_ENTRADA, GPIO.LOW)
+            GPIO.output(RELAY_SALIDA, GPIO.LOW)
             time.sleep(TIEMPO_APERTURA)
-            GPIO.output(pin, GPIO.HIGH)
-            logger.info(f"Torno {nombre} - GPIO pin {pin} cerrado OK")
+            GPIO.output(RELAY_ENTRADA, GPIO.HIGH)
+            GPIO.output(RELAY_SALIDA, GPIO.HIGH)
+            logger.info(f"Ambos reles cerrados OK")
         else:
             logger.info(f"[SIMULACION] Torno {nombre} pin {pin} abierto por {TIEMPO_APERTURA}s")
             time.sleep(TIEMPO_APERTURA)
