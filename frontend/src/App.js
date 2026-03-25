@@ -41,6 +41,7 @@ import MemberClasses from "./pages/pwa/MemberClasses";
 import MemberNotifications from "./pages/pwa/MemberNotifications";
 import MemberGuests from "./pages/pwa/MemberGuests";
 import PaymentSuccess from "./pages/pwa/PaymentSuccess";
+import PublicRegister from "./pages/pwa/PublicRegister";
 
 // Protected Route Components
 const AdminRoute = ({ children }) => {
@@ -164,6 +165,9 @@ function AppRoutes() {
       <Route path="/app/membership" element={<MemberRoute><MemberMembership /></MemberRoute>} />
       <Route path="/app/profile" element={<MemberRoute><MemberProfile /></MemberRoute>} />
       <Route path="/app/payment-success" element={<MemberRoute><PaymentSuccess /></MemberRoute>} />
+      
+      {/* Public Registration */}
+      <Route path="/register/:gymId" element={<PublicRegister />} />
       
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />

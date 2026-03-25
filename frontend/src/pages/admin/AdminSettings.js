@@ -4,7 +4,7 @@ import { getGym, updateGym, getStripeConfig, updateStripeConfig } from '../../li
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminSettings() {
@@ -19,7 +19,8 @@ export default function AdminSettings() {
     email: '',
     logo_url: '',
     primary_color: '#E1FF01',
-    qr_refresh_seconds: 10
+    qr_refresh_seconds: 10,
+    qr_mode: 'dynamic'
   });
 
   // Stripe config state
@@ -51,7 +52,8 @@ export default function AdminSettings() {
         email: response.data.email || '',
         logo_url: response.data.logo_url || '',
         primary_color: response.data.primary_color || '#E1FF01',
-        qr_refresh_seconds: response.data.qr_refresh_seconds || 10
+        qr_refresh_seconds: response.data.qr_refresh_seconds || 10,
+        qr_mode: response.data.qr_mode || 'dynamic'
       });
     } catch (error) {
       toast.error('Error al cargar configuración');
@@ -347,25 +349,74 @@ export default function AdminSettings() {
           <h3 className="font-bold text-lg">Configuración del QR</h3>
         </div>
         
-        <div>
-          <label className="text-sm text-zinc-400 mb-2 block">Tiempo de Refresco del QR (segundos)</label>
-          <Select 
-            value={formData.qr_refresh_seconds.toString()} 
-            onValueChange={(v) => setFormData({ ...formData, qr_refresh_seconds: parseInt(v) })}
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-zinc-400 mb-2 block">Modo del QR</label>
+            <Select 
+              value={formData.qr_mode} 
+              onValueChange={(v) => setFormData({ ...formData, qr_mode: v })}
+            >
+              <SelectTrigger className="w-[300px] bg-zinc-800 border-zinc-700" data-testid="qr-mode-select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectItem value="dynamic">Dinámico (cambia cada X segundos)</SelectItem>
+                <SelectItem value="static">Estático (código fijo por socio)</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-zinc-500 mt-2">
+              {formData.qr_mode === 'dynamic' 
+                ? 'El QR del socio cambiará periódicamente para mayor seguridad'
+                : 'El QR del socio será fijo y no cambiará. Menos seguro pero más simple.'}
+            </p>
+          </div>
+
+          {formData.qr_mode === 'dynamic' && (
+            <div>
+              <label className="text-sm text-zinc-400 mb-2 block">Tiempo de Refresco del QR (segundos)</label>
+              <Select 
+                value={formData.qr_refresh_seconds.toString()} 
+                onValueChange={(v) => setFormData({ ...formData, qr_refresh_seconds: parseInt(v) })}
+              >
+                <SelectTrigger className="w-[200px] bg-zinc-800 border-zinc-700" data-testid="qr-refresh-select">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  <SelectItem value="5">5 segundos (máxima seguridad)</SelectItem>
+                  <SelectItem value="10">10 segundos (recomendado)</SelectItem>
+                  <SelectItem value="15">15 segundos</SelectItem>
+                  <SelectItem value="30">30 segundos</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Public Registration Link */}
+      <div className="stat-card">
+        <div className="flex items-center gap-2 mb-4">
+          <Link2 size={20} className="text-emerald-400" />
+          <h3 className="font-bold text-lg">Enlace de Registro Público</h3>
+        </div>
+        <p className="text-zinc-400 text-sm mb-4">
+          Comparte este enlace para que nuevos socios se registren directamente en tu gimnasio.
+        </p>
+        <div className="flex items-center gap-2">
+          <code className="flex-1 bg-zinc-800 px-4 py-3 rounded-lg font-mono text-sm text-emerald-400 overflow-x-auto" data-testid="public-register-link">
+            {window.location.origin}/register/{admin?.gym_id}
+          </code>
+          <Button
+            variant="outline"
+            className="border-zinc-700 shrink-0"
+            onClick={() => {
+              navigator.clipboard.writeText(`${window.location.origin}/register/${admin?.gym_id}`);
+              toast.success('Enlace copiado');
+            }}
+            data-testid="copy-register-link-btn"
           >
-            <SelectTrigger className="w-[200px] bg-zinc-800 border-zinc-700" data-testid="qr-refresh-select">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-zinc-900 border-zinc-700">
-              <SelectItem value="5">5 segundos (máxima seguridad)</SelectItem>
-              <SelectItem value="10">10 segundos (recomendado)</SelectItem>
-              <SelectItem value="15">15 segundos</SelectItem>
-              <SelectItem value="30">30 segundos</SelectItem>
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-zinc-500 mt-2">
-            El QR del socio cambiará cada {formData.qr_refresh_seconds} segundos para mayor seguridad
-          </p>
+            <Copy size={18} />
+          </Button>
         </div>
       </div>
 

@@ -18,6 +18,7 @@ export default function MemberHome() {
   const [loading, setLoading] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
   const [error, setError] = useState(null);
+  const [qrMode, setQrMode] = useState('dynamic');
 
   const fetchQR = useCallback(async () => {
     try {
@@ -27,6 +28,7 @@ export default function MemberHome() {
       setExpiresAt(response.data.expires_at);
       setRefreshSeconds(response.data.refresh_seconds);
       setCountdown(response.data.refresh_seconds);
+      setQrMode(response.data.qr_mode || 'dynamic');
       setLoading(false);
     } catch (err) {
       console.error('Error generating QR:', err);
@@ -39,8 +41,9 @@ export default function MemberHome() {
     fetchQR();
   }, [fetchQR]);
 
-  // Countdown timer
+  // Countdown timer - only for dynamic QR
   useEffect(() => {
+    if (qrMode === 'static') return;
     if (countdown <= 0) {
       fetchQR();
       return;
@@ -51,7 +54,7 @@ export default function MemberHome() {
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [countdown, fetchQR]);
+  }, [countdown, fetchQR, qrMode]);
 
   const membershipStatus = getMembershipStatus(membership);
   const daysRemaining = membership ? getDaysRemaining(membership.end_date) : 0;
@@ -168,16 +171,23 @@ export default function MemberHome() {
           )}
         </div>
 
-        <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2">
-          <span className="text-zinc-500 text-xs sm:text-sm">Actualiza en</span>
-          <span 
-            className="font-mono font-bold text-base sm:text-lg"
-            style={{ color: 'var(--gym-primary)' }}
-            data-testid="qr-countdown"
-          >
-            {countdown}s
-          </span>
-        </div>
+        {qrMode === 'dynamic' && (
+          <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2">
+            <span className="text-zinc-500 text-xs sm:text-sm">Actualiza en</span>
+            <span 
+              className="font-mono font-bold text-base sm:text-lg"
+              style={{ color: 'var(--gym-primary)' }}
+              data-testid="qr-countdown"
+            >
+              {countdown}s
+            </span>
+          </div>
+        )}
+        {qrMode === 'static' && (
+          <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2">
+            <span className="text-zinc-500 text-xs sm:text-sm">QR fijo - no caduca</span>
+          </div>
+        )}
 
         <button
           onClick={() => setFullscreen(true)}
@@ -273,9 +283,13 @@ export default function MemberHome() {
 
             <div className="mt-8 text-center">
               <p className="text-zinc-500 text-sm mb-1">Muestra este código en el escáner</p>
-              <p className="font-mono text-lg" style={{ color: 'var(--gym-primary)' }}>
-                Actualiza en {countdown}s
-              </p>
+              {qrMode === 'dynamic' ? (
+                <p className="font-mono text-lg" style={{ color: 'var(--gym-primary)' }}>
+                  Actualiza en {countdown}s
+                </p>
+              ) : (
+                <p className="text-sm text-zinc-400">QR fijo - no caduca</p>
+              )}
             </div>
           </motion.div>
         )}

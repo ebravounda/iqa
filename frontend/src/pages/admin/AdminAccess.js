@@ -7,10 +7,12 @@ import { Button } from '../../components/ui/button';
 import { Calendar } from '../../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { Search, Calendar as CalendarIcon, Download, ArrowUpRight, ArrowDownLeft, BarChart3, User } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download, ArrowUpRight, ArrowDownLeft, BarChart3, User, FileSpreadsheet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import * as XLSX from 'xlsx';
+import { toast } from 'sonner';
 
 export default function AdminAccess() {
   const { admin, isSuperAdmin } = useAuth();
@@ -78,26 +80,29 @@ export default function AdminAccess() {
     if (key) uniqueMembers[key].count++;
   });
 
-  const exportToCSV = () => {
+  const exportToExcel = () => {
     const sortedLogs = [...filteredLogs].sort((a, b) => 
       new Date(a.timestamp) - new Date(b.timestamp)
     );
-    const headers = ['Fecha/Hora', 'Socio', 'Código', 'Dirección', 'Tipo'];
-    const rows = sortedLogs.map(log => [
-      formatDateTime(log.timestamp),
-      log.member_name || log.guest_name || '-',
-      log.member_code || log.guest_code || '-',
-      log.direction,
-      log.is_guest ? 'Invitado' : 'Socio'
-    ]);
+    const data = sortedLogs.map(log => ({
+      'Fecha/Hora': formatDateTime(log.timestamp),
+      'Socio': log.member_name || log.guest_name || '-',
+      'Código': log.member_code || log.guest_code || '-',
+      'Dirección': log.direction === 'entrada' ? 'Entrada' : 'Salida',
+      'Tipo': log.is_guest ? 'Invitado' : 'Socio',
+      'Válido': log.valid ? 'Sí' : 'No'
+    }));
     
-    const csv = [headers, ...rows].map(row => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `accesos_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
+    const ws = XLSX.utils.json_to_sheet(data);
+    const colWidths = Object.keys(data[0] || {}).map(key => ({
+      wch: Math.max(key.length, ...data.map(r => String(r[key] || '').length)) + 2
+    }));
+    ws['!cols'] = colWidths;
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Accesos');
+    XLSX.writeFile(wb, `accesos_${format(new Date(), 'yyyy-MM-dd')}.xlsx`);
+    toast.success('Archivo Excel descargado');
   };
 
   return (
@@ -108,9 +113,9 @@ export default function AdminAccess() {
           <p className="text-zinc-400 text-sm">{logs.length} registros</p>
         </div>
         
-        <Button onClick={exportToCSV} variant="outline" className="border-zinc-700" data-testid="export-csv-btn">
-          <Download size={18} className="mr-2" />
-          Exportar CSV
+        <Button onClick={exportToExcel} variant="outline" className="border-zinc-700" data-testid="export-excel-btn">
+          <FileSpreadsheet size={18} className="mr-2" />
+          Exportar Excel
         </Button>
       </div>
 

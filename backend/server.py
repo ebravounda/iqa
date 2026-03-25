@@ -67,6 +67,7 @@ class GymUpdate(BaseModel):
     logo_url: Optional[str] = None
     primary_color: Optional[str] = None
     qr_refresh_seconds: Optional[int] = None
+    qr_mode: Optional[str] = None  # "dynamic" or "static"
     max_members: Optional[int] = None
     stripe_secret_key: Optional[str] = None
     stripe_currency: Optional[str] = None
@@ -99,6 +100,13 @@ class MemberCreate(BaseModel):
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
     gym_id: str
+
+class MemberPublicRegister(BaseModel):
+    email: EmailStr
+    name: str
+    phone: Optional[str] = None
+    gym_id: str
+    plan_id: Optional[str] = None
 
 class MemberUpdate(BaseModel):
     name: Optional[str] = None
@@ -246,10 +254,21 @@ def generate_qr_data(member_id: str, gym_id: str, timestamp: int) -> str:
     return base64.urlsafe_b64encode(f"{data}|{signature}".encode()).decode()
 
 def validate_qr_data(qr_code: str, max_age_seconds: int = 15) -> dict:
-    """Validate QR code and return member info"""
+    """Validate QR code and return member info (supports dynamic and static)"""
     try:
         decoded = base64.urlsafe_b64decode(qr_code.encode()).decode()
         parts = decoded.split('|')
+        
+        # Static QR: STATIC|member_id|gym_id|signature
+        if len(parts) == 4 and parts[0] == "STATIC":
+            _, member_id, gym_id, signature = parts
+            data = f"STATIC|{member_id}|{gym_id}"
+            expected_sig = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:16]
+            if signature != expected_sig:
+                return {"valid": False, "reason": "Invalid signature"}
+            return {"valid": True, "member_id": member_id, "gym_id": gym_id}
+        
+        # Dynamic QR: member_id|gym_id|timestamp|signature
         if len(parts) != 4:
             return {"valid": False, "reason": "Invalid QR format"}
         
@@ -551,28 +570,69 @@ async def create_member(member: MemberCreate, admin: dict = Depends(get_current_
     return member_dict
 
 @api_router.post("/members/register")
-async def register_member_public(member: MemberCreate):
-    """Public registration for members"""
+async def register_member_public(member: MemberPublicRegister):
+    """Public registration for members - optionally with a plan"""
     existing = await db.members.find_one({"email": member.email, "gym_id": member.gym_id})
     if existing:
-        raise HTTPException(status_code=400, detail="Email already registered")
+        raise HTTPException(status_code=400, detail="Este email ya está registrado en este gimnasio")
     
     gym = await db.gyms.find_one({"id": member.gym_id})
     if not gym:
-        raise HTTPException(status_code=404, detail="Gym not found")
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    if gym.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Este gimnasio está suspendido")
     
-    member_dict = member.model_dump()
-    member_dict["id"] = str(uuid.uuid4())
-    member_dict["code"] = generate_member_code()
-    member_dict["status"] = "pending"  # Needs admin approval
-    member_dict["created_at"] = datetime.now(timezone.utc).isoformat()
+    member_dict = {
+        "id": str(uuid.uuid4()),
+        "email": member.email,
+        "name": member.name,
+        "phone": member.phone,
+        "gym_id": member.gym_id,
+        "code": generate_member_code(),
+        "status": "active",
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
     
     while await db.members.find_one({"code": member_dict["code"]}):
         member_dict["code"] = generate_member_code()
     
     await db.members.insert_one(member_dict)
     member_dict.pop("_id", None)
-    return member_dict
+    
+    # If a plan is selected and no Stripe, create a pending membership
+    membership_data = None
+    if member.plan_id:
+        plan = await db.plans.find_one({"id": member.plan_id}, {"_id": 0})
+        if plan:
+            start_date = datetime.now(timezone.utc)
+            end_date = start_date + timedelta(days=plan["duration_days"])
+            membership = {
+                "id": str(uuid.uuid4()),
+                "member_id": member_dict["id"],
+                "plan_id": plan["id"],
+                "gym_id": member.gym_id,
+                "start_date": start_date.isoformat(),
+                "end_date": end_date.isoformat(),
+                "status": "active",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.memberships.insert_one(membership)
+            membership.pop("_id", None)
+            membership_data = membership
+    
+    # Create JWT token so they can login immediately
+    token = create_jwt_token({
+        "sub": member_dict["id"],
+        "type": "member",
+        "gym_id": member.gym_id
+    })
+    
+    return {
+        "member": member_dict,
+        "membership": membership_data,
+        "token": token,
+        "message": f"Registro exitoso. Tu código de acceso es: {member_dict['code']}"
+    }
 
 @api_router.get("/members")
 async def get_members(gym_id: Optional[str] = None, status: Optional[str] = None, admin: dict = Depends(get_current_admin)):
@@ -706,7 +766,31 @@ async def get_plans(gym_id: Optional[str] = None, admin: dict = Depends(get_curr
 async def get_plans_public(gym_id: str):
     """Public endpoint to get plans for a gym"""
     plans = await db.plans.find({"gym_id": gym_id, "active": True}, {"_id": 0}).to_list(100)
+    if not plans:
+        plans = await db.plans.find({"gym_id": gym_id}, {"_id": 0}).to_list(100)
     return plans
+
+@api_router.get("/gyms/{gym_id}/public-info")
+async def get_gym_public_info(gym_id: str):
+    """Public endpoint to get gym info for registration page"""
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    if gym.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Este gimnasio está suspendido")
+    
+    has_stripe = bool(gym.get("stripe_secret_key"))
+    return {
+        "id": gym["id"],
+        "name": gym.get("name", ""),
+        "logo_url": gym.get("logo_url"),
+        "primary_color": gym.get("primary_color", "#E1FF01"),
+        "address": gym.get("address"),
+        "phone": gym.get("phone"),
+        "email": gym.get("email"),
+        "has_payments": has_stripe,
+        "currency": gym.get("stripe_currency", "usd")
+    }
 
 @api_router.delete("/plans/{plan_id}")
 async def delete_plan(plan_id: str, admin: dict = Depends(get_current_admin)):
@@ -780,6 +864,12 @@ async def get_expiring_memberships(days: int = 10, admin: dict = Depends(get_cur
     
     return expiring
 
+def generate_static_qr_data(member_id: str, gym_id: str) -> str:
+    """Generate a static QR code that doesn't expire"""
+    data = f"STATIC|{member_id}|{gym_id}"
+    signature = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:16]
+    return base64.urlsafe_b64encode(f"{data}|{signature}".encode()).decode()
+
 # ==================== QR ROUTES ====================
 
 @api_router.get("/qr/generate")
@@ -788,9 +878,19 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
     member_id = payload.get("sub")
     gym_id = payload.get("gym_id")
     
-    # Get gym config for refresh time
+    # Get gym config for refresh time and QR mode
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    qr_mode = gym.get("qr_mode", "dynamic") if gym else "dynamic"
     refresh_seconds = gym.get("qr_refresh_seconds", 10) if gym else 10
+    
+    if qr_mode == "static":
+        qr_data = generate_static_qr_data(member_id, gym_id)
+        return {
+            "qr_code": qr_data,
+            "expires_at": 0,
+            "refresh_seconds": 0,
+            "qr_mode": "static"
+        }
     
     timestamp = int(datetime.now(timezone.utc).timestamp())
     qr_data = generate_qr_data(member_id, gym_id, timestamp)
@@ -798,7 +898,8 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
     return {
         "qr_code": qr_data,
         "expires_at": timestamp + refresh_seconds,
-        "refresh_seconds": refresh_seconds
+        "refresh_seconds": refresh_seconds,
+        "qr_mode": "dynamic"
     }
 
 # ==================== ACCESS ROUTES ====================
@@ -1414,6 +1515,19 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
     # Suspended members count
     suspended_members = await db.members.count_documents({**query, "status": "suspended"})
 
+    # For super admin: enrich recent accesses with gym name
+    recent_accesses_enriched = []
+    if admin["role"] == "super_admin":
+        recent_logs = await db.access_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(15)
+        gym_cache = {}
+        for log in recent_logs:
+            gid = log.get("gym_id")
+            if gid and gid not in gym_cache:
+                g = await db.gyms.find_one({"id": gid}, {"_id": 0, "name": 1})
+                gym_cache[gid] = g.get("name", "?") if g else "?"
+            log["gym_name"] = gym_cache.get(gid, "?")
+            recent_accesses_enriched.append(log)
+
     return {
         "total_members": total_members,
         "active_members": active_members,
@@ -1425,6 +1539,7 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
         "today_schedules": today_schedules,
         "today_bookings": today_bookings,
         "capacity": capacity_info,
+        "recent_accesses_by_gym": recent_accesses_enriched if admin["role"] == "super_admin" else [],
         **access_stats
     }
 

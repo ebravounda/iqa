@@ -246,19 +246,20 @@ export default function AdminDashboard() {
               <tr>
                 <th>Socio</th>
                 <th>Código</th>
+                {isSuperAdmin && <th>Gimnasio</th>}
                 <th>Dirección</th>
                 <th>Fecha/Hora</th>
               </tr>
             </thead>
             <tbody>
-              {recentAccess.length === 0 ? (
+              {(isSuperAdmin && stats?.recent_accesses_by_gym?.length > 0 ? stats.recent_accesses_by_gym : recentAccess).length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="text-center text-zinc-500">
+                  <td colSpan={isSuperAdmin ? 5 : 4} className="text-center text-zinc-500">
                     No hay accesos registrados
                   </td>
                 </tr>
               ) : (
-                recentAccess.map((log) => (
+                (isSuperAdmin && stats?.recent_accesses_by_gym?.length > 0 ? stats.recent_accesses_by_gym : recentAccess).map((log) => (
                   <tr key={log.id}>
                     <td className="font-medium">{log.member_name || log.guest_name || '-'}</td>
                     <td>
@@ -266,6 +267,13 @@ export default function AdminDashboard() {
                         {log.member_code || log.guest_code || '-'}
                       </code>
                     </td>
+                    {isSuperAdmin && (
+                      <td>
+                        <span className="text-xs bg-blue-500/10 text-blue-400 px-2 py-1 rounded-full">
+                          {log.gym_name || '-'}
+                        </span>
+                      </td>
+                    )}
                     <td>
                       <span className={`badge ${log.direction === 'entrada' ? 'badge-success' : 'badge-primary'}`}>
                         {log.direction === 'entrada' ? 'Entrada' : 'Salida'}
