@@ -82,20 +82,18 @@ class GPIOController:
                 logger.error(f"Error inicializando GPIO: {e}")
 
     def abrir_torno(self, direccion):
-        pin = RELAY_ENTRADA if direccion == 'entrada' else RELAY_SALIDA
-        nombre = "ENTRADA" if direccion == 'entrada' else "SALIDA"
-        logger.info(f"Abriendo torno {nombre} - GPIO pin {pin}...")
+        nombre = direccion.upper()
+        logger.info(f"Abriendo tornos para {nombre}...")
         if self.initialized:
-            # Abrir AMBOS reles para diagnostico
-            logger.info(f"Activando AMBOS reles: pin {RELAY_ENTRADA} y pin {RELAY_SALIDA}")
+            # Abrir ambos reles - el servidor controla la logica de entrada/salida
             GPIO.output(RELAY_ENTRADA, GPIO.LOW)
             GPIO.output(RELAY_SALIDA, GPIO.LOW)
             time.sleep(TIEMPO_APERTURA)
             GPIO.output(RELAY_ENTRADA, GPIO.HIGH)
             GPIO.output(RELAY_SALIDA, GPIO.HIGH)
-            logger.info(f"Ambos reles cerrados OK")
+            logger.info(f"Tornos cerrados OK ({nombre})")
         else:
-            logger.info(f"[SIMULACION] Torno {nombre} pin {pin} abierto por {TIEMPO_APERTURA}s")
+            logger.info(f"[SIMULACION] Tornos abiertos por {TIEMPO_APERTURA}s ({nombre})")
             time.sleep(TIEMPO_APERTURA)
 
     def cleanup(self):

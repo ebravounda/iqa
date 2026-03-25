@@ -1117,6 +1117,7 @@ async def validate_access(validation: AccessValidation):
         return {"valid": False, "reason": "Membership expired"}
     
     # Anti-passback: prevent re-entry without exit (and vice versa)
+    # Auto-detect direction based on last access log
     last_log = await db.access_logs.find_one(
         {"member_id": member["id"], "gym_id": gym["id"], "is_guest": {"$ne": True}},
         {"_id": 0},
@@ -1124,18 +1125,23 @@ async def validate_access(validation: AccessValidation):
     )
     if last_log:
         last_direction = last_log.get("direction")
-        if last_direction == validation.direction:
-            action = "entrar" if validation.direction == "entrada" else "salir"
-            return {"valid": False, "reason": f"Ya registrado como {last_direction}. Debe {('salir' if validation.direction == 'entrada' else 'entrar')} primero"}
+        if last_direction == "entrada":
+            # Last was entry, this must be exit
+            actual_direction = "salida"
+        else:
+            actual_direction = "entrada"
+    else:
+        # First time, must be entry
+        actual_direction = "entrada"
     
-    # Log access
+    # Log access with auto-detected direction
     access_log = {
         "id": str(uuid.uuid4()),
         "member_id": member["id"],
         "member_name": member["name"],
         "member_code": member["code"],
         "gym_id": gym["id"],
-        "direction": validation.direction,
+        "direction": actual_direction,
         "timestamp": datetime.now(timezone.utc).isoformat()
     }
     await db.access_logs.insert_one(access_log)
@@ -1144,7 +1150,7 @@ async def validate_access(validation: AccessValidation):
         "valid": True,
         "member_name": member["name"],
         "member_code": member["code"],
-        "direction": validation.direction
+        "direction": actual_direction
     }
 
 @api_router.get("/access/logs")
