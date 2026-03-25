@@ -207,10 +207,15 @@ class GymAccessClient:
     def validar_qr(self, qr_code: str, direccion: str) -> Dict[str, Any]:
         """Valida un código QR con el servidor"""
         try:
+            # Limpiar datos del escáner (quitar whitespace, newlines, etc.)
+            qr_code_clean = qr_code.strip().replace('\n', '').replace('\r', '').replace('\x00', '')
+            if qr_code_clean != qr_code:
+                logger.info(f"QR limpiado: {len(qr_code)} -> {len(qr_code_clean)} chars")
+            
             response = requests.post(
                 f"{self.api_url}/access/validate",
                 json={
-                    "qr_code": qr_code,
+                    "qr_code": qr_code_clean,
                     "gym_token": self.gym_token,
                     "direction": direccion
                 },

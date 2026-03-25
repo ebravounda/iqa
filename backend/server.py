@@ -263,11 +263,26 @@ def generate_qr_data(member_id: str, gym_id: str, timestamp: int) -> str:
     signature = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:16]
     return base64.urlsafe_b64encode(f"{data}|{signature}".encode()).decode()
 
+def sanitize_qr_input(qr_code: str) -> str:
+    """Clean QR code string from scanner artifacts"""
+    # Strip whitespace, newlines, carriage returns
+    cleaned = qr_code.strip().replace('\n', '').replace('\r', '').replace(' ', '')
+    # Fix base64 padding (QR scanners often strip trailing '=')
+    padding_needed = len(cleaned) % 4
+    if padding_needed:
+        cleaned += '=' * (4 - padding_needed)
+    return cleaned
+
 def validate_qr_data(qr_code: str, max_age_seconds: int = 15) -> dict:
     """Validate QR code and return member info (supports dynamic and static)"""
     try:
+        # Sanitize the QR input first
+        qr_code = sanitize_qr_input(qr_code)
+        logger.info(f"QR validation - sanitized input length: {len(qr_code)}, first 30 chars: {qr_code[:30]}")
+        
         decoded = base64.urlsafe_b64decode(qr_code.encode()).decode()
         parts = decoded.split('|')
+        logger.info(f"QR validation - decoded parts count: {len(parts)}")
         
         # Static QR: STATIC|member_id|gym_id|signature
         if len(parts) == 4 and parts[0] == "STATIC":
@@ -275,11 +290,13 @@ def validate_qr_data(qr_code: str, max_age_seconds: int = 15) -> dict:
             data = f"STATIC|{member_id}|{gym_id}"
             expected_sig = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:16]
             if signature != expected_sig:
+                logger.warning(f"QR STATIC sig mismatch: got={signature}, expected={expected_sig}")
                 return {"valid": False, "reason": "Invalid signature"}
             return {"valid": True, "member_id": member_id, "gym_id": gym_id}
         
         # Dynamic QR: member_id|gym_id|timestamp|signature
         if len(parts) != 4:
+            logger.warning(f"QR format error: expected 4 parts, got {len(parts)}: {parts}")
             return {"valid": False, "reason": "Invalid QR format"}
         
         member_id, gym_id, timestamp_str, signature = parts
@@ -289,16 +306,19 @@ def validate_qr_data(qr_code: str, max_age_seconds: int = 15) -> dict:
         data = f"{member_id}|{gym_id}|{timestamp}"
         expected_sig = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:16]
         if signature != expected_sig:
+            logger.warning(f"QR DYNAMIC sig mismatch: got={signature}, expected={expected_sig}, data={data}")
             return {"valid": False, "reason": "Invalid signature"}
         
         # Check expiration
         now = int(datetime.now(timezone.utc).timestamp())
-        if now - timestamp > max_age_seconds:
+        age = now - timestamp
+        if age > max_age_seconds:
+            logger.info(f"QR expired: age={age}s, max={max_age_seconds}s")
             return {"valid": False, "reason": "QR expired"}
         
         return {"valid": True, "member_id": member_id, "gym_id": gym_id}
     except Exception as e:
-        logger.error(f"QR validation error: {e}")
+        logger.error(f"QR validation error: {e}, raw input (first 50): {qr_code[:50]}")
         return {"valid": False, "reason": "Invalid QR code"}
 
 # ==================== AUTH ROUTES ====================
@@ -914,9 +934,103 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
 
 # ==================== ACCESS ROUTES ====================
 
+@api_router.post("/access/debug-qr")
+async def debug_qr_validation(validation: AccessValidation):
+    """Debug endpoint - shows step-by-step QR validation without granting access"""
+    debug_info = {
+        "step_1_raw_input": {
+            "qr_code_length": len(validation.qr_code),
+            "qr_code_first_40": validation.qr_code[:40],
+            "qr_code_last_20": validation.qr_code[-20:],
+            "has_whitespace": validation.qr_code != validation.qr_code.strip(),
+            "has_newline": '\n' in validation.qr_code or '\r' in validation.qr_code,
+        }
+    }
+    
+    # Step 2: Sanitize
+    sanitized = sanitize_qr_input(validation.qr_code)
+    debug_info["step_2_sanitized"] = {
+        "length": len(sanitized),
+        "first_40": sanitized[:40],
+        "changed_from_original": sanitized != validation.qr_code,
+    }
+    
+    # Step 3: Decode
+    try:
+        decoded = base64.urlsafe_b64decode(sanitized.encode()).decode()
+        parts = decoded.split('|')
+        debug_info["step_3_decode"] = {
+            "success": True,
+            "decoded_content": decoded,
+            "parts_count": len(parts),
+            "parts": parts,
+        }
+    except Exception as e:
+        debug_info["step_3_decode"] = {"success": False, "error": str(e)}
+        return debug_info
+    
+    # Step 4: Signature check
+    if len(parts) == 4:
+        if parts[0] == "STATIC":
+            data = f"STATIC|{parts[1]}|{parts[2]}"
+        else:
+            data = f"{parts[0]}|{parts[1]}|{parts[2]}"
+        expected_sig = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:16]
+        debug_info["step_4_signature"] = {
+            "data_for_hmac": data,
+            "received_signature": parts[3],
+            "expected_signature": expected_sig,
+            "match": parts[3] == expected_sig,
+            "qr_secret_first_4": QR_SECRET[:4] + "...",
+        }
+    
+    # Step 5: Gym token check
+    gym = await db.gyms.find_one({"api_token": validation.gym_token}, {"_id": 0})
+    debug_info["step_5_gym"] = {
+        "gym_found": gym is not None,
+        "gym_name": gym.get("name") if gym else None,
+    }
+    
+    return debug_info
+
+@api_router.get("/access/self-test")
+async def access_self_test():
+    """Self-test: generates a QR and immediately validates it. Use to verify QR_SECRET is consistent."""
+    test_member_id = "self-test-member"
+    test_gym_id = "self-test-gym"
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    
+    # Generate
+    qr_code = generate_qr_data(test_member_id, test_gym_id, timestamp)
+    
+    # Validate
+    result = validate_qr_data(qr_code, max_age_seconds=60)
+    
+    # Also test static
+    static_qr = generate_static_qr_data(test_member_id, test_gym_id)
+    static_result = validate_qr_data(static_qr, max_age_seconds=9999999)
+    
+    # Test with simulated scanner corruptions
+    corrupted_tests = {
+        "trailing_newline": validate_qr_data(qr_code + "\n", max_age_seconds=60),
+        "trailing_spaces": validate_qr_data(qr_code + "  ", max_age_seconds=60),
+        "stripped_padding": validate_qr_data(qr_code.rstrip("="), max_age_seconds=60),
+    }
+    
+    return {
+        "qr_secret_loaded": QR_SECRET[:4] + "..." + QR_SECRET[-4:],
+        "qr_secret_length": len(QR_SECRET),
+        "dynamic_qr_test": {"qr_code_preview": qr_code[:40], "valid": result.get("valid"), "details": result},
+        "static_qr_test": {"valid": static_result.get("valid"), "details": static_result},
+        "corruption_tests": corrupted_tests,
+        "all_passed": result.get("valid") and static_result.get("valid") and all(t.get("valid") for t in corrupted_tests.values())
+    }
+
 @api_router.post("/access/validate")
 async def validate_access(validation: AccessValidation):
     """Validate QR code from Raspberry Pi (supports members and guests)"""
+    logger.info(f"Access validate - raw qr_code length: {len(validation.qr_code)}, direction: {validation.direction}")
+    
     # Verify gym token
     gym = await db.gyms.find_one({"api_token": validation.gym_token}, {"_id": 0})
     if not gym:
@@ -1514,8 +1628,8 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
     capacity_info = None
     if gym_id:
         gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0, "max_members": 1})
-        max_members = gym.get("max_members", 0) if gym else 0
-        if max_members > 0:
+        max_members = gym.get("max_members") if gym else None
+        if max_members and max_members > 0:
             capacity_info = {
                 "max_members": max_members,
                 "active_members": active_members,
