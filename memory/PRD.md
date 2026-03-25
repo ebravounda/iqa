@@ -1,64 +1,60 @@
-# GymAccess - PRD
+# GymAccess - PRD (Product Requirements Document)
 
-## Última actualización: 25/03/2026
+## Problema Original
+Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámicos, pagos Stripe, roles multi-nivel, y control físico via Raspberry Pi.
 
-## Problem Statement
-Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinámico/estático, pagos Stripe + efectivo + tarjeta, módulo kiosko, contabilidad con PDF, plantillas de email editables, check-in de asistencia, y control de tornos con Raspberry Pi.
+## Arquitectura
+- **Backend**: FastAPI (Python) - `/app/backend/server.py`
+- **Frontend**: React + Tailwind + Shadcn UI
+- **Database**: MongoDB (Docker con auth)
+- **Hardware**: Raspberry Pi 3B+ con lectores QR USB (evdev) y relés GPIO
 
-## Todas las Funcionalidades Implementadas
+## Funcionalidades Implementadas
 
 ### Core
-- Panel Admin completo con 14 módulos en sidebar
-- PWA responsive para socios
-- Roles: super_admin, gym_admin, gym_manager, trainer
-- JWT Authentication + Impersonación
-- Raspberry Pi con GPIO para tornos
+- JWT Authentication (Admin + Member)
+- Multi-tenancy (Super Admin gym_id=null, Gym Admin gym_id=UUID)
+- QR dinámicos con firma HMAC + sanitización
+- Anti-passback (auto-detección dirección entrada/salida)
+- Raspberry Pi con calibración USB persistente (scanner_map.json)
+- GPIO pins: 12 (entrada), 16 (salida)
 
-### SaaS Multi-tenant
-- Stripe por gym, SMTP por gym, plantillas email por gym
-- Auto-creación de gym admin
-- Impersonación de gym
+### Módulos
+- Gestión de Gyms (CRUD, suspender, eliminar, max_members)
+- Gestión de Miembros (CRUD, suspender con razón, eliminar)
+- Planes y Membresías
+- Dispositivos (solo super_admin)
+- Kiosko (registro público)
+- Contabilidad (dashboard + PDF export)
+- Pagos Manuales
+- Plantillas de Email
+- Clases y Reservas
+- Notificaciones in-app
+- Guest Passes
 
-### QR y Accesos
-- QR Dinámico/Estático (configurable por gym)
-- Exportación a Excel (XLSX)
-- Logs detallados con gráficos
+### Seguridad
+- Dispositivos solo visibles/gestionables por super_admin
+- Anti-passback: no se puede entrar dos veces sin salir
+- QR con tolerancia de 5 minutos
+- MongoDB con autenticación + backup diario
 
-### Módulo Kiosko
-- Página `/kiosk/{gymId}` optimizada para tablets
-- Registro presencial, envío de email con código
-- Auto-reset de pantalla tras 30 segundos
+## Deployment
+- **Servidor**: Plesk (gymapi.ticketpro.es / gym.ticketpro.es)
+- **Backend**: systemd service `gymaccess-api`
+- **Frontend**: Build estático en /httpdocs/
+- **DB**: MongoDB Docker con auth en localhost:27017
+- **Pi**: systemd service `gymaccess` en /home/pi/gymaccess/
 
-### Contabilidad
-- Dashboard financiero con gráficos por día y método de pago
-- Filtros rápidos (7d, semana, mes, todo) + rango fechas
-- Export a PDF con ReportLab
-- Tabla de transacciones detallada
+## Tareas Pendientes
+### P1
+- Cron job para auto-suspender membresías vencidas
+- Módulo de facturación SaaS (super admin cobra a gyms)
+- Protección contra eliminación de dispositivos activos
 
-### Pagos Manuales
-- Efectivo y tarjeta en recepción desde panel admin
-- Modal en vista de Socios con selector de plan y método
-- Activa membresía y reactiva socios suspendidos
-
-### Plantillas Email
-- 6 plantillas editables por gym (bienvenida, vencimiento, pago)
-- Variables dinámicas ({gym_name}, {member_name}, {member_code}, etc.)
-- Panel de referencia de variables
-
-### Check-in de Asistencia
-- Página `/admin/attendance` para registrar asistencia
-- Botones check-in/anular por reserva
-- Barra de progreso
-
-## Credenciales
-- Super Admin: admin@gymaccess.com / admin123
-- Gym Admin FitZone: admin@fitzone.com / admin123
-
-## Backlog
 ### P2
-- Módulo Kiosko: aceptar pagos directos
-- Planes SaaS con tiers para gimnasios
+- Reportes PDF avanzados
 - Push notifications (Firebase)
+- Dashboards específicos para Trainer
 
 ### P3
-- Reportes PDF avanzados, App nativa, Wearables, Gamificación
+- App nativa, Wearables, Gamificación
