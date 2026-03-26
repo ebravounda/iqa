@@ -299,6 +299,9 @@ export const uploadAvatarAdmin = (memberId, file) => {
   return axios.post(`${API}/upload/avatar/admin/${memberId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 };
 
+// QR Mode
+export const setMemberQRMode = (memberId, mode) => axios.put(`${API}/members/${memberId}/qr-mode`, { qr_mode: mode });
+
 // Sales Report PDF
 export const downloadSalesReportPDF = (gymId, period, dateFrom, dateTo) => {
   const params = new URLSearchParams();
