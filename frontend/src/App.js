@@ -33,6 +33,10 @@ import AdminSchedules from "./pages/admin/AdminSchedules";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminNotifications from "./pages/admin/AdminNotifications";
 import AdminGuests from "./pages/admin/AdminGuests";
+import AdminSaaSPlans from "./pages/admin/AdminSaaSPlans";
+import AdminPOS from "./pages/admin/AdminPOS";
+import AdminIframes from "./pages/admin/AdminIframes";
+import AdminBroadcast from "./pages/admin/AdminBroadcast";
 
 // PWA Pages
 import MemberLogin from "./pages/pwa/MemberLogin";
@@ -159,6 +163,10 @@ function AppRoutes() {
       <Route path="/admin/devices" element={<AdminRoute><AdminDevices /></AdminRoute>} />
       <Route path="/admin/templates" element={<AdminRoute><AdminTemplates /></AdminRoute>} />
       <Route path="/admin/settings" element={<AdminRoute><AdminSettings /></AdminRoute>} />
+      <Route path="/admin/saas-plans" element={<AdminRoute><AdminSaaSPlans /></AdminRoute>} />
+      <Route path="/admin/pos" element={<AdminRoute><AdminPOS /></AdminRoute>} />
+      <Route path="/admin/iframes" element={<AdminRoute><AdminIframes /></AdminRoute>} />
+      <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
       
       {/* PWA/Member Routes */}
       <Route path="/app/login" element={<MemberLogin />} />

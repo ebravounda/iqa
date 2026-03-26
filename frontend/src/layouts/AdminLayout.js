@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Users, CreditCard, Building2, UserCog, Settings, 
   Calendar, Clock, Bell, Shield, QrCode, Menu, X, ChevronLeft,
-  LogOut, Smartphone, UserCheck, DollarSign, Mail
+  LogOut, Smartphone, UserCheck, DollarSign, Mail, ShoppingCart,
+  Layers, Code, Megaphone
 } from 'lucide-react';
 
 const getNavItems = (role, isImpersonating) => {
@@ -15,17 +16,21 @@ const getNavItems = (role, isImpersonating) => {
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
     { path: '/admin/members', icon: Users, label: 'Socios', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/plans', icon: CreditCard, label: 'Planes', roles: ['super_admin', 'gym_admin'] },
+    { path: '/admin/pos', icon: ShoppingCart, label: 'TPV/POS', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/classes', icon: Calendar, label: 'Clases', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/attendance', icon: UserCheck, label: 'Asistencia', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
     { path: '/admin/schedules', icon: Clock, label: 'Horarios', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
     { path: '/admin/access', icon: Shield, label: 'Accesos', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/accounting', icon: DollarSign, label: 'Contabilidad', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/staff', icon: UserCog, label: 'Personal', roles: ['super_admin', 'gym_admin'] },
+    { path: '/admin/iframes', icon: Code, label: 'Iframes', roles: ['gym_admin'] },
     { path: '/admin/devices', icon: Smartphone, label: 'Dispositivos', roles: ['super_admin'] },
     { path: '/admin/templates', icon: Mail, label: 'Plantillas Email', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/notifications', icon: Bell, label: 'Notificaciones', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+    { path: '/admin/broadcast', icon: Megaphone, label: 'Comunicados', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/gyms', icon: Building2, label: 'Gimnasios', roles: ['super_admin'] },
-    { path: '/admin/settings', icon: Settings, label: 'Configuración', roles: ['super_admin', 'gym_admin'] },
+    { path: '/admin/saas-plans', icon: Layers, label: 'Planes SaaS', roles: ['super_admin'] },
+    { path: '/admin/settings', icon: Settings, label: 'Configuracion', roles: ['super_admin', 'gym_admin'] },
   ];
 
   return items.filter(item => item.roles.includes(effectiveRole));

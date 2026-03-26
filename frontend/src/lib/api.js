@@ -115,3 +115,134 @@ export const gymHasPayments = (gymId) => axios.get(`${API}/gyms/${gymId}/has-pay
 
 // Validation (for Raspberry Pi - no auth needed)
 export const validateAccess = (data) => axios.post(`${API}/access/validate`, data);
+
+// Manual Payments
+export const createManualPayment = (data) => axios.post(`${API}/payments/manual`, data);
+
+// Classes
+export const getClasses = (gymId) => {
+  let url = `${API}/classes`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const createClass = (data) => axios.post(`${API}/classes`, data);
+export const deleteClass = (id) => axios.delete(`${API}/classes/${id}`);
+
+// Schedules
+export const getSchedules = (gymId, dateFrom, dateTo) => {
+  let url = `${API}/schedules`;
+  const params = new URLSearchParams();
+  if (gymId) params.append('gym_id', gymId);
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) params.append('date_to', dateTo);
+  if (params.toString()) url += `?${params.toString()}`;
+  return axios.get(url);
+};
+export const createSchedule = (data) => axios.post(`${API}/schedules`, data);
+export const cancelSchedule = (id) => axios.put(`${API}/schedules/${id}/cancel`);
+
+// Bookings
+export const getBookings = (gymId, scheduleId) => {
+  let url = `${API}/bookings`;
+  const params = new URLSearchParams();
+  if (gymId) params.append('gym_id', gymId);
+  if (scheduleId) params.append('schedule_id', scheduleId);
+  if (params.toString()) url += `?${params.toString()}`;
+  return axios.get(url);
+};
+
+// Trainers
+export const getTrainers = (gymId) => {
+  let url = `${API}/trainers`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const createTrainer = (data) => axios.post(`${API}/trainers`, data);
+
+// Staff
+export const getStaff = (gymId) => {
+  let url = `${API}/staff`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const createStaff = (data) => axios.post(`${API}/staff`, data);
+
+// Notifications
+export const getNotifications = (gymId) => {
+  let url = `${API}/notifications`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const createNotification = (data) => axios.post(`${API}/notifications`, data);
+export const deleteNotification = (id) => axios.delete(`${API}/notifications/${id}`);
+
+// Guests  
+export const getAllGuests = (gymId) => {
+  let url = `${API}/guests`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+
+// Accounting
+export const getAccountingReport = (gymId, dateFrom, dateTo) => {
+  let url = `${API}/accounting/report`;
+  const params = new URLSearchParams();
+  if (gymId) params.append('gym_id', gymId);
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) params.append('date_to', dateTo);
+  if (params.toString()) url += `?${params.toString()}`;
+  return axios.get(url);
+};
+export const createCashWithdrawal = (data) => axios.post(`${API}/accounting/withdrawal`, data);
+export const getCashWithdrawals = (gymId) => {
+  let url = `${API}/accounting/withdrawals`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const pruneOldRecords = (months = 6) => axios.delete(`${API}/accounting/prune?months=${months}`);
+
+// SaaS Plans
+export const getSaaSPlans = () => axios.get(`${API}/saas/plans`);
+export const createSaaSPlan = (data) => axios.post(`${API}/saas/plans`, data);
+export const updateSaaSPlan = (id, data) => axios.put(`${API}/saas/plans/${id}`, data);
+export const deleteSaaSPlan = (id) => axios.delete(`${API}/saas/plans/${id}`);
+export const assignSaaSPlan = (gymId, planId) => axios.put(`${API}/gyms/${gymId}/saas-plan`, { saas_plan_id: planId });
+export const getGymSaaSFeatures = (gymId) => axios.get(`${API}/gyms/${gymId}/saas-features`);
+
+// Broadcasts
+export const createBroadcast = (data) => axios.post(`${API}/broadcast`, data);
+export const getActiveBroadcasts = () => axios.get(`${API}/broadcast/active`);
+export const dismissBroadcast = (id) => axios.post(`${API}/broadcast/${id}/dismiss`);
+
+// POS
+export const getPOSProducts = (gymId) => {
+  let url = `${API}/pos/products`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const createPOSProduct = (data) => axios.post(`${API}/pos/products`, data);
+export const updatePOSProduct = (id, data) => axios.put(`${API}/pos/products/${id}`, data);
+export const deletePOSProduct = (id) => axios.delete(`${API}/pos/products/${id}`);
+export const createPOSSale = (data) => axios.post(`${API}/pos/sales`, data);
+export const getPOSSales = (gymId, dateFrom, dateTo) => {
+  let url = `${API}/pos/sales`;
+  const params = new URLSearchParams();
+  if (gymId) params.append('gym_id', gymId);
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) params.append('date_to', dateTo);
+  if (params.toString()) url += `?${params.toString()}`;
+  return axios.get(url);
+};
+export const getPOSStats = (gymId) => {
+  let url = `${API}/pos/stats`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+
+// MercadoPago
+export const getMercadoPagoConfig = (gymId) => axios.get(`${API}/gyms/${gymId}/mercadopago-config`);
+export const updateMercadoPagoConfig = (gymId, data) => axios.put(`${API}/gyms/${gymId}/mercadopago-config`, data);
+export const createMPPreference = (planId) => axios.post(`${API}/mercadopago/create-preference?plan_id=${planId}`);
+
+// Gym Public Info
+export const getGymPublicInfo = (gymId) => axios.get(`${API}/gyms/${gymId}/public-info`);

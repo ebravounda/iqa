@@ -1,0 +1,288 @@
+from fastapi import APIRouter, HTTPException, Depends
+from fastapi.security import HTTPAuthorizationCredentials
+from datetime import datetime, timezone, timedelta
+from typing import Optional
+import uuid
+import logging
+
+from database import db
+from auth import security, decode_jwt_token, get_current_admin
+from models import AccessValidation
+from qr_utils import (
+    generate_qr_data, generate_static_qr_data, validate_qr_data, 
+    sanitize_qr_input, QR_SECRET
+)
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/api")
+
+@router.get("/qr/generate")
+async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    gym_id = payload.get("gym_id")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    qr_mode = gym.get("qr_mode", "dynamic") if gym else "dynamic"
+    refresh_seconds = gym.get("qr_refresh_seconds", 10) if gym else 10
+    if qr_mode == "static":
+        qr_data = generate_static_qr_data(member_id, gym_id)
+        return {"qr_code": qr_data, "expires_at": 0, "refresh_seconds": 0, "qr_mode": "static"}
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    qr_data = generate_qr_data(member_id, gym_id, timestamp)
+    return {"qr_code": qr_data, "expires_at": timestamp + refresh_seconds, "refresh_seconds": refresh_seconds, "qr_mode": "dynamic"}
+
+@router.post("/access/debug-qr")
+async def debug_qr_validation(validation: AccessValidation):
+    import base64, hmac, hashlib
+    debug_info = {
+        "step_1_raw_input": {
+            "qr_code_length": len(validation.qr_code),
+            "qr_code_first_40": validation.qr_code[:40],
+            "qr_code_last_20": validation.qr_code[-20:],
+            "has_whitespace": validation.qr_code != validation.qr_code.strip(),
+            "has_newline": '\n' in validation.qr_code or '\r' in validation.qr_code,
+        }
+    }
+    sanitized = sanitize_qr_input(validation.qr_code)
+    debug_info["step_2_sanitized"] = {"length": len(sanitized), "first_40": sanitized[:40], "changed_from_original": sanitized != validation.qr_code}
+    try:
+        decoded = base64.urlsafe_b64decode(sanitized.encode()).decode()
+        parts = decoded.split('|')
+        debug_info["step_3_decode"] = {"success": True, "decoded_content": decoded, "parts_count": len(parts), "parts": parts}
+    except Exception as e:
+        debug_info["step_3_decode"] = {"success": False, "error": str(e)}
+        return debug_info
+    if len(parts) == 4:
+        if parts[0] == "STATIC":
+            data = f"STATIC|{parts[1]}|{parts[2]}"
+        else:
+            data = f"{parts[0]}|{parts[1]}|{parts[2]}"
+        expected_sig = hmac.new(QR_SECRET.encode(), data.encode(), hashlib.sha256).hexdigest()[:16]
+        debug_info["step_4_signature"] = {
+            "data_for_hmac": data, "received_signature": parts[3],
+            "expected_signature": expected_sig, "match": parts[3] == expected_sig,
+            "qr_secret_first_4": QR_SECRET[:4] + "...",
+        }
+    gym = await db.gyms.find_one({"api_token": validation.gym_token}, {"_id": 0})
+    debug_info["step_5_gym"] = {"gym_found": gym is not None, "gym_name": gym.get("name") if gym else None}
+    return debug_info
+
+@router.get("/access/self-test")
+async def access_self_test():
+    test_member_id = "self-test-member"
+    test_gym_id = "self-test-gym"
+    timestamp = int(datetime.now(timezone.utc).timestamp())
+    qr_code = generate_qr_data(test_member_id, test_gym_id, timestamp)
+    result = validate_qr_data(qr_code, max_age_seconds=60)
+    static_qr = generate_static_qr_data(test_member_id, test_gym_id)
+    static_result = validate_qr_data(static_qr, max_age_seconds=9999999)
+    corrupted_tests = {
+        "trailing_newline": validate_qr_data(qr_code + "\n", max_age_seconds=60),
+        "trailing_spaces": validate_qr_data(qr_code + "  ", max_age_seconds=60),
+        "stripped_padding": validate_qr_data(qr_code.rstrip("="), max_age_seconds=60),
+    }
+    return {
+        "qr_secret_loaded": QR_SECRET[:4] + "..." + QR_SECRET[-4:],
+        "qr_secret_length": len(QR_SECRET),
+        "dynamic_qr_test": {"qr_code_preview": qr_code[:40], "valid": result.get("valid"), "details": result},
+        "static_qr_test": {"valid": static_result.get("valid"), "details": static_result},
+        "corruption_tests": corrupted_tests,
+        "all_passed": result.get("valid") and static_result.get("valid") and all(t.get("valid") for t in corrupted_tests.values())
+    }
+
+@router.post("/access/validate")
+async def validate_access(validation: AccessValidation):
+    logger.info(f"Access validate - raw qr_code length: {len(validation.qr_code)}, direction: {validation.direction}")
+    gym = await db.gyms.find_one({"api_token": validation.gym_token}, {"_id": 0})
+    if not gym:
+        return {"valid": False, "reason": "Invalid gym token"}
+    max_age = max(gym.get("qr_refresh_seconds", 10) + 5, 300)
+    result = validate_qr_data(validation.qr_code, max_age)
+    if not result["valid"]:
+        return result
+    if result["gym_id"] != gym["id"]:
+        return {"valid": False, "reason": "QR code not for this gym"}
+    member_id = result["member_id"]
+    # Guest QR
+    if member_id.startswith("GUEST:"):
+        guest_id = member_id.replace("GUEST:", "")
+        guest = await db.guests.find_one({"id": guest_id}, {"_id": 0})
+        if not guest:
+            return {"valid": False, "reason": "Guest not found"}
+        valid_until = datetime.fromisoformat(guest["valid_until"].replace('Z', '+00:00'))
+        if valid_until < datetime.now(timezone.utc):
+            await db.guests.update_one({"id": guest_id}, {"$set": {"status": "expired"}})
+            return {"valid": False, "reason": "Guest pass expired"}
+        if guest["status"] != "active":
+            return {"valid": False, "reason": f"Guest pass is {guest['status']}"}
+        access_log = {
+            "id": str(uuid.uuid4()), "guest_id": guest_id, "guest_name": guest["name"],
+            "guest_code": guest["code"], "invited_by": guest["invited_by"],
+            "invited_by_name": guest["invited_by_name"], "gym_id": gym["id"],
+            "direction": validation.direction, "is_guest": True,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await db.access_logs.insert_one(access_log)
+        await db.guests.update_one({"id": guest_id}, {"$inc": {"accesses": 1}})
+        return {"valid": True, "is_guest": True, "guest_name": guest["name"],
+                "guest_code": guest["code"], "invited_by": guest["invited_by_name"],
+                "direction": validation.direction}
+    # Regular member
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        return {"valid": False, "reason": "Member not found"}
+    if member["status"] != "active":
+        return {"valid": False, "reason": f"Member status: {member['status']}"}
+    membership = await db.memberships.find_one({"member_id": member["id"], "status": "active"}, {"_id": 0})
+    if not membership:
+        return {"valid": False, "reason": "No active membership"}
+    end_date = datetime.fromisoformat(membership["end_date"].replace('Z', '+00:00'))
+    if end_date < datetime.now(timezone.utc):
+        await db.memberships.update_one({"id": membership["id"]}, {"$set": {"status": "expired"}})
+        return {"valid": False, "reason": "Membership expired"}
+    # Anti-passback
+    last_log = await db.access_logs.find_one(
+        {"member_id": member["id"], "gym_id": gym["id"], "is_guest": {"$ne": True}},
+        {"_id": 0}, sort=[("timestamp", -1)]
+    )
+    if last_log:
+        actual_direction = "salida" if last_log.get("direction") == "entrada" else "entrada"
+    else:
+        actual_direction = "entrada"
+    access_log = {
+        "id": str(uuid.uuid4()), "member_id": member["id"], "member_name": member["name"],
+        "member_code": member["code"], "gym_id": gym["id"],
+        "direction": actual_direction, "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    await db.access_logs.insert_one(access_log)
+    return {"valid": True, "member_name": member["name"], "member_code": member["code"], "direction": actual_direction}
+
+@router.get("/access/logs")
+async def get_access_logs(
+    gym_id: Optional[str] = None, member_id: Optional[str] = None,
+    date_from: Optional[str] = None, date_to: Optional[str] = None,
+    limit: int = 100, admin: dict = Depends(get_current_admin)
+):
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    if member_id:
+        query["member_id"] = member_id
+    if date_from:
+        query["timestamp"] = {"$gte": date_from}
+    if date_to:
+        if "timestamp" in query:
+            query["timestamp"]["$lte"] = date_to
+        else:
+            query["timestamp"] = {"$lte": date_to}
+    logs = await db.access_logs.find(query, {"_id": 0}).sort("timestamp", -1).to_list(limit)
+    return logs
+
+@router.get("/access/logs/member")
+async def get_member_access_logs(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    logs = await db.access_logs.find({"member_id": member_id}, {"_id": 0}).sort("timestamp", -1).to_list(50)
+    return logs
+
+@router.get("/access/stats")
+async def get_access_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_count = await db.access_logs.count_documents({**query, "timestamp": {"$gte": today_start.isoformat()}})
+    week_start = today_start - timedelta(days=today_start.weekday())
+    week_count = await db.access_logs.count_documents({**query, "timestamp": {"$gte": week_start.isoformat()}})
+    month_start = today_start.replace(day=1)
+    month_count = await db.access_logs.count_documents({**query, "timestamp": {"$gte": month_start.isoformat()}})
+    member_query = {"status": "active"}
+    if admin["role"] != "super_admin":
+        member_query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        member_query["gym_id"] = gym_id
+    active_members = await db.members.count_documents(member_query)
+    membership_query = {"status": "active"}
+    if admin["role"] != "super_admin":
+        membership_query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        membership_query["gym_id"] = gym_id
+    active_memberships = await db.memberships.count_documents(membership_query)
+    return {
+        "today_accesses": today_count, "week_accesses": week_count,
+        "month_accesses": month_count, "active_members": active_members,
+        "active_memberships": active_memberships
+    }
+
+@router.get("/access/stats/daily")
+async def get_daily_access_stats(gym_id: Optional[str] = None, days: int = 7, admin: dict = Depends(get_current_admin)):
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    today = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
+    start_date = (today - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    day_names_es = ['Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab', 'Dom']
+    daily_data = []
+    for i in range(days):
+        day = start_date + timedelta(days=i)
+        day_end = day.replace(hour=23, minute=59, second=59)
+        day_query = {**query, "timestamp": {"$gte": day.isoformat(), "$lte": day_end.isoformat()}}
+        count = await db.access_logs.count_documents(day_query)
+        entry_query = {**day_query, "direction": "entrada"}
+        entries = await db.access_logs.count_documents(entry_query)
+        daily_data.append({"date": day.strftime("%Y-%m-%d"), "day_name": day_names_es[day.weekday()], "accesos": count, "entradas": entries})
+    return daily_data
+
+@router.get("/access/stats/member/{member_id}")
+async def get_member_access_stats(member_id: str, days: int = 30, admin: dict = Depends(get_current_admin)):
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    today = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59)
+    start_date = (today - timedelta(days=days - 1)).replace(hour=0, minute=0, second=0, microsecond=0)
+    logs = await db.access_logs.find(
+        {"member_id": member_id, "timestamp": {"$gte": start_date.isoformat()}}, {"_id": 0}
+    ).sort("timestamp", -1).to_list(1000)
+    daily = {}
+    for log in logs:
+        day = log["timestamp"][:10]
+        if day not in daily:
+            daily[day] = {"entradas": 0, "salidas": 0}
+        if log.get("direction") == "entrada":
+            daily[day]["entradas"] += 1
+        else:
+            daily[day]["salidas"] += 1
+    total_entries = sum(d["entradas"] for d in daily.values())
+    days_attended = len(daily)
+    return {
+        "member": {"id": member["id"], "name": member["name"], "code": member["code"]},
+        "total_entries": total_entries, "days_attended": days_attended, "period_days": days,
+        "attendance_rate": round((days_attended / days * 100), 1) if days > 0 else 0,
+        "daily_breakdown": [{"date": k, **v} for k, v in sorted(daily.items())],
+        "recent_logs": logs[:20]
+    }
+
+@router.get("/access/stats/hourly")
+async def get_hourly_access_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    query["timestamp"] = {"$gte": today_start.isoformat()}
+    logs = await db.access_logs.find(query, {"_id": 0, "timestamp": 1}).to_list(10000)
+    hourly = {f"{h:02d}:00": 0 for h in range(24)}
+    for log in logs:
+        try:
+            hour = log["timestamp"][11:13]
+            hourly[f"{hour}:00"] = hourly.get(f"{hour}:00", 0) + 1
+        except (IndexError, KeyError):
+            pass
+    return [{"hour": k, "accesos": v} for k, v in hourly.items()]

@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getGym, updateGym, getStripeConfig, updateStripeConfig } from '../../lib/api';
+import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig } from '../../lib/api';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2 } from 'lucide-react';
+import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminSettings() {
@@ -44,10 +44,20 @@ export default function AdminSettings() {
   const [testingEmail, setTestingEmail] = useState(false);
   const [showSmtpPassword, setShowSmtpPassword] = useState(false);
 
+  // MercadoPago config
+  const [mpData, setMpData] = useState({ mercadopago_access_token: '' });
+  const [mpStatus, setMpStatus] = useState({ has_mercadopago: false, masked_token: '' });
+  const [showMpKey, setShowMpKey] = useState(false);
+  const [savingMp, setSavingMp] = useState(false);
+
+  // Currency
+  const [gymCurrency, setGymCurrency] = useState('EUR');
+
   useEffect(() => {
     if (admin?.gym_id) {
       fetchGym();
       fetchStripeConfig();
+      fetchMpConfig();
     } else {
       setLoading(false);
     }
@@ -74,6 +84,7 @@ export default function AdminSettings() {
         smtp_password: response.data.smtp_password || '',
         smtp_from_email: response.data.smtp_from_email || ''
       });
+      setGymCurrency(response.data.currency || 'EUR');
     } catch (error) {
       toast.error('Error al cargar configuración');
     } finally {
@@ -89,6 +100,40 @@ export default function AdminSettings() {
     } catch (error) {
       console.error('Error fetching stripe config:', error);
     }
+  };
+
+  const fetchMpConfig = async () => {
+    try {
+      const response = await getMercadoPagoConfig(admin.gym_id);
+      setMpStatus(response.data);
+    } catch (error) {
+      console.error('Error fetching MP config:', error);
+    }
+  };
+
+  const handleSaveMp = async () => {
+    if (!mpData.mercadopago_access_token && !mpStatus.has_mercadopago) {
+      toast.error('Ingresa tu Access Token de MercadoPago');
+      return;
+    }
+    setSavingMp(true);
+    try {
+      const payload = {};
+      if (mpData.mercadopago_access_token) payload.mercadopago_access_token = mpData.mercadopago_access_token;
+      await updateMercadoPagoConfig(admin.gym_id, payload);
+      toast.success('Configuracion de MercadoPago guardada');
+      setMpData({ mercadopago_access_token: '' });
+      fetchMpConfig();
+    } catch (error) {
+      toast.error('Error al guardar MercadoPago');
+    } finally { setSavingMp(false); }
+  };
+
+  const handleSaveCurrency = async () => {
+    try {
+      await updateGym(admin.gym_id, { currency: gymCurrency });
+      toast.success('Moneda actualizada');
+    } catch (error) { toast.error('Error al guardar moneda'); }
   };
 
   const handleSave = async () => {
@@ -244,6 +289,82 @@ export default function AdminSettings() {
           <Button onClick={handleSaveStripe} disabled={savingStripe} className="btn-gym-primary" data-testid="save-stripe-btn">
             <CreditCard size={18} className="mr-2" />
             {savingStripe ? 'Guardando...' : 'Guardar Configuración de Pagos'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Currency Configuration */}
+      <div className="stat-card border-2 border-zinc-700/50">
+        <div className="flex items-center gap-2 mb-6">
+          <Globe size={20} className="text-emerald-400" />
+          <h3 className="font-bold text-lg">Moneda del Gimnasio</h3>
+        </div>
+        <div className="flex items-center gap-4">
+          <Select value={gymCurrency} onValueChange={setGymCurrency}>
+            <SelectTrigger className="w-[250px] bg-zinc-800 border-zinc-700" data-testid="gym-currency-select">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectItem value="EUR">EUR - Euro</SelectItem>
+              <SelectItem value="USD">USD - Dolar US</SelectItem>
+              <SelectItem value="CLP">CLP - Peso Chileno (sin decimales)</SelectItem>
+              <SelectItem value="ARS">ARS - Peso Argentino</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={handleSaveCurrency} className="btn-gym-primary" data-testid="save-currency-btn">
+            <Save size={16} className="mr-2" /> Guardar
+          </Button>
+        </div>
+        <p className="text-xs text-zinc-500 mt-2">La moneda afecta a todos los precios, pagos y reportes del gimnasio.</p>
+      </div>
+
+      {/* MercadoPago Configuration */}
+      <div className="stat-card border-2 border-zinc-700/50">
+        <div className="flex items-center gap-2 mb-6">
+          <CreditCard size={20} className="text-sky-400" />
+          <h3 className="font-bold text-lg">MercadoPago</h3>
+          <span className="text-xs bg-sky-900/30 text-sky-400 px-2 py-0.5 rounded ml-2">Solo CLP</span>
+        </div>
+        <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-zinc-800/50">
+          {mpStatus.has_mercadopago ? (
+            <>
+              <CheckCircle size={20} className="text-emerald-500 shrink-0" />
+              <div>
+                <p className="font-medium text-emerald-400">MercadoPago Configurado</p>
+                <p className="text-xs text-zinc-500">Token: {mpStatus.masked_token}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+              <div>
+                <p className="font-medium text-amber-400">MercadoPago No Configurado</p>
+                <p className="text-xs text-zinc-500">Disponible para gimnasios con moneda CLP</p>
+              </div>
+            </>
+          )}
+        </div>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-zinc-400 mb-2 block">Access Token {mpStatus.has_mercadopago && '(dejar vacio para mantener)'}</label>
+            <div className="relative">
+              <Input
+                type={showMpKey ? 'text' : 'password'}
+                value={mpData.mercadopago_access_token}
+                onChange={(e) => setMpData({ mercadopago_access_token: e.target.value })}
+                placeholder={mpStatus.has_mercadopago ? 'Token actual guardado' : 'APP_USR-...'}
+                className="input-dark pr-10"
+                data-testid="mp-token-input"
+              />
+              <button type="button" onClick={() => setShowMpKey(!showMpKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+                {showMpKey ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500 mt-1">Obten tu Access Token en <a href="https://www.mercadopago.cl/developers/panel" target="_blank" rel="noopener noreferrer" className="text-sky-400 hover:underline">mercadopago.cl/developers</a></p>
+          </div>
+          <Button onClick={handleSaveMp} disabled={savingMp} className="btn-gym-primary" data-testid="save-mp-btn">
+            <CreditCard size={18} className="mr-2" />
+            {savingMp ? 'Guardando...' : 'Guardar MercadoPago'}
           </Button>
         </div>
       </div>
