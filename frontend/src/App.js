@@ -40,6 +40,7 @@ import AdminBroadcast from "./pages/admin/AdminBroadcast";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminForms from "./pages/admin/AdminForms";
 import AdminData from "./pages/admin/AdminData";
+import TrainerDashboard from "./pages/admin/TrainerDashboard";
 
 // PWA Pages
 import MemberLogin from "./pages/pwa/MemberLogin";
@@ -53,6 +54,13 @@ import MemberNotifications from "./pages/pwa/MemberNotifications";
 import MemberGuests from "./pages/pwa/MemberGuests";
 import PaymentSuccess from "./pages/pwa/PaymentSuccess";
 import PublicRegister from "./pages/pwa/PublicRegister";
+
+// Smart Dashboard: shows TrainerDashboard for trainers, AdminDashboard for others
+const SmartDashboard = () => {
+  const { admin } = useAuth();
+  if (admin?.role === 'trainer') return <TrainerDashboard />;
+  return <AdminDashboard />;
+};
 
 // Protected Route Components
 const AdminRoute = ({ children }) => {
@@ -152,7 +160,7 @@ function AppRoutes() {
       
       {/* Admin Routes */}
       <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+      <Route path="/admin" element={<AdminRoute><SmartDashboard /></AdminRoute>} />
       <Route path="/admin/gyms" element={<AdminRoute><AdminGyms /></AdminRoute>} />
       <Route path="/admin/members" element={<AdminRoute><AdminMembers /></AdminRoute>} />
       <Route path="/admin/plans" element={<AdminRoute><AdminPlans /></AdminRoute>} />

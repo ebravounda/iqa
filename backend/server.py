@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from starlette.middleware.cors import CORSMiddleware
 from database import db
 from auth import hash_password
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 import asyncio
 import logging
 
@@ -85,32 +85,111 @@ async def init_super_admin():
         await db.admins.insert_one(admin)
         logger.info("Super admin created: admin@gymaccess.com / admin123")
 
-async def auto_suspend_expired_memberships():
+async def run_daily_at_midnight(func):
+    """Utility: calculates seconds until next midnight UTC, sleeps, then runs func in a loop."""
     while True:
+        now = datetime.now(timezone.utc)
+        tomorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        wait_seconds = (tomorrow - now).total_seconds()
+        logger.info(f"[CRON] Next run of {func.__name__} in {wait_seconds:.0f}s (midnight UTC)")
+        await asyncio.sleep(wait_seconds)
         try:
-            await asyncio.sleep(3600)
-            now = datetime.now(timezone.utc).isoformat()
-            active_memberships = await db.memberships.find({"status": "active"}, {"_id": 0}).to_list(10000)
-            suspended_count = 0
-            for m in active_memberships:
-                if m.get("end_date") and m["end_date"] < now:
-                    await db.memberships.update_one({"id": m["id"]}, {"$set": {"status": "expired"}})
-                    other_active = await db.memberships.find_one({"member_id": m["member_id"], "status": "active"})
-                    if not other_active:
-                        await db.members.update_one({"id": m["member_id"]}, {"$set": {
-                            "status": "suspended",
-                            "suspension_reason": "Membresia vencida (automatico)",
-                            "suspended_at": now
-                        }})
-                        suspended_count += 1
-            if suspended_count > 0:
-                logger.info(f"Auto-suspended {suspended_count} members with expired memberships")
+            await func()
         except Exception as e:
-            logger.error(f"Error in auto-suspend task: {e}")
+            logger.error(f"[CRON] Error in {func.__name__}: {e}")
+
+async def do_auto_suspend():
+    """Suspend members whose memberships have expired."""
+    now = datetime.now(timezone.utc).isoformat()
+    active_memberships = await db.memberships.find({"status": "active"}, {"_id": 0}).to_list(10000)
+    suspended_count = 0
+    for m in active_memberships:
+        if m.get("end_date") and m["end_date"] < now:
+            await db.memberships.update_one({"id": m["id"]}, {"$set": {"status": "expired"}})
+            other_active = await db.memberships.find_one({"member_id": m["member_id"], "status": "active"})
+            if not other_active:
+                await db.members.update_one({"id": m["member_id"]}, {"$set": {
+                    "status": "suspended",
+                    "suspension_reason": "Membresia vencida (automatico)",
+                    "suspended_at": now
+                }})
+                suspended_count += 1
+    if suspended_count > 0:
+        logger.info(f"[CRON] Auto-suspended {suspended_count} members with expired memberships")
+
+async def do_send_expiration_reminders():
+    """Send email reminders for memberships expiring in 1, 3, and 7 days."""
+    import aiosmtplib
+    from email.mime.text import MIMEText
+    from email.mime.multipart import MIMEMultipart
+
+    now = datetime.now(timezone.utc)
+    reminder_days = [1, 3, 7]
+    total_sent = 0
+
+    for days in reminder_days:
+        target_date = now + timedelta(days=days)
+        day_start = target_date.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+        day_end = target_date.replace(hour=23, minute=59, second=59).isoformat()
+
+        expiring = await db.memberships.find({
+            "status": "active",
+            "end_date": {"$gte": day_start, "$lte": day_end}
+        }, {"_id": 0}).to_list(5000)
+
+        for ms in expiring:
+            member = await db.members.find_one({"id": ms["member_id"]}, {"_id": 0})
+            if not member or not member.get("email"):
+                continue
+            gym = await db.gyms.find_one({"id": ms.get("gym_id", member.get("gym_id"))}, {"_id": 0})
+            if not gym or not gym.get("smtp_host") or not gym.get("smtp_user") or not gym.get("smtp_password"):
+                continue
+            plan = await db.plans.find_one({"id": ms.get("plan_id")}, {"_id": 0})
+            plan_name = plan.get("name", "Plan") if plan else "Plan"
+            color = gym.get("primary_color", "#E1FF01")
+            gym_name = gym.get("name", "Gimnasio")
+            end_date_str = ms.get("end_date", "")[:10]
+
+            html = f"""
+            <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
+                <div style="text-align:center;margin-bottom:20px;">
+                    <h1 style="color:{color};margin:0;font-size:24px;">{gym_name}</h1>
+                </div>
+                <h2 style="color:#FAFAFA;">Recordatorio de Vencimiento</h2>
+                <p>Hola <strong>{member.get('name','Socio')}</strong>,</p>
+                <p>Tu membresia <strong>{plan_name}</strong> en <strong>{gym_name}</strong> vence en <strong>{days} dia{'s' if days > 1 else ''}</strong> ({end_date_str}).</p>
+                <div style="background:#18181B;padding:16px;border-radius:12px;text-align:center;margin:20px 0;">
+                    <p style="color:{color};font-size:20px;font-weight:bold;margin:0;">Renueva tu membresia</p>
+                    <p style="color:#a1a1aa;margin:8px 0 0;">Accede a la app para renovar y seguir entrenando.</p>
+                </div>
+            </div>
+            """
+            try:
+                msg = MIMEMultipart("alternative")
+                smtp_from = gym.get("smtp_from_email", gym.get("smtp_user"))
+                msg["From"] = f"{gym_name} <{smtp_from}>"
+                msg["To"] = member["email"]
+                msg["Subject"] = f"Tu membresia vence en {days} dia{'s' if days > 1 else ''} - {gym_name}"
+                msg.attach(MIMEText(html, "html"))
+                smtp_port = gym.get("smtp_port", 587)
+                await aiosmtplib.send(
+                    msg, hostname=gym["smtp_host"], port=smtp_port,
+                    username=gym["smtp_user"], password=gym["smtp_password"],
+                    use_tls=smtp_port == 465, start_tls=smtp_port != 465
+                )
+                total_sent += 1
+            except Exception as e:
+                logger.warning(f"[CRON] Failed to send reminder to {member['email']}: {e}")
+
+    if total_sent > 0:
+        logger.info(f"[CRON] Sent {total_sent} expiration reminder emails")
 
 @app.on_event("startup")
 async def start_background_tasks():
-    asyncio.create_task(auto_suspend_expired_memberships())
+    asyncio.create_task(run_daily_at_midnight(do_auto_suspend))
+    asyncio.create_task(run_daily_at_midnight(do_send_expiration_reminders))
+    # Also run auto-suspend once on startup to catch any already expired
+    asyncio.create_task(do_auto_suspend())
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

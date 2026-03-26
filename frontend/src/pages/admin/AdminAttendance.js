@@ -2,32 +2,35 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { Button } from '../../components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { CheckCircle, XCircle, Users, Calendar, Clock, UserCheck, UserX } from 'lucide-react';
-import { format } from 'date-fns';
+import { CheckCircle, XCircle, Users, Calendar, Clock, UserCheck, UserX, ChevronLeft, ChevronRight } from 'lucide-react';
+import { format, addDays, subDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function AdminAttendance() {
   const { admin } = useAuth();
+  const [selectedDate, setSelectedDate] = useState(new Date());
   const [schedules, setSchedules] = useState([]);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [attendance, setAttendance] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTodaySchedules();
-  }, []);
+    fetchSchedules(selectedDate);
+  }, [selectedDate]);
 
-  const fetchTodaySchedules = async () => {
+  const fetchSchedules = async (date) => {
     try {
-      const today = format(new Date(), 'yyyy-MM-dd');
+      setLoading(true);
+      const dateStr = format(date, 'yyyy-MM-dd');
       const response = await axios.get(`${API}/schedules`, {
-        params: { date_from: today, date_to: today }
+        params: { date_from: dateStr, date_to: dateStr }
       });
       setSchedules(response.data);
+      setSelectedSchedule(null);
+      setAttendance(null);
       if (response.data.length > 0) {
         loadAttendance(response.data[0].id);
       }
@@ -68,15 +71,7 @@ export default function AdminAttendance() {
     }
   };
 
-  const formatTime = (t) => t || '--:--';
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="w-8 h-8 border-2 border-[var(--gym-primary)] border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  const isToday = format(selectedDate, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd');
 
   return (
     <div className="space-y-6" data-testid="admin-attendance">
@@ -85,15 +80,49 @@ export default function AdminAttendance() {
         <p className="text-zinc-400 text-sm">Registra la asistencia de los socios a sus clases</p>
       </div>
 
-      {/* Schedule Selector */}
+      {/* Date Navigator */}
+      <div className="stat-card">
+        <div className="flex items-center justify-between">
+          <Button variant="ghost" size="sm" onClick={() => setSelectedDate(subDays(selectedDate, 1))}
+            className="text-zinc-400 hover:text-white" data-testid="attendance-prev-day">
+            <ChevronLeft size={20} />
+          </Button>
+          <div className="text-center">
+            <p className="font-bold text-lg">{format(selectedDate, "EEEE", { locale: es })}</p>
+            <p className="text-zinc-400 text-sm">{format(selectedDate, "d 'de' MMMM, yyyy", { locale: es })}</p>
+            {isToday && <span className="text-xs bg-emerald-500/10 text-emerald-400 px-2 py-0.5 rounded-full">Hoy</span>}
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+            className="text-zinc-400 hover:text-white" data-testid="attendance-next-day">
+            <ChevronRight size={20} />
+          </Button>
+        </div>
+        {!isToday && (
+          <div className="text-center mt-3">
+            <Button variant="outline" size="sm" className="border-zinc-700 text-xs"
+              onClick={() => setSelectedDate(new Date())} data-testid="attendance-today-btn">
+              Ir a Hoy
+            </Button>
+          </div>
+        )}
+      </div>
+
+      {/* Schedule Cards */}
       <div className="stat-card">
         <div className="flex items-center gap-2 mb-4">
           <Calendar size={18} className="text-zinc-400" />
-          <h3 className="font-bold">Clases de Hoy - {format(new Date(), "d 'de' MMMM, yyyy", { locale: es })}</h3>
+          <h3 className="font-bold">Clases del dia</h3>
+          <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full ml-auto">
+            {schedules.length} clases
+          </span>
         </div>
 
-        {schedules.length === 0 ? (
-          <p className="text-zinc-500 text-sm">No hay clases programadas para hoy</p>
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="w-6 h-6 border-2 border-[var(--gym-primary)] border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : schedules.length === 0 ? (
+          <p className="text-zinc-500 text-sm text-center py-6">No hay clases programadas para este dia</p>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {schedules.map((s) => (
@@ -110,7 +139,7 @@ export default function AdminAttendance() {
                 <p className="font-bold text-sm">{s.class?.name || 'Clase'}</p>
                 <div className="flex items-center gap-2 mt-1 text-xs text-zinc-400">
                   <Clock size={12} />
-                  <span>{formatTime(s.start_time)} - {formatTime(s.end_time)}</span>
+                  <span>{s.start_time || '--:--'} - {s.end_time || '--:--'}</span>
                 </div>
                 {s.trainer && (
                   <p className="text-xs text-zinc-500 mt-1">Trainer: {s.trainer.name}</p>
@@ -149,7 +178,6 @@ export default function AdminAttendance() {
             </div>
           </div>
 
-          {/* Progress */}
           <div className="w-full h-2 bg-zinc-800 rounded-full mb-6 overflow-hidden">
             <div
               className="h-full rounded-full bg-emerald-500 transition-all duration-500"
@@ -175,8 +203,8 @@ export default function AdminAttendance() {
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
-                      booking.checked_in 
-                        ? 'bg-emerald-500/20 text-emerald-400' 
+                      booking.checked_in
+                        ? 'bg-emerald-500/20 text-emerald-400'
                         : 'bg-zinc-800 text-zinc-400'
                     }`}>
                       {booking.member_name?.charAt(0)?.toUpperCase() || '?'}
@@ -195,25 +223,18 @@ export default function AdminAttendance() {
                   </div>
 
                   {booking.checked_in ? (
-                    <Button
-                      variant="ghost"
-                      size="sm"
+                    <Button variant="ghost" size="sm"
                       onClick={() => handleCheckout(booking.id)}
                       className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                      data-testid={`undo-checkin-${booking.id}`}
-                    >
-                      <XCircle size={18} className="mr-1" />
-                      Anular
+                      data-testid={`undo-checkin-${booking.id}`}>
+                      <XCircle size={18} className="mr-1" /> Anular
                     </Button>
                   ) : (
-                    <Button
-                      size="sm"
+                    <Button size="sm"
                       onClick={() => handleCheckin(booking.id)}
                       className="bg-emerald-600 hover:bg-emerald-500 text-white"
-                      data-testid={`checkin-btn-${booking.id}`}
-                    >
-                      <CheckCircle size={18} className="mr-1" />
-                      Check-in
+                      data-testid={`checkin-btn-${booking.id}`}>
+                      <CheckCircle size={18} className="mr-1" /> Check-in
                     </Button>
                   )}
                 </div>

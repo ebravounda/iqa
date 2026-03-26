@@ -458,3 +458,64 @@ async def get_attendance_stats(
     total_checkins = sum(1 for b in all_bookings if b.get("checked_in"))
     return {"total_bookings": total_bookings, "total_checkins": total_checkins,
             "attendance_rate": round((total_checkins / total_bookings * 100), 1) if total_bookings > 0 else 0}
+
+
+# ==================== TRAINER DASHBOARD ====================
+
+@router.get("/trainer/dashboard")
+async def get_trainer_dashboard(admin: dict = Depends(get_current_admin)):
+    """Dashboard data for trainers: their classes today, week stats, upcoming schedules."""
+    trainer_id = admin["id"]
+    today = date.today().isoformat()
+    gym_id = admin.get("gym_id")
+
+    # Today's schedules for this trainer
+    today_schedules = await db.class_schedules.find(
+        {"trainer_id": trainer_id, "date": today, "status": {"$ne": "cancelled"}}, {"_id": 0}
+    ).sort("start_time", 1).to_list(50)
+
+    for s in today_schedules:
+        class_data = await db.classes.find_one({"id": s["class_id"]}, {"_id": 0})
+        s["class"] = class_data
+        bookings = await db.bookings.find(
+            {"schedule_id": s["id"], "status": "confirmed"}, {"_id": 0}
+        ).to_list(200)
+        s["bookings"] = bookings
+        s["checked_in_count"] = sum(1 for b in bookings if b.get("checked_in"))
+
+    # This week stats
+    week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
+    week_end = (date.today() + timedelta(days=6 - date.today().weekday())).isoformat()
+    week_schedules = await db.class_schedules.find(
+        {"trainer_id": trainer_id, "date": {"$gte": week_start, "$lte": week_end}, "status": {"$ne": "cancelled"}}, {"_id": 0}
+    ).to_list(100)
+    week_bookings = 0
+    week_checkins = 0
+    for ws in week_schedules:
+        bks = await db.bookings.find({"schedule_id": ws["id"], "status": "confirmed"}, {"_id": 0}).to_list(200)
+        week_bookings += len(bks)
+        week_checkins += sum(1 for b in bks if b.get("checked_in"))
+
+    # Upcoming schedules (next 7 days)
+    upcoming = await db.class_schedules.find(
+        {"trainer_id": trainer_id, "date": {"$gt": today, "$lte": (date.today() + timedelta(days=7)).isoformat()}, "status": {"$ne": "cancelled"}},
+        {"_id": 0}
+    ).sort([("date", 1), ("start_time", 1)]).to_list(20)
+    for u in upcoming:
+        class_data = await db.classes.find_one({"id": u["class_id"]}, {"_id": 0})
+        u["class"] = class_data
+
+    # Trainer's total classes
+    total_classes = await db.classes.count_documents({"trainer_id": trainer_id, "active": True})
+
+    return {
+        "today_schedules": today_schedules,
+        "upcoming_schedules": upcoming,
+        "week_stats": {
+            "total_schedules": len(week_schedules),
+            "total_bookings": week_bookings,
+            "total_checkins": week_checkins,
+            "attendance_rate": round((week_checkins / week_bookings * 100), 1) if week_bookings > 0 else 0
+        },
+        "total_classes": total_classes
+    }
