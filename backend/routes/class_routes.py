@@ -159,6 +159,20 @@ async def update_staff_permissions(staff_id: str, body: dict, admin: dict = Depe
     await db.admins.update_one({"id": staff_id}, {"$set": {"permissions": valid}})
     return {"message": "Permisos actualizados", "permissions": valid}
 
+@router.put("/staff/{staff_id}/toggle-active")
+async def toggle_staff_active(staff_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    check_role(admin, ["super_admin", "gym_admin"])
+    if staff_id == admin["id"]:
+        raise HTTPException(status_code=400, detail="No puedes desactivar tu propia cuenta")
+    target = await db.admins.find_one({"id": staff_id}, {"_id": 0})
+    if not target:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    if admin["role"] != "super_admin" and admin.get("gym_id") != target.get("gym_id"):
+        raise HTTPException(status_code=403, detail="No tienes acceso a este usuario")
+    new_active = body.get("active", not target.get("active", True))
+    await db.admins.update_one({"id": staff_id}, {"$set": {"active": new_active}})
+    return {"message": "Activado" if new_active else "Desactivado", "active": new_active}
+
 # ==================== CLASS ROUTES ====================
 
 @router.post("/classes")
