@@ -323,6 +323,13 @@ export const exportMembersExcel = (gymId, status, dateFrom, dateTo, includeMembe
   return axios.get(`${API}/members/export/excel?${params.toString()}`, { responseType: 'blob' });
 };
 
+// Member Devices (Admin)
+export const getMemberDevices = (memberId) => axios.get(`${API}/member-devices/${memberId}`);
+export const deactivateDevice = (deviceId) => axios.put(`${API}/member-devices/${deviceId}/deactivate`);
+export const deactivateAllDevices = (memberId) => axios.put(`${API}/member-devices/member/${memberId}/deactivate-all`);
+export const updateMaxDevices = (gymId, maxDevices) => axios.put(`${API}/gyms/${gymId}/max-devices`, { max_devices_per_member: maxDevices });
+export const getMemberVisitStats = (memberId) => axios.get(`${API}/stats/member-visits/${memberId}`);
+
 // Product Image Upload
 export const uploadProductImage = (productId, file) => {
   const fd = new FormData();

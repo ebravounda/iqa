@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig } from '../../lib/api';
+import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices } from '../../lib/api';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe } from 'lucide-react';
+import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe, Smartphone } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminSettings() {
@@ -52,6 +52,8 @@ export default function AdminSettings() {
 
   // Currency
   const [gymCurrency, setGymCurrency] = useState('EUR');
+  const [maxDevices, setMaxDevices] = useState(2);
+  const [savingDevices, setSavingDevices] = useState(false);
 
   useEffect(() => {
     if (admin?.gym_id) {
@@ -85,6 +87,7 @@ export default function AdminSettings() {
         smtp_from_email: response.data.smtp_from_email || ''
       });
       setGymCurrency(response.data.currency || 'EUR');
+      setMaxDevices(response.data.max_devices_per_member || 2);
     } catch (error) {
       toast.error('Error al cargar configuración');
     } finally {
@@ -531,6 +534,42 @@ export default function AdminSettings() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Device Limit */}
+      <div className="stat-card">
+        <div className="flex items-center gap-2 mb-6">
+          <Smartphone size={20} className="text-violet-400" />
+          <h3 className="font-bold text-lg">Control de Dispositivos (App)</h3>
+        </div>
+        <p className="text-zinc-400 text-sm mb-4">
+          Limita cuantos dispositivos puede usar cada socio para acceder a la app. Si un socio excede el limite, debera contactar a recepcion.
+        </p>
+        <div className="flex items-center gap-4">
+          <Select value={maxDevices.toString()} onValueChange={(v) => setMaxDevices(parseInt(v))}>
+            <SelectTrigger className="w-[200px] bg-zinc-800 border-zinc-700" data-testid="max-devices-select">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-zinc-900 border-zinc-700">
+              <SelectItem value="1">1 dispositivo</SelectItem>
+              <SelectItem value="2">2 dispositivos</SelectItem>
+              <SelectItem value="3">3 dispositivos</SelectItem>
+              <SelectItem value="5">5 dispositivos</SelectItem>
+              <SelectItem value="10">10 dispositivos</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button onClick={async () => {
+            setSavingDevices(true);
+            try {
+              await updateMaxDevices(admin.gym_id, maxDevices);
+              toast.success(`Limite de dispositivos: ${maxDevices}`);
+            } catch (e) { toast.error('Error'); }
+            finally { setSavingDevices(false); }
+          }} disabled={savingDevices} className="btn-gym-primary" data-testid="save-max-devices-btn">
+            <Save size={16} className="mr-2" /> {savingDevices ? 'Guardando...' : 'Guardar'}
+          </Button>
+        </div>
+        <p className="text-xs text-zinc-500 mt-2">Puedes desactivar dispositivos individuales desde el menu de cada socio (Socios → 3 puntitos → Dispositivos).</p>
       </div>
 
       {/* Public Registration & Kiosk Links */}

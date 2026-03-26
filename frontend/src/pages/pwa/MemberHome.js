@@ -5,7 +5,7 @@ import { generateQR } from '../../lib/api';
 import { getMembershipStatus, getDaysRemaining } from '../../lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard } from 'lucide-react';
+import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard, BarChart3, Calendar, Clock } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
 export default function MemberHome() {
@@ -242,6 +242,24 @@ export default function MemberHome() {
           </div>
         </motion.div>
       )}
+
+      {/* Quick Nav */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
+        <div className="grid grid-cols-3 gap-3">
+          <button onClick={() => navigate('/app/stats')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-stats">
+            <BarChart3 size={22} className="text-[var(--gym-primary)]" />
+            <span className="text-xs text-zinc-400">Estadisticas</span>
+          </button>
+          <button onClick={() => navigate('/app/classes')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-classes">
+            <Calendar size={22} className="text-emerald-400" />
+            <span className="text-xs text-zinc-400">Clases</span>
+          </button>
+          <button onClick={() => navigate('/app/history')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-history">
+            <Clock size={22} className="text-cyan-400" />
+            <span className="text-xs text-zinc-400">Accesos</span>
+          </button>
+        </div>
+      </motion.div>
 
       {/* Fullscreen QR Modal */}
       <AnimatePresence>

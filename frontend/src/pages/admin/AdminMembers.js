@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -11,7 +11,7 @@ import {
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
   AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode, Camera,
-  Mail, Phone, Copy, X as XIcon
+  Mail, Phone, Copy, X as XIcon, Smartphone
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
@@ -77,6 +77,9 @@ export default function AdminMembers() {
   const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: admin?.gym_id || '', gender: 'prefer_not_to_say' });
   const [editData, setEditData] = useState({ name: '', email: '', phone: '' });
   const [expandedContact, setExpandedContact] = useState(null);
+  const [showDevicesModal, setShowDevicesModal] = useState(false);
+  const [devicesMember, setDevicesMember] = useState(null);
+  const [memberDevices, setMemberDevices] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentNotes, setPaymentNotes] = useState('');
@@ -226,6 +229,34 @@ export default function AdminMembers() {
     document.addEventListener('click', handler);
     return () => document.removeEventListener('click', handler);
   }, [expandedContact, members]);
+
+  const handleOpenDevices = async (member) => {
+    setDevicesMember(member);
+    setShowDevicesModal(true);
+    try {
+      const res = await getMemberDevices(member.id);
+      setMemberDevices(res.data);
+    } catch { setMemberDevices([]); }
+  };
+
+  const handleDeactivateDevice = async (deviceId) => {
+    try {
+      await deactivateDevice(deviceId);
+      toast.success('Dispositivo desactivado');
+      const res = await getMemberDevices(devicesMember.id);
+      setMemberDevices(res.data);
+    } catch { toast.error('Error al desactivar'); }
+  };
+
+  const handleDeactivateAll = async () => {
+    if (!devicesMember) return;
+    try {
+      await deactivateAllDevices(devicesMember.id);
+      toast.success('Todos los dispositivos desactivados');
+      const res = await getMemberDevices(devicesMember.id);
+      setMemberDevices(res.data);
+    } catch { toast.error('Error'); }
+  };
 
   const filteredMembers = members.filter(m =>
     m.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -451,6 +482,9 @@ export default function AdminMembers() {
                             }} />
                           </label>
                         </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenDevices(member)} className="cursor-pointer text-zinc-400" data-testid={`member-devices-${member.code}`}>
+                          <Smartphone size={16} className="mr-2" /> Dispositivos
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </td>
@@ -624,6 +658,51 @@ export default function AdminMembers() {
             <Button onClick={handleManualPayment} className="w-full btn-gym-primary" data-testid="confirm-payment-btn">
               <Banknote size={20} className="mr-2" /> Registrar Pago y Activar Membresía
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Devices Modal */}
+      <Dialog open={showDevicesModal} onOpenChange={setShowDevicesModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Smartphone size={20} className="text-blue-400" />
+              Dispositivos de {devicesMember?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 space-y-3">
+            {memberDevices.length === 0 ? (
+              <p className="text-zinc-500 text-sm text-center py-4">No hay dispositivos registrados</p>
+            ) : (
+              <>
+                <div className="flex items-center justify-between text-xs text-zinc-500">
+                  <span>{memberDevices.filter(d => d.active).length} activos / {memberDevices.length} total</span>
+                  {memberDevices.some(d => d.active) && (
+                    <button onClick={handleDeactivateAll} className="text-red-400 hover:text-red-300 underline" data-testid="deactivate-all-devices">
+                      Desactivar todos
+                    </button>
+                  )}
+                </div>
+                {memberDevices.map(d => (
+                  <div key={d.id} className={`flex items-center gap-3 p-3 rounded-lg border ${d.active ? 'bg-zinc-800/50 border-zinc-700' : 'bg-zinc-900 border-zinc-800 opacity-50'}`}>
+                    <Smartphone size={20} className={d.active ? 'text-blue-400' : 'text-zinc-600'} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white">{d.device_name}</p>
+                      <p className="text-[11px] text-zinc-500 truncate">{d.user_agent?.substring(0, 50)}...</p>
+                      <p className="text-[10px] text-zinc-600">{d.active ? `Ultimo uso: ${d.last_active?.substring(0, 10)}` : 'Desactivado'}</p>
+                    </div>
+                    {d.active && (
+                      <button onClick={() => handleDeactivateDevice(d.id)}
+                        className="text-xs text-red-400 hover:text-red-300 px-2 py-1 border border-red-500/20 rounded hover:bg-red-500/10 transition-colors"
+                        data-testid={`deactivate-device-${d.id}`}>
+                        Desactivar
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         </DialogContent>
       </Dialog>

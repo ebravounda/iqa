@@ -24,6 +24,7 @@ from routes.mercadopago_routes import router as mp_router
 from routes.upload_routes import router as upload_router
 from routes.form_routes import router as form_router
 from routes.analytics_routes import router as analytics_router
+from routes.device_member_routes import router as device_member_router
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -59,6 +60,7 @@ app.include_router(mp_router)
 app.include_router(upload_router)
 app.include_router(form_router)
 app.include_router(analytics_router)
+app.include_router(device_member_router)
 
 app.add_middleware(
     CORSMiddleware,

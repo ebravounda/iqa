@@ -45,6 +45,7 @@ import AdminData from "./pages/admin/AdminData";
 import MemberLogin from "./pages/pwa/MemberLogin";
 import MemberHome from "./pages/pwa/MemberHome";
 import MemberHistory from "./pages/pwa/MemberHistory";
+import MemberStats from "./pages/pwa/MemberStats";
 import MemberMembership from "./pages/pwa/MemberMembership";
 import MemberProfile from "./pages/pwa/MemberProfile";
 import MemberClasses from "./pages/pwa/MemberClasses";
@@ -181,6 +182,7 @@ function AppRoutes() {
       <Route path="/app/notifications" element={<MemberRoute><MemberNotifications /></MemberRoute>} />
       <Route path="/app/guests" element={<MemberRoute><MemberGuests /></MemberRoute>} />
       <Route path="/app/history" element={<MemberRoute><MemberHistory /></MemberRoute>} />
+      <Route path="/app/stats" element={<MemberRoute><MemberStats /></MemberRoute>} />
       <Route path="/app/membership" element={<MemberRoute><MemberMembership /></MemberRoute>} />
       <Route path="/app/profile" element={<MemberRoute><MemberProfile /></MemberRoute>} />
       <Route path="/app/payment-success" element={<MemberRoute><PaymentSuccess /></MemberRoute>} />

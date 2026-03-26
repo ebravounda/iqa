@@ -130,8 +130,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const getDeviceFingerprint = () => {
+    let fp = localStorage.getItem('device_fingerprint');
+    if (!fp) {
+      fp = 'dev_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+      localStorage.setItem('device_fingerprint', fp);
+    }
+    return fp;
+  };
+
   const loginMember = async (code) => {
-    const response = await axios.post(`${API}/auth/member/login?code=${code}`);
+    const fp = getDeviceFingerprint();
+    const response = await axios.post(`${API}/auth/member/login?code=${code}&device_fingerprint=${fp}`);
     const { member: memberData, gym: gymData, membership: membershipData, token: newToken } = response.data;
     
     localStorage.setItem('token', newToken);

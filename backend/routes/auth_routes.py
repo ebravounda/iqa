@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
 from datetime import datetime, timezone
 import uuid
@@ -65,12 +65,21 @@ async def impersonate_gym(gym_id: str, credentials: HTTPAuthorizationCredentials
     return {"admin": admin_data, "token": impersonation_token, "gym": gym}
 
 @router.post("/auth/member/login")
-async def login_member(code: str):
+async def login_member(code: str, request: Request, device_fingerprint: str = None):
     member = await db.members.find_one({"code": code.upper()}, {"_id": 0})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     if member.get("status") == "blocked":
         raise HTTPException(status_code=403, detail="Account blocked")
+    
+    # Device registration
+    if device_fingerprint:
+        from routes.device_member_routes import register_member_device
+        user_agent = request.headers.get("user-agent", "")
+        success, error_msg = await register_member_device(member["id"], member["gym_id"], device_fingerprint, user_agent)
+        if not success:
+            raise HTTPException(status_code=403, detail=error_msg)
+    
     gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0})
     membership = await db.memberships.find_one(
         {"member_id": member["id"], "status": "active"}, {"_id": 0}
