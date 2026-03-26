@@ -165,7 +165,14 @@ async def check_expired_memberships(admin: dict = Depends(get_current_admin)):
     return {"message": f"{suspended_count} members suspended due to expired memberships"}
 
 @router.get("/members/export/excel")
-async def export_members_excel(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+async def export_members_excel(
+    gym_id: Optional[str] = None,
+    status: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    include_memberships: bool = False,
+    admin: dict = Depends(get_current_admin)
+):
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     
@@ -175,9 +182,21 @@ async def export_members_excel(gym_id: Optional[str] = None, admin: dict = Depen
     elif gym_id:
         query["gym_id"] = gym_id
     
+    if status and status != "all":
+        query["status"] = status
+    
+    if date_from or date_to:
+        date_q = {}
+        if date_from:
+            date_q["$gte"] = date_from
+        if date_to:
+            date_q["$lte"] = date_to + "T23:59:59"
+        if date_q:
+            query["created_at"] = date_q
+    
     members = await db.members.find(query, {"_id": 0}).sort("name", 1).to_list(50000)
     
-    gym_name = "Todos los gimnasios"
+    gym_name = "Todos"
     if gym_id:
         gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0, "name": 1})
         if gym:
@@ -186,6 +205,27 @@ async def export_members_excel(gym_id: Optional[str] = None, admin: dict = Depen
         gym = await db.gyms.find_one({"id": admin["gym_id"]}, {"_id": 0, "name": 1})
         if gym:
             gym_name = gym["name"]
+    
+    membership_map = {}
+    if include_memberships and members:
+        member_ids = [m["id"] for m in members]
+        memberships = await db.memberships.find(
+            {"member_id": {"$in": member_ids}, "status": "active"}, {"_id": 0}
+        ).to_list(50000)
+        plan_ids = list({m["plan_id"] for m in memberships if m.get("plan_id")})
+        plans = {}
+        if plan_ids:
+            for p in await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(500):
+                plans[p["id"]] = p
+        for ms in memberships:
+            mid = ms["member_id"]
+            plan = plans.get(ms.get("plan_id"), {})
+            membership_map[mid] = {
+                "plan_name": plan.get("name", "-"),
+                "start_date": ms.get("start_date", "")[:10],
+                "end_date": ms.get("end_date", "")[:10],
+                "price": plan.get("price", 0)
+            }
     
     wb = Workbook()
     ws = wb.active
@@ -202,6 +242,9 @@ async def export_members_excel(gym_id: Optional[str] = None, admin: dict = Depen
     )
     
     headers = ["Nombre", "Numero de Socio", "Telefono", "Email", "Estado", "Fecha Registro"]
+    if include_memberships:
+        headers += ["Plan Activo", "Inicio Plan", "Fin Plan", "Precio Plan"]
+    
     for col, header in enumerate(headers, 1):
         cell = ws.cell(row=1, column=col, value=header)
         cell.font = header_font
@@ -218,10 +261,14 @@ async def export_members_excel(gym_id: Optional[str] = None, admin: dict = Depen
         ws.cell(row=row, column=4, value=member.get("email", "")).border = thin_border
         ws.cell(row=row, column=5, value=status_map.get(member.get("status", ""), member.get("status", ""))).border = thin_border
         created = member.get("created_at", "")
-        if created:
-            ws.cell(row=row, column=6, value=created[:10]).border = thin_border
-        else:
-            ws.cell(row=row, column=6, value="").border = thin_border
+        ws.cell(row=row, column=6, value=created[:10] if created else "").border = thin_border
+        
+        if include_memberships:
+            ms = membership_map.get(member["id"], {})
+            ws.cell(row=row, column=7, value=ms.get("plan_name", "-")).border = thin_border
+            ws.cell(row=row, column=8, value=ms.get("start_date", "-")).border = thin_border
+            ws.cell(row=row, column=9, value=ms.get("end_date", "-")).border = thin_border
+            ws.cell(row=row, column=10, value=ms.get("price", "")).border = thin_border
     
     ws.column_dimensions['A'].width = 30
     ws.column_dimensions['B'].width = 18
@@ -229,6 +276,11 @@ async def export_members_excel(gym_id: Optional[str] = None, admin: dict = Depen
     ws.column_dimensions['D'].width = 35
     ws.column_dimensions['E'].width = 14
     ws.column_dimensions['F'].width = 16
+    if include_memberships:
+        ws.column_dimensions['G'].width = 22
+        ws.column_dimensions['H'].width = 14
+        ws.column_dimensions['I'].width = 14
+        ws.column_dimensions['J'].width = 14
     
     output = io.BytesIO()
     wb.save(output)

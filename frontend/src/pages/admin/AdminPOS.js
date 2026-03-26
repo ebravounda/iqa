@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getPOSProducts, createPOSProduct, updatePOSProduct, deletePOSProduct, createPOSSale, getPOSSales, getPOSStats, getGymSaaSFeatures, getGyms } from '../../lib/api';
+import { getPOSProducts, createPOSProduct, updatePOSProduct, deletePOSProduct, createPOSSale, getPOSSales, getPOSStats, getGymSaaSFeatures, getGyms, uploadProductImage } from '../../lib/api';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Camera, ImageIcon } from 'lucide-react';
 
 const CURRENCY_SYMBOLS = { EUR: '\u20ac', USD: '$', CLP: '$', ARS: '$' };
 
@@ -115,6 +116,21 @@ export default function AdminPOS() {
     } catch (e) { toast.error(e.response?.data?.detail || 'Error'); }
   };
 
+  const handleProductImageUpload = async (productId, file) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no puede superar 2MB'); return; }
+    try {
+      await uploadProductImage(productId, file);
+      toast.success('Imagen del producto actualizada');
+      load();
+    } catch (err) { toast.error(err.response?.data?.detail || 'Error al subir imagen'); }
+  };
+
+  const getProductImageUrl = (product) => {
+    if (!product.image_path) return null;
+    return `${process.env.REACT_APP_BACKEND_URL}/api/files/${product.image_path}`;
+  };
+
   const printReceipt = (sale) => {
     const w = window.open('', '_blank', 'width=302,height=600');
     const items = (sale.items || []).map(i => `<tr><td style="font-size:11px">${i.product_name}</td><td style="text-align:right;font-size:11px">${i.quantity}x${cs}${i.unit_price}</td></tr>`).join('');
@@ -172,10 +188,21 @@ export default function AdminPOS() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 grid grid-cols-2 sm:grid-cols-3 gap-3">
             {products.map(p => (
-              <button key={p.id} onClick={() => addToCart(p)} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 text-left hover:border-[var(--gym-primary)] transition-colors" data-testid={`pos-product-${p.id}`} disabled={p.stock <= 0}>
-                <p className="text-white font-semibold truncate">{p.name}</p>
-                <p className="text-[var(--gym-primary)] font-bold">{cs}{p.sale_price?.toLocaleString()}</p>
-                <p className={`text-xs ${p.stock <= 5 ? 'text-red-400' : 'text-zinc-400'}`}>Stock: {p.stock}</p>
+              <button key={p.id} onClick={() => addToCart(p)} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden text-left hover:border-[var(--gym-primary)] transition-colors" data-testid={`pos-product-${p.id}`} disabled={p.stock <= 0}>
+                {getProductImageUrl(p) ? (
+                  <div className="w-full h-28 bg-zinc-800">
+                    <img src={getProductImageUrl(p)} alt={p.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-full h-28 bg-zinc-800/50 flex items-center justify-center">
+                    <ImageIcon size={32} className="text-zinc-700" />
+                  </div>
+                )}
+                <div className="p-3">
+                  <p className="text-white font-semibold truncate text-sm">{p.name}</p>
+                  <p className="text-[var(--gym-primary)] font-bold">{cs}{p.sale_price?.toLocaleString()}</p>
+                  <p className={`text-xs ${p.stock <= 5 ? 'text-red-400' : 'text-zinc-400'}`}>Stock: {p.stock}</p>
+                </div>
               </button>
             ))}
             {products.length === 0 && <p className="text-zinc-500 col-span-full text-center py-8">No hay productos. Crea algunos en la pestana "Productos".</p>}
@@ -256,15 +283,32 @@ export default function AdminPOS() {
           )}
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
             <table className="w-full text-sm">
-              <thead><tr className="border-b border-zinc-800"><th className="text-left p-3 text-zinc-400 font-medium">Producto</th><th className="text-right p-3 text-zinc-400">Costo</th><th className="text-right p-3 text-zinc-400">Venta</th><th className="text-right p-3 text-zinc-400">Stock</th><th className="text-right p-3 text-zinc-400">Acciones</th></tr></thead>
+              <thead><tr className="border-b border-zinc-800"><th className="text-left p-3 text-zinc-400 font-medium w-12">Img</th><th className="text-left p-3 text-zinc-400 font-medium">Producto</th><th className="text-right p-3 text-zinc-400">Costo</th><th className="text-right p-3 text-zinc-400">Venta</th><th className="text-right p-3 text-zinc-400">Stock</th><th className="text-right p-3 text-zinc-400">Acciones</th></tr></thead>
               <tbody>
                 {products.map(p => (
                   <tr key={p.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/30">
+                    <td className="p-2">
+                      {getProductImageUrl(p) ? (
+                        <img src={getProductImageUrl(p)} alt={p.name} className="w-10 h-10 rounded-lg object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center">
+                          <ImageIcon size={16} className="text-zinc-600" />
+                        </div>
+                      )}
+                    </td>
                     <td className="p-3 text-white">{p.name}<span className="text-zinc-500 text-xs ml-2">{p.category}</span></td>
                     <td className="p-3 text-right text-zinc-400">{cs}{p.cost_price?.toLocaleString()}</td>
                     <td className="p-3 text-right text-[var(--gym-primary)] font-semibold">{cs}{p.sale_price?.toLocaleString()}</td>
                     <td className={`p-3 text-right font-mono ${p.stock <= 5 ? 'text-red-400' : 'text-zinc-300'}`}>{p.stock}</td>
-                    <td className="p-3 text-right"><button onClick={() => deletePOSProduct(p.id).then(load)} className="text-red-400 text-xs hover:underline">Eliminar</button></td>
+                    <td className="p-3 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <label className="cursor-pointer text-violet-400 hover:text-violet-300 text-xs flex items-center gap-1" data-testid={`product-upload-img-${p.id}`}>
+                          <Camera size={14} /> Foto
+                          <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={(e) => handleProductImageUpload(p.id, e.target.files[0])} />
+                        </label>
+                        <button onClick={() => deletePOSProduct(p.id).then(load)} className="text-red-400 text-xs hover:underline">Eliminar</button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

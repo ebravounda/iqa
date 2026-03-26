@@ -310,8 +310,19 @@ export const downloadSalesReportPDF = (gymId, period, dateFrom, dateTo) => {
 };
 
 // Members Export Excel
-export const exportMembersExcel = (gymId) => {
-  let url = `${API}/members/export/excel`;
-  if (gymId) url += `?gym_id=${gymId}`;
-  return axios.get(url, { responseType: 'blob' });
+export const exportMembersExcel = (gymId, status, dateFrom, dateTo, includeMemberships) => {
+  const params = new URLSearchParams();
+  if (gymId) params.append('gym_id', gymId);
+  if (status && status !== 'all') params.append('status', status);
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) params.append('date_to', dateTo);
+  if (includeMemberships) params.append('include_memberships', 'true');
+  return axios.get(`${API}/members/export/excel?${params.toString()}`, { responseType: 'blob' });
+};
+
+// Product Image Upload
+export const uploadProductImage = (productId, file) => {
+  const fd = new FormData();
+  fd.append('file', file);
+  return axios.post(`${API}/upload/product-image/${productId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
 };

@@ -126,3 +126,53 @@ async def serve_file(path: str, auth: Optional[str] = Query(None), authorization
     except Exception as e:
         logger.error(f"File serve error: {e}")
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
+
+@router.post("/upload/product-image/{product_id}")
+async def upload_product_image(
+    product_id: str,
+    file: UploadFile = File(...),
+    admin: dict = Depends(get_current_admin)
+):
+    product = await db.pos_products.find_one({"id": product_id}, {"_id": 0})
+    if not product:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Solo se permiten imagenes (JPG, PNG, WEBP)")
+    
+    data = await file.read()
+    if len(data) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="La imagen no puede superar 2MB")
+    
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "jpg"
+    if ext not in ("jpg", "jpeg", "png", "webp"):
+        ext = "jpg"
+    
+    path = f"gymaccess/products/{product_id}/{uuid.uuid4()}.{ext}"
+    
+    try:
+        result = put_object(path, data, file.content_type or "image/jpeg")
+        storage_path = result.get("path", path)
+        
+        file_record = {
+            "id": str(uuid.uuid4()),
+            "user_id": product_id,
+            "storage_path": storage_path,
+            "original_filename": file.filename,
+            "content_type": file.content_type,
+            "size": len(data),
+            "file_type": "product_image",
+            "is_deleted": False,
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.files.insert_one(file_record)
+        
+        await db.pos_products.update_one(
+            {"id": product_id},
+            {"$set": {"image_path": storage_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        
+        return {"storage_path": storage_path, "message": "Imagen de producto subida correctamente"}
+    except Exception as e:
+        logger.error(f"Product image upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al subir imagen: {str(e)}")
