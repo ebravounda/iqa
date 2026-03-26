@@ -42,7 +42,10 @@ export default function AdminAnalytics() {
       setRevenue(rv.data);
       setRetention(rt.data);
       setPeakHours(ph.data);
-    } catch (e) { toast.error('Error al cargar analytics'); }
+    } catch (e) { 
+      console.error('Analytics Error:', e?.response?.status, e?.response?.data, e?.message);
+      toast.error(`Error Analytics: ${e?.response?.data?.detail || e?.message || 'Error de conexion'}`); 
+    }
   }, [gymId]);
 
   useEffect(() => { if (gymId) load(); }, [load, gymId]);

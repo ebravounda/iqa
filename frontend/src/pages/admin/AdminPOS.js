@@ -47,7 +47,10 @@ export default function AdminPOS() {
       setSales(s.data);
       setStats(st.data);
       if (s.data.length > 0 && s.data[0].currency) setCurrency(s.data[0].currency);
-    } catch (e) { toast.error('Error al cargar TPV'); }
+    } catch (e) { 
+      console.error('TPV Error:', e?.response?.status, e?.response?.data, e?.message);
+      toast.error(`Error TPV: ${e?.response?.data?.detail || e?.message || 'Error de conexion'}`); 
+    }
   }, [gymId, admin]);
 
   useEffect(() => { if (gymId) load(); }, [load, gymId]);

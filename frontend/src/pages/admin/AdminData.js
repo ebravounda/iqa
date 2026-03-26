@@ -52,7 +52,8 @@ export default function AdminData() {
       window.URL.revokeObjectURL(url);
       toast.success('Excel descargado correctamente');
     } catch (error) {
-      toast.error('Error al descargar el archivo');
+      console.error('Export Error:', error?.response?.status, error?.message);
+      toast.error(`Error descarga: ${error?.response?.data?.detail || error?.message || 'Error de conexion'}`);
     } finally {
       setDownloading(false);
     }
