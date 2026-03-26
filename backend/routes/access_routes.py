@@ -22,9 +22,16 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
     member_id = payload.get("sub")
     gym_id = payload.get("gym_id")
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
-    qr_mode = gym.get("qr_mode", "dynamic") if gym else "dynamic"
+    
+    # Check if this specific member has static QR override
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    member_qr_mode = (member or {}).get("qr_mode")
+    
+    gym_qr_mode = gym.get("qr_mode", "dynamic") if gym else "dynamic"
+    effective_qr_mode = member_qr_mode or gym_qr_mode
+    
     refresh_seconds = gym.get("qr_refresh_seconds", 10) if gym else 10
-    if qr_mode == "static":
+    if effective_qr_mode == "static":
         qr_data = generate_static_qr_data(member_id, gym_id)
         return {"qr_code": qr_data, "expires_at": 0, "refresh_seconds": 0, "qr_mode": "static"}
     timestamp = int(datetime.now(timezone.utc).timestamp())
@@ -267,6 +274,17 @@ async def get_member_access_stats(member_id: str, days: int = 30, admin: dict = 
         "daily_breakdown": [{"date": k, **v} for k, v in sorted(daily.items())],
         "recent_logs": logs[:20]
     }
+
+@router.put("/members/{member_id}/qr-mode")
+async def set_member_qr_mode(member_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo el super admin puede asignar QR estatico")
+    qr_mode = body.get("qr_mode", "dynamic")
+    if qr_mode not in ("dynamic", "static"):
+        raise HTTPException(status_code=400, detail="qr_mode debe ser 'dynamic' o 'static'")
+    update_data = {"qr_mode": qr_mode if qr_mode == "static" else None}
+    await db.members.update_one({"id": member_id}, {"$set": update_data})
+    return {"message": f"QR mode set to {qr_mode} for member {member_id}"}
 
 @router.get("/access/stats/hourly")
 async def get_hourly_access_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):

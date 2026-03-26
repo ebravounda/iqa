@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt
+  AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
@@ -298,7 +298,7 @@ export default function AdminMembers() {
                         </div>
                       </div>
                     </td>
-                    <td><code className="text-sm bg-zinc-800 px-2 py-1 rounded font-mono">{member.code}</code></td>
+                    <td><code className="text-sm bg-zinc-800 px-2 py-1 rounded font-mono">{member.code}</code>{member.qr_mode === 'static' && <span className="ml-1 text-xs bg-cyan-900/30 text-cyan-400 px-1.5 py-0.5 rounded">QR Fijo</span>}</td>
                     <td className="text-zinc-400">{member.email}</td>
                     <td>{getStatusBadge(member.status)}</td>
                     <td className="text-zinc-400 text-sm">{formatDate(member.created_at)}</td>
@@ -337,6 +337,18 @@ export default function AdminMembers() {
                           <DropdownMenuItem onClick={() => handleOpenDelete(member)} className="cursor-pointer text-red-500" data-testid={`member-delete-${member.code}`}>
                             <Trash2 size={16} className="mr-2" /> Eliminar
                           </DropdownMenuItem>
+                          {isSuperAdmin && (
+                            <>
+                              <DropdownMenuSeparator className="bg-zinc-700" />
+                              <DropdownMenuItem onClick={async () => {
+                                const newMode = member.qr_mode === 'static' ? 'dynamic' : 'static';
+                                try { await setMemberQRMode(member.id, newMode); toast.success(`QR ${newMode === 'static' ? 'estatico' : 'dinamico'} asignado`); fetchData(); }
+                                catch (e) { toast.error('Error'); }
+                              }} className="cursor-pointer text-cyan-400" data-testid={`member-qr-${member.code}`}>
+                                <QrCode size={16} className="mr-2" /> {member.qr_mode === 'static' ? 'Cambiar a QR Dinamico' : 'Asignar QR Estatico'}
+                              </DropdownMenuItem>
+                            </>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

@@ -246,3 +246,6 @@ export const createMPPreference = (planId) => axios.post(`${API}/mercadopago/cre
 
 // Gym Public Info
 export const getGymPublicInfo = (gymId) => axios.get(`${API}/gyms/${gymId}/public-info`);
+
+// Member QR Mode (Super Admin only)
+export const setMemberQRMode = (memberId, qrMode) => axios.put(`${API}/members/${memberId}/qr-mode`, { qr_mode: qrMode });
