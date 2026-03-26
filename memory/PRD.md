@@ -15,7 +15,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 /app/backend/
   server.py, database.py, auth.py (+ check_permission), models.py, qr_utils.py, storage.py
   routes/ (auth, gym, member, plan, access, device, payment, class/staff,
-           notification_guest, accounting, saas, pos, mercadopago, upload, form, analytics, misc)
+           notification_guest, accounting, saas, pos, mercadopago, upload, form, analytics, misc, device_member)
 ```
 
 ## Roles y Permisos
@@ -24,9 +24,9 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - **Gym Manager (Gestor)**: Permisos granulares configurables.
   - Por defecto: Ver/Crear/Editar socios, Registrar pagos, Ventas TPV, Ver accesos, Gestionar clases
   - Requiere activacion: Eliminar socios, Suspender socios, Gestionar productos TPV, Exportar datos, Enviar notificaciones
-- **Trainer**: Ve sus clases y asistencia.
+- **Trainer**: Dashboard propio con clases asignadas, check-in de asistentes, estadisticas semanales.
 
-### Catálogo de Permisos (12 total)
+### Catalogo de Permisos (12 total)
 | Permiso | Default | Endpoint protegido |
 |---------|---------|-------------------|
 | members_view | Si | GET /api/members |
@@ -59,7 +59,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 ### Fase 10: Filtros Excel + Imagenes POS (2026-02-28)
 - Filtros: estado, fechas, incluir membresias. Imagenes de productos POS
 
-### Fase 11: Tabla de Socios Rediseñada (2026-02-28)
+### Fase 11: Tabla de Socios Rediseniada (2026-02-28)
 - Tabla compacta sin scroll horizontal, popover de contacto, acciones siempre visibles
 
 ### Fase 12: Sistema de Permisos Granulares (2026-03-26)
@@ -70,6 +70,19 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - Modal de permisos con toggles agrupados (Socios, Pagos, Operaciones)
 - Barra visual de permisos activos en cards de gestores
 - Cuentas desactivadas bloqueadas en login (HTTP 403)
+
+### Fase 13: Control de Dispositivos y Estadisticas (2026-03-26)
+- Device fingerprinting para socios en la PWA
+- Limite de dispositivos configurable por gym (max_devices_per_member)
+- Modal admin para ver/revocar dispositivos de un socio
+- Estadisticas de visitas personales en la PWA (MemberStats)
+
+### Fase 14: Automatizacion y Dashboard Trainer (2026-03-26)
+- Auto-suspension de membresias vencidas via CRON a medianoche UTC
+- Emails automaticos de recordatorio 1/3/7 dias antes del vencimiento
+- Dashboard especifico para Trainers (clases del dia, check-in, stats semanales, proximas clases)
+- Navegacion por fechas en pagina de Asistencia (prev/next day)
+- Guia paso a paso para publicar la PWA en Google Play (GUIA_GOOGLE_PLAY.md)
 
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123
@@ -82,14 +95,8 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 
 ## Backlog Pendiente
 
-### P1
-- Emails recordatorio vencimiento membresia
-- Check-in asistencia a clases
-
 ### P2
-- Dashboards para Trainers
-- Push notifications (Firebase/PWA)
-- Endpoint para desactivar/activar gestores via API (actualmente solo trainers)
+- Push notifications reales (Firebase/PWA Push API)
 
 ### P3
 - Facturacion SaaS automatica
