@@ -5,11 +5,11 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { DollarSign, FileText, Download, Calendar, TrendingUp, CreditCard, Banknote, Zap, Trash2, AlertTriangle } from 'lucide-react';
+import { DollarSign, FileText, Download, Calendar, TrendingUp, CreditCard, Banknote, Zap, Trash2, AlertTriangle, FileBarChart } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { createCashWithdrawal, pruneOldRecords } from '../../lib/api';
+import { createCashWithdrawal, pruneOldRecords, downloadSalesReportPDF } from '../../lib/api';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -94,15 +94,21 @@ export default function AdminAccounting() {
   };
 
   const printWithdrawalReceipt = (w) => {
-    const win = window.open('', '_blank', 'width=302,height=500');
-    win.document.write(`<html><head><style>body{font-family:monospace;width:72mm;margin:0 auto;padding:4mm;}hr{border:0;border-top:1px dashed #000;margin:8px 0}</style></head><body>
+    const win = window.open('', '_blank', 'width=302,height=700');
+    win.document.write(`<html><head><style>body{font-family:monospace;width:72mm;margin:0 auto;padding:4mm;}hr{border:0;border-top:1px dashed #000;margin:8px 0}.sig-line{border-bottom:1px solid #000;width:100%;display:inline-block;margin:6px 0}</style></head><body>
       <h3 style="text-align:center;margin:4px 0">RETIRO DE CAJA</h3>
       <p style="text-align:center;font-size:10px">${new Date(w.created_at).toLocaleString()}</p><hr/>
       <p><strong>Monto:</strong> $${w.amount?.toLocaleString()}</p>
       <p><strong>Motivo:</strong> ${w.reason}</p>
       ${w.notes ? `<p><strong>Notas:</strong> ${w.notes}</p>` : ''}
       <p><strong>Registrado por:</strong> ${w.registered_by_name || '-'}</p><hr/>
-      <p style="text-align:center;font-size:9px">Comprobante de retiro</p>
+      <p style="font-size:9px;margin-bottom:12px"><strong>Firma de quien recibe:</strong></p>
+      <p><span class="sig-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
+      <p style="font-size:9px"><strong>Nombre:</strong> <span class="sig-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
+      <p style="font-size:9px"><strong>DNI/Pasaporte/NIE:</strong> <span class="sig-line">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span></p>
+      <hr/>
+      <p style="font-size:7px;text-align:center;font-style:italic">(Al firmar el recibo, confirmo que recibo conforme la cantidad que aparece en el ticket)</p>
+      <p style="text-align:center;font-size:8px;margin-top:8px">Comprobante de retiro</p>
     </body></html>`);
     win.document.close();
     win.print();
@@ -112,6 +118,22 @@ export default function AdminAccounting() {
     if (!window.confirm('Esto eliminara registros de acceso anteriores a 6 meses. Esta accion es irreversible. Continuar?')) return;
     try { const r = await pruneOldRecords(6); toast.success(r.data.message); }
     catch (e) { toast.error('Error al purgar registros'); }
+  };
+
+  const handleDownloadSalesReport = async (period) => {
+    try {
+      const gymId = admin?.gym_id;
+      const res = await downloadSalesReportPDF(gymId, period, dateFrom, dateTo);
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `informe_ventas_${period}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success(`Informe ${period} descargado`);
+    } catch (e) { toast.error('Error al generar PDF'); }
   };
 
   const PIE_COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#06B6D4'];
@@ -143,6 +165,27 @@ export default function AdminAccounting() {
           <FileText size={18} className="mr-2" />
           Exportar PDF
         </Button>
+      </div>
+
+      {/* Sales Reports */}
+      <div className="stat-card">
+        <div className="flex items-center gap-2 mb-4">
+          <FileBarChart size={18} className="text-[var(--gym-primary)]" />
+          <h3 className="font-bold">Informes de Ventas</h3>
+        </div>
+        <p className="text-zinc-400 text-sm mb-4">Descarga informes PDF detallados con membresias, ventas POS y retiros.</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { period: 'daily', label: 'Diario (hoy)' },
+            { period: 'weekly', label: 'Semanal' },
+            { period: 'monthly', label: 'Mensual' },
+            { period: 'custom', label: 'Periodo personalizado' },
+          ].map(r => (
+            <button key={r.period} onClick={() => handleDownloadSalesReport(r.period)} className="flex items-center gap-2 px-4 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors text-sm" data-testid={`report-${r.period}`}>
+              <FileText size={14} /> {r.label}
+            </button>
+          ))}
+        </div>
       </div>
       {/* Filters */}
       <div className="stat-card">

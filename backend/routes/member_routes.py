@@ -21,6 +21,7 @@ async def create_member(member: MemberCreate, admin: dict = Depends(get_current_
     member_dict["id"] = str(uuid.uuid4())
     member_dict["code"] = generate_member_code()
     member_dict["status"] = "active"
+    member_dict["gender"] = member.gender or "prefer_not_to_say"
     member_dict["created_at"] = datetime.now(timezone.utc).isoformat()
     while await db.members.find_one({"code": member_dict["code"]}):
         member_dict["code"] = generate_member_code()
@@ -46,6 +47,8 @@ async def register_member_public(member: MemberPublicRegister):
         "gym_id": member.gym_id,
         "code": generate_member_code(),
         "status": "active",
+        "gender": member.gender or "prefer_not_to_say",
+        "form_responses": member.form_responses,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     while await db.members.find_one({"code": member_dict["code"]}):

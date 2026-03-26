@@ -183,14 +183,32 @@ export default function AdminPOS() {
           </div>
           {showProductForm && (
             <form onSubmit={handleCreateProduct} className="bg-zinc-900 border border-zinc-800 rounded-xl p-5 mb-4 grid grid-cols-1 md:grid-cols-3 gap-3" data-testid="product-form">
-              <input className="input-gym" placeholder="Nombre" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
-              <input className="input-gym" type="number" step="0.01" placeholder="Precio costo" value={productForm.cost_price} onChange={e => setProductForm({ ...productForm, cost_price: parseFloat(e.target.value) })} />
-              <input className="input-gym" type="number" step="0.01" placeholder="Precio venta" value={productForm.sale_price} onChange={e => setProductForm({ ...productForm, sale_price: parseFloat(e.target.value) })} required />
-              <input className="input-gym" type="number" placeholder="Stock" value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: parseInt(e.target.value) })} />
-              <input className="input-gym" placeholder="Categoria" value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} />
-              <input className="input-gym" placeholder="Codigo de barras" value={productForm.barcode} onChange={e => setProductForm({ ...productForm, barcode: e.target.value })} />
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">Nombre del producto *</label>
+                <input className="input-gym" placeholder="Ej: Batido proteina" value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} required />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">Precio de costo</label>
+                <input className="input-gym" type="number" step="0.01" placeholder="0.00" value={productForm.cost_price} onChange={e => setProductForm({ ...productForm, cost_price: parseFloat(e.target.value) || 0 })} />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">Precio de venta *</label>
+                <input className="input-gym" type="number" step="0.01" placeholder="0.00" value={productForm.sale_price} onChange={e => setProductForm({ ...productForm, sale_price: parseFloat(e.target.value) || 0 })} required />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">Stock inicial</label>
+                <input className="input-gym" type="number" placeholder="0" value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: parseInt(e.target.value) || 0 })} />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">Categoria</label>
+                <input className="input-gym" placeholder="Ej: Bebidas, Suplementos" value={productForm.category} onChange={e => setProductForm({ ...productForm, category: e.target.value })} />
+              </div>
+              <div>
+                <label className="text-xs text-zinc-400 block mb-1">Codigo de barras</label>
+                <input className="input-gym" placeholder="Opcional" value={productForm.barcode} onChange={e => setProductForm({ ...productForm, barcode: e.target.value })} />
+              </div>
               <div className="col-span-full flex gap-3">
-                <button type="submit" className="btn-gym-primary" data-testid="save-product-btn">Guardar</button>
+                <button type="submit" className="btn-gym-primary" data-testid="save-product-btn">Guardar Producto</button>
                 <button type="button" onClick={() => setShowProductForm(false)} className="btn-gym-secondary">Cancelar</button>
               </div>
             </form>

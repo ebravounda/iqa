@@ -5,7 +5,7 @@ import {
   LayoutDashboard, Users, CreditCard, Building2, UserCog, Settings, 
   Calendar, Clock, Bell, Shield, QrCode, Menu, X, ChevronLeft,
   LogOut, Smartphone, UserCheck, DollarSign, Mail, ShoppingCart,
-  Layers, Code, Megaphone
+  Layers, Code, Megaphone, BarChart3, ClipboardList
 } from 'lucide-react';
 
 const getNavItems = (role, isImpersonating) => {
@@ -22,6 +22,8 @@ const getNavItems = (role, isImpersonating) => {
     { path: '/admin/schedules', icon: Clock, label: 'Horarios', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
     { path: '/admin/access', icon: Shield, label: 'Accesos', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
     { path: '/admin/accounting', icon: DollarSign, label: 'Contabilidad', roles: ['super_admin', 'gym_admin'] },
+    { path: '/admin/analytics', icon: BarChart3, label: 'Analytics', roles: ['super_admin', 'gym_admin'] },
+    { path: '/admin/forms', icon: ClipboardList, label: 'Formularios', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/staff', icon: UserCog, label: 'Personal', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/iframes', icon: Code, label: 'Iframes', roles: ['gym_admin'] },
     { path: '/admin/devices', icon: Smartphone, label: 'Dispositivos', roles: ['super_admin'] },

@@ -21,8 +21,11 @@ export default function PublicRegister() {
     name: '',
     email: '',
     phone: '',
-    plan_id: ''
+    plan_id: '',
+    gender: 'prefer_not_to_say'
   });
+  const [customForms, setCustomForms] = useState([]);
+  const [formResponses, setFormResponses] = useState({});
 
   useEffect(() => {
     fetchGymInfo();
@@ -39,6 +42,11 @@ export default function PublicRegister() {
       if (gymRes.data.primary_color) {
         document.documentElement.style.setProperty('--gym-primary', gymRes.data.primary_color);
       }
+      // Fetch custom forms
+      try {
+        const formsRes = await axios.get(`${API}/forms/public/${gymId}`);
+        setCustomForms(formsRes.data);
+      } catch (e) {}
     } catch (error) {
       toast.error('Gimnasio no encontrado');
     } finally {
@@ -60,10 +68,24 @@ export default function PublicRegister() {
         email: formData.email,
         phone: formData.phone || null,
         gym_id: gymId,
-        plan_id: formData.plan_id || null
+        plan_id: formData.plan_id || null,
+        gender: formData.gender || 'prefer_not_to_say',
+        form_responses: Object.keys(formResponses).length > 0 ? formResponses : null
       };
       const response = await axios.post(`${API}/members/register`, payload);
       setSuccess(response.data);
+
+      // Submit custom form responses
+      if (customForms.length > 0 && Object.keys(formResponses).length > 0 && response.data.member?.id) {
+        for (const form of customForms) {
+          try {
+            await axios.post(`${API}/forms/${form.id}/responses`, {
+              member_id: response.data.member.id,
+              responses: formResponses
+            });
+          } catch (e) {}
+        }
+      }
 
       // Auto-login the member
       localStorage.setItem('token', response.data.token);
@@ -178,7 +200,7 @@ export default function PublicRegister() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-zinc-400 mb-2">Teléfono (opcional)</label>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">Telefono (opcional)</label>
               <Input
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
@@ -187,6 +209,48 @@ export default function PublicRegister() {
                 data-testid="register-phone-input"
               />
             </div>
+
+            <div>
+              <label className="block text-sm font-medium text-zinc-400 mb-2">Sexo</label>
+              <select className="input-gym w-full" value={formData.gender} onChange={e => setFormData({ ...formData, gender: e.target.value })} data-testid="register-gender-select">
+                <option value="male">Hombre</option>
+                <option value="female">Mujer</option>
+                <option value="prefer_not_to_say">Prefiero no contestar</option>
+              </select>
+            </div>
+
+            {customForms.length > 0 && customForms.map(form => (
+              <div key={form.id} className="border border-zinc-700 rounded-xl p-4 space-y-3" data-testid={`custom-form-${form.id}`}>
+                <h4 className="text-sm font-semibold text-white">{form.name}</h4>
+                {form.description && <p className="text-xs text-zinc-400">{form.description}</p>}
+                {(form.fields || []).map((field, idx) => (
+                  <div key={idx}>
+                    <label className="text-xs text-zinc-400 block mb-1">{field.label}{field.required && ' *'}</label>
+                    {field.field_type === 'text' && (
+                      <input className="input-gym text-sm" placeholder={field.placeholder || ''} value={formResponses[field.label] || ''} onChange={e => setFormResponses({ ...formResponses, [field.label]: e.target.value })} required={field.required} />
+                    )}
+                    {field.field_type === 'textarea' && (
+                      <textarea className="input-gym text-sm" placeholder={field.placeholder || ''} rows={2} value={formResponses[field.label] || ''} onChange={e => setFormResponses({ ...formResponses, [field.label]: e.target.value })} required={field.required} />
+                    )}
+                    {field.field_type === 'select' && (
+                      <select className="input-gym text-sm" value={formResponses[field.label] || ''} onChange={e => setFormResponses({ ...formResponses, [field.label]: e.target.value })} required={field.required}>
+                        <option value="">Seleccionar...</option>
+                        {(field.options || []).map((opt, i) => <option key={i} value={opt}>{opt}</option>)}
+                      </select>
+                    )}
+                    {field.field_type === 'checkbox' && (
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" checked={formResponses[field.label] === 'Si'} onChange={e => setFormResponses({ ...formResponses, [field.label]: e.target.checked ? 'Si' : 'No' })} className="accent-[var(--gym-primary)]" />
+                        <span className="text-sm text-zinc-300">Si</span>
+                      </label>
+                    )}
+                    {field.field_type === 'number' && (
+                      <input type="number" className="input-gym text-sm" placeholder={field.placeholder || ''} value={formResponses[field.label] || ''} onChange={e => setFormResponses({ ...formResponses, [field.label]: e.target.value })} required={field.required} />
+                    )}
+                  </div>
+                ))}
+              </div>
+            ))}
 
             {plans.length > 0 && (
               <div>

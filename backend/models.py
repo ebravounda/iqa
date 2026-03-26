@@ -51,6 +51,7 @@ class MemberCreate(BaseModel):
     phone: Optional[str] = None
     avatar_url: Optional[str] = None
     gym_id: str
+    gender: Optional[str] = None  # male, female, prefer_not_to_say
 
 class MemberPublicRegister(BaseModel):
     email: EmailStr
@@ -58,6 +59,8 @@ class MemberPublicRegister(BaseModel):
     phone: Optional[str] = None
     gym_id: str
     plan_id: Optional[str] = None
+    gender: Optional[str] = None  # male, female, prefer_not_to_say
+    form_responses: Optional[dict] = None  # Custom form answers
 
 class MemberUpdate(BaseModel):
     name: Optional[str] = None
@@ -68,6 +71,7 @@ class MemberUpdate(BaseModel):
     can_bring_guests: Optional[bool] = None
     max_guests_per_month: Optional[int] = None
     suspension_reason: Optional[str] = None
+    gender: Optional[str] = None
 
 class PlanCreate(BaseModel):
     gym_id: str
@@ -225,3 +229,21 @@ class BroadcastCreate(BaseModel):
     title: str
     message: str
     priority: str = "normal"  # normal, urgent
+
+
+# ==================== Custom Form Models ====================
+
+class FormFieldCreate(BaseModel):
+    label: str
+    field_type: str = "text"  # text, textarea, select, checkbox, number
+    required: bool = False
+    options: Optional[List[str]] = None  # For select type
+    placeholder: Optional[str] = None
+
+class CustomFormCreate(BaseModel):
+    gym_id: str
+    name: str
+    description: Optional[str] = None
+    fields: List[FormFieldCreate]
+    active: bool = True
+    show_on_registration: bool = True

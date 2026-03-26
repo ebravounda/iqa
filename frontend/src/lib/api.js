@@ -247,5 +247,64 @@ export const createMPPreference = (planId) => axios.post(`${API}/mercadopago/cre
 // Gym Public Info
 export const getGymPublicInfo = (gymId) => axios.get(`${API}/gyms/${gymId}/public-info`);
 
-// Member QR Mode (Super Admin only)
-export const setMemberQRMode = (memberId, qrMode) => axios.put(`${API}/members/${memberId}/qr-mode`, { qr_mode: qrMode });
+// Analytics
+export const getAnalyticsOverview = (gymId) => {
+  let url = `${API}/analytics/overview`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const getHourlyHeatmap = (gymId) => {
+  let url = `${API}/analytics/hourly-heatmap`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const getRevenueComparison = (gymId) => {
+  let url = `${API}/analytics/revenue-comparison`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const getMemberRetention = (gymId) => {
+  let url = `${API}/analytics/member-retention`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const getPeakHours = (gymId) => {
+  let url = `${API}/analytics/peak-hours`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+
+// Custom Forms
+export const getCustomForms = (gymId) => {
+  let url = `${API}/forms`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url);
+};
+export const createCustomForm = (data) => axios.post(`${API}/forms`, data);
+export const updateCustomForm = (id, data) => axios.put(`${API}/forms/${id}`, data);
+export const deleteCustomForm = (id) => axios.delete(`${API}/forms/${id}`);
+export const getPublicForms = (gymId) => axios.get(`${API}/forms/public/${gymId}`);
+export const submitFormResponse = (formId, data) => axios.post(`${API}/forms/${formId}/responses`, data);
+export const getFormResponses = (formId) => axios.get(`${API}/forms/${formId}/responses`);
+
+// Upload
+export const uploadAvatar = (file) => {
+  const fd = new FormData();
+  fd.append('file', file);
+  return axios.post(`${API}/upload/avatar`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+export const uploadAvatarAdmin = (memberId, file) => {
+  const fd = new FormData();
+  fd.append('file', file);
+  return axios.post(`${API}/upload/avatar/admin/${memberId}`, fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+};
+
+// Sales Report PDF
+export const downloadSalesReportPDF = (gymId, period, dateFrom, dateTo) => {
+  const params = new URLSearchParams();
+  if (gymId) params.append('gym_id', gymId);
+  if (period) params.append('period', period);
+  if (dateFrom) params.append('date_from', dateFrom);
+  if (dateTo) params.append('date_to', dateTo);
+  return axios.get(`${API}/accounting/sales-report-pdf?${params.toString()}`, { responseType: 'blob' });
+};

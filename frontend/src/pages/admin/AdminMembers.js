@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode
+  AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode, Camera
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
+import { MemberAvatar } from '../../components/MemberAvatar';
 
 export default function AdminMembers() {
   const { admin, isSuperAdmin } = useAuth();
@@ -30,7 +31,7 @@ export default function AdminMembers() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [selectedMember, setSelectedMember] = useState(null);
   const [suspendReason, setSuspendReason] = useState('');
-  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: admin?.gym_id || '' });
+  const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: admin?.gym_id || '', gender: 'prefer_not_to_say' });
   const [editData, setEditData] = useState({ name: '', email: '', phone: '' });
   const [selectedPlan, setSelectedPlan] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
@@ -229,9 +230,17 @@ export default function AdminMembers() {
                     placeholder="email@ejemplo.com" className="input-dark" data-testid="member-email-input" />
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Teléfono (opcional)</label>
+                  <label className="text-sm text-zinc-400 mb-1 block">Telefono (opcional)</label>
                   <Input value={newMember.phone} onChange={(e) => setNewMember({ ...newMember, phone: e.target.value })}
                     placeholder="+1 234 567 890" className="input-dark" />
+                </div>
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Sexo</label>
+                  <select className="input-gym w-full" value={newMember.gender} onChange={e => setNewMember({ ...newMember, gender: e.target.value })} data-testid="member-gender-select">
+                    <option value="male">Hombre</option>
+                    <option value="female">Mujer</option>
+                    <option value="prefer_not_to_say">Prefiero no contestar</option>
+                  </select>
                 </div>
                 <Button onClick={handleCreateMember} className="w-full btn-gym-primary" data-testid="save-member-btn">
                   <UserPlus size={20} className="mr-2" /> Crear Socio
@@ -285,9 +294,7 @@ export default function AdminMembers() {
                   <tr key={member.id}>
                     <td>
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-zinc-700 flex items-center justify-center font-bold text-sm">
-                          {member.name.charAt(0)}
-                        </div>
+                        <MemberAvatar member={member} size={40} />
                         <div>
                           <span className="font-medium">{member.name}</span>
                           {member.status === 'suspended' && member.suspension_reason && (
@@ -349,6 +356,19 @@ export default function AdminMembers() {
                               </DropdownMenuItem>
                             </>
                           )}
+                          <DropdownMenuSeparator className="bg-zinc-700" />
+                          <DropdownMenuItem className="cursor-pointer text-violet-400 p-0" data-testid={`member-photo-${member.code}`}>
+                            <label className="flex items-center gap-2 cursor-pointer w-full px-2 py-1.5">
+                              <Camera size={16} /> Subir Foto
+                              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (e) => {
+                                const file = e.target.files[0];
+                                if (!file) return;
+                                if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no puede superar 2MB'); return; }
+                                try { await uploadAvatarAdmin(member.id, file); toast.success('Foto actualizada'); fetchData(); }
+                                catch (err) { toast.error(err.response?.data?.detail || 'Error al subir foto'); }
+                              }} />
+                            </label>
+                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </td>

@@ -230,3 +230,174 @@ async def generate_accounting_pdf(
     filename = f"contabilidad_{gym_name.replace(' ', '_')}_{date_from or 'all'}_{date_to or 'all'}.pdf"
     return StreamingResponse(buffer, media_type="application/pdf",
                              headers={"Content-Disposition": f"attachment; filename={filename}"})
+
+
+@router.get("/accounting/sales-report-pdf")
+async def generate_sales_report_pdf(
+    gym_id: Optional[str] = None, period: str = "daily",
+    date_from: Optional[str] = None, date_to: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import mm
+    from io import BytesIO
+    from datetime import timedelta
+    
+    now = datetime.now(timezone.utc)
+    if not date_from:
+        if period == "daily":
+            date_from = now.replace(hour=0, minute=0, second=0, microsecond=0).isoformat()[:10]
+        elif period == "weekly":
+            date_from = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()[:10]
+        elif period == "monthly":
+            date_from = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()[:10]
+        else:
+            date_from = (now - timedelta(days=365)).isoformat()[:10]
+    if not date_to:
+        date_to = now.isoformat()[:10]
+    
+    target_gym_id = admin.get("gym_id") or gym_id
+    
+    # Membership payments
+    pay_query = {"payment_status": "paid", "created_at": {"$gte": date_from, "$lte": date_to + "T23:59:59"}}
+    if target_gym_id:
+        pay_query["gym_id"] = target_gym_id
+    transactions = await db.payment_transactions.find(pay_query, {"_id": 0}).sort("created_at", 1).to_list(5000)
+    
+    # POS sales
+    pos_query = {"created_at": {"$gte": date_from, "$lte": date_to + "T23:59:59"}}
+    if target_gym_id:
+        pos_query["gym_id"] = target_gym_id
+    pos_sales = await db.pos_sales.find(pos_query, {"_id": 0}).sort("created_at", 1).to_list(5000)
+    
+    # Withdrawals
+    w_query = {"created_at": {"$gte": date_from, "$lte": date_to + "T23:59:59"}}
+    if target_gym_id:
+        w_query["gym_id"] = target_gym_id
+    withdrawals = await db.cash_withdrawals.find(w_query, {"_id": 0}).sort("created_at", 1).to_list(1000)
+    
+    gym_name = "Todos los Gimnasios"
+    if target_gym_id:
+        gym_doc = await db.gyms.find_one({"id": target_gym_id}, {"_id": 0, "name": 1})
+        gym_name = gym_doc.get("name", gym_name) if gym_doc else gym_name
+    
+    total_memberships = sum(t.get("amount", 0) for t in transactions)
+    total_pos = sum(s.get("total", 0) for s in pos_sales)
+    total_withdrawals = sum(w.get("amount", 0) for w in withdrawals)
+    grand_total = total_memberships + total_pos
+    
+    period_labels = {"daily": "Diario", "weekly": "Semanal", "monthly": "Mensual", "custom": "Personalizado"}
+    
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=15*mm, bottomMargin=15*mm, leftMargin=12*mm, rightMargin=12*mm)
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('T', parent=styles['Title'], fontSize=16, spaceAfter=4, textColor=colors.HexColor('#18181B'))
+    sub_style = ParagraphStyle('S', parent=styles['Normal'], fontSize=9, textColor=colors.grey)
+    section_style = ParagraphStyle('Sec', parent=styles['Heading2'], fontSize=12, spaceBefore=10, spaceAfter=4, textColor=colors.HexColor('#18181B'))
+    
+    elements = []
+    elements.append(Paragraph(f"Informe de Ventas - {gym_name}", title_style))
+    elements.append(Paragraph(f"Periodo: {period_labels.get(period, period)} | Desde: {date_from} | Hasta: {date_to}", sub_style))
+    elements.append(Spacer(1, 6*mm))
+    
+    # Summary table
+    summary_data = [
+        ['Concepto', 'Total'],
+        ['Ingresos por Membresias', f'${total_memberships:,.2f}'],
+        ['Ingresos por Ventas POS', f'${total_pos:,.2f}'],
+        ['TOTAL INGRESOS', f'${grand_total:,.2f}'],
+        ['Retiros de Caja', f'-${total_withdrawals:,.2f}'],
+        ['NETO', f'${(grand_total - total_withdrawals):,.2f}'],
+    ]
+    t = Table(summary_data, colWidths=[300, 150])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#18181B')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+        ('BACKGROUND', (0, 3), (-1, 3), colors.HexColor('#E8F5E9')),
+        ('BACKGROUND', (0, 5), (-1, 5), colors.HexColor('#E3F2FD')),
+        ('FONTNAME', (0, 3), (-1, 3), 'Helvetica-Bold'),
+        ('FONTNAME', (0, 5), (-1, 5), 'Helvetica-Bold'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(t)
+    elements.append(Spacer(1, 8*mm))
+    
+    # Memberships detail
+    if transactions:
+        elements.append(Paragraph("Detalle de Membresias", section_style))
+        mem_data = [['Fecha', 'Socio', 'Plan', 'Metodo', 'Monto']]
+        method_map = {"cash": "Efectivo", "card_reception": "Tarjeta", "stripe": "Stripe", "mercadopago": "MercadoPago"}
+        for tx in transactions:
+            mem_data.append([
+                tx.get("created_at", "")[:10],
+                tx.get("member_name", "-"),
+                tx.get("plan_name", "-"),
+                method_map.get(tx.get("payment_method", "stripe"), "Stripe"),
+                f'${tx.get("amount", 0):,.2f}'
+            ])
+        mt = Table(mem_data, colWidths=[65, 130, 110, 75, 70])
+        mt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#18181B')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FAFAFA')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 3), ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(mt)
+        elements.append(Spacer(1, 6*mm))
+    
+    # POS detail
+    if pos_sales:
+        elements.append(Paragraph("Detalle de Ventas POS", section_style))
+        pos_data = [['Fecha', 'Productos', 'Metodo', 'Total']]
+        for s in pos_sales:
+            items_str = ", ".join([f"{i['product_name']}({i['quantity']})" for i in s.get("items", [])])
+            pos_data.append([
+                s.get("created_at", "")[:10],
+                items_str[:50],
+                "Efectivo" if s.get("payment_method") == "cash" else "Tarjeta",
+                f'${s.get("total", 0):,.2f}'
+            ])
+        pt = Table(pos_data, colWidths=[65, 220, 75, 70])
+        pt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#18181B')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#FAFAFA')]),
+            ('TOPPADDING', (0, 0), (-1, -1), 3), ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(pt)
+        elements.append(Spacer(1, 6*mm))
+    
+    # Withdrawals detail
+    if withdrawals:
+        elements.append(Paragraph("Detalle de Retiros de Caja", section_style))
+        wd = [['Fecha', 'Motivo', 'Responsable', 'Monto']]
+        for w in withdrawals:
+            wd.append([w.get("created_at", "")[:10], w.get("reason", ""), w.get("registered_by_name", ""), f'-${w.get("amount", 0):,.2f}'])
+        wt = Table(wd, colWidths=[65, 190, 110, 70])
+        wt.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#18181B')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('ALIGN', (-1, 0), (-1, -1), 'RIGHT'),
+            ('TEXTCOLOR', (-1, 1), (-1, -1), colors.red),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ('TOPPADDING', (0, 0), (-1, -1), 3), ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ]))
+        elements.append(wt)
+    
+    doc.build(elements)
+    buffer.seek(0)
+    filename = f"informe_ventas_{period}_{gym_name.replace(' ','_')}_{date_from}_{date_to}.pdf"
+    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": f"attachment; filename={filename}"})
