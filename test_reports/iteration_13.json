@@ -1,0 +1,118 @@
+{
+  "summary": "Iteration 13 testing complete. Granular permission system for gym_manager role fully verified. Backend: 14/14 tests passed (100%). Frontend: All UI tests passed - Staff page shows permission bars, permissions modal with grouped toggles, sidebar filtering, and member dropdown hiding based on permissions.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {
+        "endpoint": "PUT /api/staff/{id}",
+        "issue": "No endpoint to update staff active status (deactivate staff). The /api/trainers/{id} endpoint only works for role='trainer'. This means disabled account login test cannot be fully verified via API.",
+        "priority": "LOW"
+      }
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Staff page permissions modal",
+        "issues": ["Console warning: 'Missing Description or aria-describedby for DialogContent' - minor accessibility warning"]
+      }
+    ]
+  },
+  "passed_tests": [
+    "POST /api/staff - Creating gym_manager includes default 7 permissions array",
+    "GET /api/staff/permissions-catalog - Returns all 12 permissions, 7 defaults, and labels",
+    "PUT /api/staff/{id}/permissions - Updates manager permissions (only gym_admin/super_admin)",
+    "POST /api/auth/admin/login - Manager login response includes permissions array",
+    "Permission enforcement: Manager WITHOUT members_delete gets 403 on DELETE /api/members/{id}",
+    "Permission enforcement: Manager WITHOUT members_suspend gets 403 on POST /api/members/{id}/suspend",
+    "Permission enforcement: Manager WITHOUT data_export gets 403 on GET /api/members/export/excel",
+    "Permission enforcement: Manager WITHOUT notifications_send gets 403 on POST /api/notifications",
+    "Permission enforcement: Manager WITH members_view gets 200 on GET /api/members",
+    "After granting members_delete permission, DELETE returns 404 (not 403)",
+    "Active account login check exists in auth_routes.py (line 35-36)",
+    "Super admin bypasses all permission checks",
+    "Super admin can export data without explicit permission",
+    "Super admin can send notifications without explicit permission",
+    "Frontend: Staff page (/admin/staff) shows Gestores section with permission bars",
+    "Frontend: Clicking permissions bar opens modal with toggles grouped by Socios/Pagos/Operaciones",
+    "Frontend: Permissions modal shows 12 permission toggles with Spanish labels",
+    "Frontend: Manager sidebar hides 'Datos' nav (no data_export permission)",
+    "Frontend: Manager sidebar hides 'Notificaciones' nav (no notifications_send permission)",
+    "Frontend: Manager sidebar shows 'Socios' nav (has members_view permission)",
+    "Frontend: Member dropdown hides 'Eliminar' for manager without members_delete",
+    "Frontend: Member dropdown hides 'Suspender' for manager without members_suspend",
+    "Frontend: Member dropdown shows 'Editar' for manager with members_edit"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iteration13_permissions.py",
+    "/app/test_reports/pytest/pytest_results_iteration13.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "auth.py: check_permission function correctly bypasses for super_admin and gym_admin roles",
+    "auth_routes.py: Login correctly checks admin.get('active') is False and returns 403",
+    "class_routes.py: Staff creation correctly assigns DEFAULT_MANAGER_PERMISSIONS for gym_manager role",
+    "AdminLayout.js: Nav filtering correctly uses hasPermission() for permission-gated menu items",
+    "AdminMembers.js: Dropdown actions correctly use hasPermission() conditionals",
+    "AuthContext.js: hasPermission helper correctly returns true for super_admin/gym_admin, checks permissions array for gym_manager"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration13_permissions.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (All UI tests passed)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@gymaccess.com / admin123",
+    "test_manager_with_delete": "maria@test.com / manager123 (has members_delete)",
+    "test_manager_default_perms": "TEST_nodelete_9adf55b5@test.com / testpass123 (default permissions only)"
+  },
+  "seed_data_creation": "Created multiple TEST_ prefixed gym_manager accounts during testing for permission verification. These remain in DB for future testing.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Permission system fully implemented and tested. Key points: (1) DEFAULT_MANAGER_PERMISSIONS = 7 permissions (members_view, members_create, members_edit, payments_register, pos_sell, access_view, classes_manage). (2) ALL_MANAGER_PERMISSIONS = 12 total (adds members_delete, members_suspend, pos_products, data_export, notifications_send). (3) Permission checks use check_permission() in backend which reads from DB on each request. (4) Frontend uses hasPermission() from AuthContext which checks admin.permissions array. (5) Super admin and gym_admin bypass all permission checks. (6) Maria Recepcion (maria@test.com) has members_delete granted - not default permissions.",
+  "mocked_apis": {
+    "has_mocked_apis": true,
+    "mocked_apis_list": ["Stripe checkout"]
+  },
+  "feature_verification_details": {
+    "permission_system": {
+      "status": "WORKING",
+      "default_permissions": ["members_view", "members_create", "members_edit", "payments_register", "pos_sell", "access_view", "classes_manage"],
+      "all_permissions": ["members_view", "members_create", "members_edit", "members_delete", "members_suspend", "payments_register", "pos_sell", "pos_products", "access_view", "classes_manage", "data_export", "notifications_send"],
+      "endpoints": {
+        "create_staff": "POST /api/staff - assigns default permissions for gym_manager",
+        "permissions_catalog": "GET /api/staff/permissions-catalog - returns all/default/labels",
+        "update_permissions": "PUT /api/staff/{id}/permissions - updates manager permissions"
+      },
+      "enforcement_tested": {
+        "members_delete": "DELETE /api/members/{id} - 403 without permission",
+        "members_suspend": "POST /api/members/{id}/suspend - 403 without permission",
+        "data_export": "GET /api/members/export/excel - 403 without permission",
+        "notifications_send": "POST /api/notifications - 403 without permission"
+      }
+    },
+    "frontend_ui": {
+      "staff_page": {
+        "route": "/admin/staff",
+        "features": ["Gestores section", "Permission bars showing X/12 active", "Permisos button on each manager card"]
+      },
+      "permissions_modal": {
+        "groups": ["Socios", "Pagos y Ventas", "Operaciones"],
+        "toggles": "12 permission toggles with Spanish labels",
+        "save_button": "data-testid='save-permissions-btn'"
+      },
+      "sidebar_filtering": {
+        "hidden_for_manager": ["Datos (data_export)", "Notificaciones (notifications_send)", "Personal", "Planes", "Gimnasios", "Configuracion"],
+        "visible_for_manager": ["Dashboard", "Socios", "TPV/POS", "Clases", "Asistencia", "Horarios", "Accesos"]
+      },
+      "member_dropdown_filtering": {
+        "hidden_without_permission": ["Eliminar (members_delete)", "Suspender (members_suspend)"],
+        "visible_with_permission": ["Editar (members_edit)", "Registrar Pago (payments_register)"]
+      }
+    }
+  }
+}

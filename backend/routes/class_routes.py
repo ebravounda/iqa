@@ -5,7 +5,7 @@ from typing import Optional, List
 import uuid
 
 from database import db
-from auth import get_current_admin, check_role, security, decode_jwt_token
+from auth import get_current_admin, check_role, security, decode_jwt_token, check_permission, DEFAULT_MANAGER_PERMISSIONS, ALL_MANAGER_PERMISSIONS
 from models import ClassCreate, ClassUpdate, ClassScheduleCreate, BookingCreate, TrainerCreate, AdminCreate
 from auth import hash_password
 
@@ -104,6 +104,7 @@ async def create_staff(staff_data: AdminCreate, admin: dict = Depends(get_curren
         "id": str(uuid.uuid4()), "email": staff_data.email,
         "password": hash_password(staff_data.password), "name": staff_data.name,
         "role": staff_data.role, "gym_id": gym_id, "active": True,
+        "permissions": DEFAULT_MANAGER_PERMISSIONS if staff_data.role == "gym_manager" else [],
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.admins.insert_one(staff_dict)
@@ -121,6 +122,42 @@ async def get_staff(gym_id: Optional[str] = None, admin: dict = Depends(get_curr
         query["gym_id"] = gym_id
     staff = await db.admins.find(query, {"_id": 0, "password": 0}).to_list(100)
     return staff
+
+@router.get("/staff/permissions-catalog")
+async def get_permissions_catalog(admin: dict = Depends(get_current_admin)):
+    check_role(admin, ["super_admin", "gym_admin"])
+    labels = {
+        "members_view": "Ver socios",
+        "members_create": "Crear socios",
+        "members_edit": "Editar socios",
+        "members_delete": "Eliminar socios",
+        "members_suspend": "Suspender/Reactivar socios",
+        "payments_register": "Registrar pagos",
+        "pos_sell": "Ventas TPV",
+        "pos_products": "Gestionar productos TPV",
+        "access_view": "Ver accesos",
+        "classes_manage": "Gestionar clases y horarios",
+        "data_export": "Exportar datos (Excel)",
+        "notifications_send": "Enviar notificaciones",
+    }
+    return {
+        "all_permissions": ALL_MANAGER_PERMISSIONS,
+        "default_permissions": DEFAULT_MANAGER_PERMISSIONS,
+        "labels": labels
+    }
+
+@router.put("/staff/{staff_id}/permissions")
+async def update_staff_permissions(staff_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    check_role(admin, ["super_admin", "gym_admin"])
+    staff_member = await db.admins.find_one({"id": staff_id, "role": "gym_manager"}, {"_id": 0})
+    if not staff_member:
+        raise HTTPException(status_code=404, detail="Gestor no encontrado")
+    if admin["role"] != "super_admin" and admin.get("gym_id") != staff_member.get("gym_id"):
+        raise HTTPException(status_code=403, detail="No tienes acceso a este gestor")
+    permissions = body.get("permissions", [])
+    valid = [p for p in permissions if p in ALL_MANAGER_PERMISSIONS]
+    await db.admins.update_one({"id": staff_id}, {"$set": {"permissions": valid}})
+    return {"message": "Permisos actualizados", "permissions": valid}
 
 # ==================== CLASS ROUTES ====================
 

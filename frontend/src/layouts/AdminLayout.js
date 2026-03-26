@@ -8,35 +8,42 @@ import {
   Layers, Code, Megaphone, BarChart3, ClipboardList, Database
 } from 'lucide-react';
 
-const getNavItems = (role, isImpersonating) => {
+const getNavItems = (role, isImpersonating, permissions) => {
   // When impersonating, show gym_admin menu
   const effectiveRole = isImpersonating ? 'gym_admin' : role;
 
   const items = [
     { path: '/admin', icon: LayoutDashboard, label: 'Dashboard', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
-    { path: '/admin/members', icon: Users, label: 'Socios', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+    { path: '/admin/members', icon: Users, label: 'Socios', roles: ['super_admin', 'gym_admin', 'gym_manager'], perm: 'members_view' },
     { path: '/admin/plans', icon: CreditCard, label: 'Planes', roles: ['super_admin', 'gym_admin'] },
-    { path: '/admin/pos', icon: ShoppingCart, label: 'TPV/POS', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
-    { path: '/admin/classes', icon: Calendar, label: 'Clases', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+    { path: '/admin/pos', icon: ShoppingCart, label: 'TPV/POS', roles: ['super_admin', 'gym_admin', 'gym_manager'], perm: 'pos_sell' },
+    { path: '/admin/classes', icon: Calendar, label: 'Clases', roles: ['super_admin', 'gym_admin', 'gym_manager'], perm: 'classes_manage' },
     { path: '/admin/attendance', icon: UserCheck, label: 'Asistencia', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
     { path: '/admin/schedules', icon: Clock, label: 'Horarios', roles: ['super_admin', 'gym_admin', 'gym_manager', 'trainer'] },
-    { path: '/admin/access', icon: Shield, label: 'Accesos', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+    { path: '/admin/access', icon: Shield, label: 'Accesos', roles: ['super_admin', 'gym_admin', 'gym_manager'], perm: 'access_view' },
     { path: '/admin/accounting', icon: DollarSign, label: 'Contabilidad', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/analytics', icon: BarChart3, label: 'Analytics', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/forms', icon: ClipboardList, label: 'Formularios', roles: ['super_admin', 'gym_admin'] },
-    { path: '/admin/data', icon: Database, label: 'Datos', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+    { path: '/admin/data', icon: Database, label: 'Datos', roles: ['super_admin', 'gym_admin', 'gym_manager'], perm: 'data_export' },
     { path: '/admin/staff', icon: UserCog, label: 'Personal', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/iframes', icon: Code, label: 'Iframes', roles: ['gym_admin'] },
     { path: '/admin/devices', icon: Smartphone, label: 'Dispositivos', roles: ['super_admin'] },
     { path: '/admin/templates', icon: Mail, label: 'Plantillas Email', roles: ['super_admin', 'gym_admin'] },
-    { path: '/admin/notifications', icon: Bell, label: 'Notificaciones', roles: ['super_admin', 'gym_admin', 'gym_manager'] },
+    { path: '/admin/notifications', icon: Bell, label: 'Notificaciones', roles: ['super_admin', 'gym_admin', 'gym_manager'], perm: 'notifications_send' },
     { path: '/admin/broadcast', icon: Megaphone, label: 'Comunicados', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/gyms', icon: Building2, label: 'Gimnasios', roles: ['super_admin'] },
     { path: '/admin/saas-plans', icon: Layers, label: 'Planes SaaS', roles: ['super_admin'] },
     { path: '/admin/settings', icon: Settings, label: 'Configuracion', roles: ['super_admin', 'gym_admin'] },
   ];
 
-  return items.filter(item => item.roles.includes(effectiveRole));
+  const defaultPerms = ["members_view", "members_create", "members_edit", "payments_register", "pos_sell", "access_view", "classes_manage"];
+  const perms = effectiveRole === 'gym_manager' ? (permissions || defaultPerms) : null;
+
+  return items.filter(item => {
+    if (!item.roles.includes(effectiveRole)) return false;
+    if (perms && item.perm && !perms.includes(item.perm)) return false;
+    return true;
+  });
 };
 
 export const AdminLayout = ({ children }) => {
@@ -45,7 +52,7 @@ export const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   
-  const navItems = getNavItems(admin?.role, isImpersonating);
+  const navItems = getNavItems(admin?.role, isImpersonating, admin?.permissions);
 
   const handleLogout = () => {
     logout();

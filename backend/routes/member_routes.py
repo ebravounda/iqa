@@ -7,7 +7,7 @@ import logging
 import io
 
 from database import db
-from auth import get_current_admin, create_jwt_token, check_role
+from auth import get_current_admin, create_jwt_token, check_role, check_permission
 from models import MemberCreate, MemberPublicRegister, MemberUpdate
 from qr_utils import generate_member_code
 
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api")
 
 @router.post("/members")
 async def create_member(member: MemberCreate, admin: dict = Depends(get_current_admin)):
+    check_permission(admin, "members_create")
     existing = await db.members.find_one({"email": member.email, "gym_id": member.gym_id})
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered in this gym")
@@ -86,6 +87,7 @@ async def register_member_public(member: MemberPublicRegister):
 
 @router.get("/members")
 async def get_members(gym_id: Optional[str] = None, status: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    check_permission(admin, "members_view")
     query = {}
     if admin["role"] != "super_admin":
         query["gym_id"] = admin.get("gym_id")
@@ -105,6 +107,7 @@ async def get_member(member_id: str, admin: dict = Depends(get_current_admin)):
 
 @router.put("/members/{member_id}")
 async def update_member(member_id: str, member_update: MemberUpdate, admin: dict = Depends(get_current_admin)):
+    check_permission(admin, "members_edit")
     update_data = {k: v for k, v in member_update.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
@@ -125,6 +128,7 @@ async def block_member(member_id: str, admin: dict = Depends(get_current_admin))
 
 @router.post("/members/{member_id}/suspend")
 async def suspend_member(member_id: str, body: dict = {}, admin: dict = Depends(get_current_admin)):
+    check_permission(admin, "members_suspend")
     reason = body.get("reason", "Sin motivo especificado") if isinstance(body, dict) else "Sin motivo especificado"
     await db.members.update_one({"id": member_id}, {"$set": {
         "status": "suspended",
@@ -136,6 +140,7 @@ async def suspend_member(member_id: str, body: dict = {}, admin: dict = Depends(
 
 @router.delete("/members/{member_id}")
 async def delete_member(member_id: str, admin: dict = Depends(get_current_admin)):
+    check_permission(admin, "members_delete")
     member = await db.members.find_one({"id": member_id})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
@@ -173,6 +178,7 @@ async def export_members_excel(
     include_memberships: bool = False,
     admin: dict = Depends(get_current_admin)
 ):
+    check_permission(admin, "data_export")
     from openpyxl import Workbook
     from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
     

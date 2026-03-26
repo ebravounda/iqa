@@ -176,6 +176,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const DEFAULT_MANAGER_PERMISSIONS = [
+    "members_view", "members_create", "members_edit",
+    "payments_register", "pos_sell", "access_view", "classes_manage"
+  ];
+
+  const hasPermission = (permission) => {
+    if (!admin) return false;
+    if (admin.role === 'super_admin' || admin.role === 'gym_admin') return true;
+    const perms = admin.permissions || DEFAULT_MANAGER_PERMISSIONS;
+    return perms.includes(permission);
+  };
+
   return (
     <AuthContext.Provider value={{
       admin,
@@ -193,6 +205,7 @@ export const AuthProvider = ({ children }) => {
       impersonateGym,
       exitImpersonation,
       isImpersonating,
+      hasPermission,
       isAuthenticated: !!token,
       isAdmin: userType === 'admin',
       isMember: userType === 'member',

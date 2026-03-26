@@ -60,7 +60,7 @@ function MemberContactPopover({ member, onClose }) {
 }
 
 export default function AdminMembers() {
-  const { admin, isSuperAdmin } = useAuth();
+  const { admin, isSuperAdmin, hasPermission } = useAuth();
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -387,33 +387,45 @@ export default function AdminMembers() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700">
-                        <DropdownMenuItem onClick={() => handleOpenEdit(member)} className="cursor-pointer" data-testid={`member-edit-${member.code}`}>
-                          <Pencil size={16} className="mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setSelectedMember(member); setShowMembershipModal(true); }} className="cursor-pointer">
-                          <CreditCard size={16} className="mr-2" /> Asignar Membresía
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleOpenPayment(member)} className="cursor-pointer text-emerald-400" data-testid={`member-payment-${member.code}`}>
-                          <Banknote size={16} className="mr-2" /> Registrar Pago
-                        </DropdownMenuItem>
-                        {member.status === 'pending' && (
+                        {hasPermission('members_edit') && (
+                          <DropdownMenuItem onClick={() => handleOpenEdit(member)} className="cursor-pointer" data-testid={`member-edit-${member.code}`}>
+                            <Pencil size={16} className="mr-2" /> Editar
+                          </DropdownMenuItem>
+                        )}
+                        {hasPermission('payments_register') && (
+                          <DropdownMenuItem onClick={() => { setSelectedMember(member); setShowMembershipModal(true); }} className="cursor-pointer">
+                            <CreditCard size={16} className="mr-2" /> Asignar Membresía
+                          </DropdownMenuItem>
+                        )}
+                        {hasPermission('payments_register') && (
+                          <DropdownMenuItem onClick={() => handleOpenPayment(member)} className="cursor-pointer text-emerald-400" data-testid={`member-payment-${member.code}`}>
+                            <Banknote size={16} className="mr-2" /> Registrar Pago
+                          </DropdownMenuItem>
+                        )}
+                        {member.status === 'pending' && hasPermission('members_edit') && (
                           <DropdownMenuItem onClick={() => handleApprove(member.id)} className="cursor-pointer text-emerald-500">
                             <CheckCircle size={16} className="mr-2" /> Aprobar
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuSeparator className="bg-zinc-700" />
-                        {(member.status === 'suspended' || member.status === 'blocked') ? (
-                          <DropdownMenuItem onClick={() => handleActivate(member.id)} className="cursor-pointer text-emerald-500" data-testid={`member-activate-${member.code}`}>
-                            <Check size={16} className="mr-2" /> Reactivar
-                          </DropdownMenuItem>
-                        ) : (
-                          <DropdownMenuItem onClick={() => handleOpenSuspend(member)} className="cursor-pointer text-orange-400" data-testid={`member-suspend-${member.code}`}>
-                            <PauseCircle size={16} className="mr-2" /> Suspender
+                        {hasPermission('members_suspend') && (
+                          <>
+                            <DropdownMenuSeparator className="bg-zinc-700" />
+                            {(member.status === 'suspended' || member.status === 'blocked') ? (
+                              <DropdownMenuItem onClick={() => handleActivate(member.id)} className="cursor-pointer text-emerald-500" data-testid={`member-activate-${member.code}`}>
+                                <Check size={16} className="mr-2" /> Reactivar
+                              </DropdownMenuItem>
+                            ) : (
+                              <DropdownMenuItem onClick={() => handleOpenSuspend(member)} className="cursor-pointer text-orange-400" data-testid={`member-suspend-${member.code}`}>
+                                <PauseCircle size={16} className="mr-2" /> Suspender
+                              </DropdownMenuItem>
+                            )}
+                          </>
+                        )}
+                        {hasPermission('members_delete') && (
+                          <DropdownMenuItem onClick={() => handleOpenDelete(member)} className="cursor-pointer text-red-500" data-testid={`member-delete-${member.code}`}>
+                            <Trash2 size={16} className="mr-2" /> Eliminar
                           </DropdownMenuItem>
                         )}
-                        <DropdownMenuItem onClick={() => handleOpenDelete(member)} className="cursor-pointer text-red-500" data-testid={`member-delete-${member.code}`}>
-                          <Trash2 size={16} className="mr-2" /> Eliminar
-                        </DropdownMenuItem>
                         {isSuperAdmin && (
                           <>
                             <DropdownMenuSeparator className="bg-zinc-700" />

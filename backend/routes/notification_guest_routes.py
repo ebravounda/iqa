@@ -5,7 +5,7 @@ from typing import Optional
 import uuid
 
 from database import db
-from auth import get_current_admin, check_role, security, decode_jwt_token
+from auth import get_current_admin, check_role, security, decode_jwt_token, check_permission
 from models import NotificationCreate, GuestCreate
 from qr_utils import generate_member_code, generate_qr_data
 
@@ -16,6 +16,7 @@ router = APIRouter(prefix="/api")
 @router.post("/notifications")
 async def create_notification(notification: NotificationCreate, admin: dict = Depends(get_current_admin)):
     check_role(admin, ["super_admin", "gym_admin", "gym_manager"], notification.gym_id)
+    check_permission(admin, "notifications_send")
     notification_dict = {
         "id": str(uuid.uuid4()), "gym_id": notification.gym_id,
         "title": notification.title, "message": notification.message,

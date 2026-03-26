@@ -51,3 +51,37 @@ def check_role(admin: dict, allowed_roles: List[str], gym_id: str = None):
         raise HTTPException(status_code=403, detail=f"Access denied. Required roles: {allowed_roles}")
     if gym_id and admin["role"] != "super_admin" and admin.get("gym_id") != gym_id:
         raise HTTPException(status_code=403, detail="Access denied to this gym")
+
+# Permission constants for gym_manager
+DEFAULT_MANAGER_PERMISSIONS = [
+    "members_view",
+    "members_create",
+    "members_edit",
+    "payments_register",
+    "pos_sell",
+    "access_view",
+    "classes_manage",
+]
+
+ALL_MANAGER_PERMISSIONS = [
+    "members_view",
+    "members_create",
+    "members_edit",
+    "members_delete",
+    "members_suspend",
+    "payments_register",
+    "pos_sell",
+    "pos_products",
+    "access_view",
+    "classes_manage",
+    "data_export",
+    "notifications_send",
+]
+
+def check_permission(admin: dict, permission: str):
+    """Check if a gym_manager has a specific permission. Admins and super_admins bypass."""
+    if admin["role"] in ("super_admin", "gym_admin"):
+        return
+    perms = admin.get("permissions", DEFAULT_MANAGER_PERMISSIONS)
+    if permission not in perms:
+        raise HTTPException(status_code=403, detail=f"No tienes permiso para: {permission}")

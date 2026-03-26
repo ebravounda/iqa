@@ -5,7 +5,7 @@ import uuid
 import logging
 
 from database import db
-from auth import get_current_admin, check_role
+from auth import get_current_admin, check_role, check_permission
 from models import ProductCreate, ProductUpdate, SaleCreate
 
 logger = logging.getLogger(__name__)
@@ -27,6 +27,7 @@ async def check_pos_access(gym_id: str):
 @router.post("/pos/products")
 async def create_product(product: ProductCreate, admin: dict = Depends(get_current_admin)):
     check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
+    check_permission(admin, "pos_products")
     await check_pos_access(product.gym_id)
     product_dict = product.model_dump()
     product_dict["id"] = str(uuid.uuid4())
@@ -60,6 +61,7 @@ async def update_product(product_id: str, product_update: ProductUpdate, admin: 
 @router.delete("/pos/products/{product_id}")
 async def delete_product(product_id: str, admin: dict = Depends(get_current_admin)):
     check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
+    check_permission(admin, "pos_products")
     await db.pos_products.update_one({"id": product_id}, {"$set": {"active": False}})
     return {"message": "Producto eliminado"}
 
@@ -68,6 +70,7 @@ async def delete_product(product_id: str, admin: dict = Depends(get_current_admi
 @router.post("/pos/sales")
 async def create_sale(sale: SaleCreate, admin: dict = Depends(get_current_admin)):
     check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
+    check_permission(admin, "pos_sell")
     await check_pos_access(sale.gym_id)
     
     items_detail = []

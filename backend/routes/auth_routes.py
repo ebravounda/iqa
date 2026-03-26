@@ -32,6 +32,8 @@ async def login_admin(login: AdminLogin):
     admin = await db.admins.find_one({"email": login.email})
     if not admin or not verify_password(login.password, admin["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
+    if admin.get("active") is False:
+        raise HTTPException(status_code=403, detail="Cuenta desactivada. Contacta al administrador.")
     token = create_jwt_token({"sub": admin["id"], "role": admin["role"], "gym_id": admin.get("gym_id")})
     admin_data = {k: v for k, v in admin.items() if k not in ["_id", "password"]}
     return {"admin": admin_data, "token": token}
