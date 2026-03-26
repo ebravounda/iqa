@@ -1,20 +1,34 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getAnalyticsOverview, getHourlyHeatmap, getRevenueComparison, getMemberRetention, getPeakHours } from '../../lib/api';
+import { getAnalyticsOverview, getHourlyHeatmap, getRevenueComparison, getMemberRetention, getPeakHours, getGyms } from '../../lib/api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
 import { toast } from 'sonner';
 import { TrendingUp, Users, Clock, Activity } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 export default function AdminAnalytics() {
-  const { admin } = useAuth();
-  const gymId = admin?.gym_id;
+  const { admin, isSuperAdmin } = useAuth();
+  const [selectedGym, setSelectedGym] = useState(admin?.gym_id || '');
+  const [gyms, setGyms] = useState([]);
   const [overview, setOverview] = useState(null);
   const [heatmap, setHeatmap] = useState([]);
   const [revenue, setRevenue] = useState([]);
   const [retention, setRetention] = useState([]);
   const [peakHours, setPeakHours] = useState(null);
 
+  useEffect(() => {
+    if (isSuperAdmin) {
+      getGyms().then(res => {
+        setGyms(res.data);
+        if (res.data.length > 0 && !selectedGym) setSelectedGym(res.data[0].id);
+      }).catch(() => {});
+    }
+  }, [isSuperAdmin]);
+
+  const gymId = isSuperAdmin ? selectedGym : admin?.gym_id;
+
   const load = useCallback(async () => {
+    if (!gymId) return;
     try {
       const [ov, hm, rv, rt, ph] = await Promise.all([
         getAnalyticsOverview(gymId),
@@ -31,7 +45,25 @@ export default function AdminAnalytics() {
     } catch (e) { toast.error('Error al cargar analytics'); }
   }, [gymId]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (gymId) load(); }, [load, gymId]);
+
+  if (!gymId && isSuperAdmin) return (
+    <div className="space-y-6" data-testid="analytics-page">
+      <div><h1 className="text-2xl font-black text-white">Analytics</h1></div>
+      <div className="max-w-sm">
+        <label className="text-sm text-zinc-400 mb-1 block">Seleccionar Gimnasio</label>
+        <Select value={selectedGym} onValueChange={setSelectedGym}>
+          <SelectTrigger className="bg-zinc-900 border-zinc-700" data-testid="analytics-gym-select">
+            <SelectValue placeholder="Seleccionar gimnasio" />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-700">
+            {gyms.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+      <p className="text-zinc-500">Selecciona un gimnasio para ver sus analytics.</p>
+    </div>
+  );
 
   if (!overview) return <div className="p-6 text-zinc-400">Cargando analytics...</div>;
 
@@ -50,9 +82,23 @@ export default function AdminAnalytics() {
 
   return (
     <div className="space-y-6" data-testid="analytics-page">
-      <div>
-        <h1 className="text-2xl font-black text-white">Analytics</h1>
-        <p className="text-zinc-400 text-sm">Retencion, horas pico y comparativa de ingresos</p>
+      <div className="flex flex-col sm:flex-row sm:items-end gap-4">
+        <div>
+          <h1 className="text-2xl font-black text-white">Analytics</h1>
+          <p className="text-zinc-400 text-sm">Retencion, horas pico y comparativa de ingresos</p>
+        </div>
+        {isSuperAdmin && (
+          <div className="sm:ml-auto min-w-[200px]">
+            <Select value={selectedGym} onValueChange={setSelectedGym}>
+              <SelectTrigger className="bg-zinc-900 border-zinc-700" data-testid="analytics-gym-select">
+                <SelectValue placeholder="Gimnasio" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-700">
+                {gyms.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {/* KPI Cards */}

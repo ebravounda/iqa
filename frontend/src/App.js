@@ -39,6 +39,7 @@ import AdminIframes from "./pages/admin/AdminIframes";
 import AdminBroadcast from "./pages/admin/AdminBroadcast";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminForms from "./pages/admin/AdminForms";
+import AdminData from "./pages/admin/AdminData";
 
 // PWA Pages
 import MemberLogin from "./pages/pwa/MemberLogin";
@@ -171,6 +172,7 @@ function AppRoutes() {
       <Route path="/admin/broadcast" element={<AdminRoute><AdminBroadcast /></AdminRoute>} />
       <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
       <Route path="/admin/forms" element={<AdminRoute><AdminForms /></AdminRoute>} />
+      <Route path="/admin/data" element={<AdminRoute><AdminData /></AdminRoute>} />
       
       {/* PWA/Member Routes */}
       <Route path="/app/login" element={<MemberLogin />} />

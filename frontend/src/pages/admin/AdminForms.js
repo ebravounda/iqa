@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getCustomForms, createCustomForm, deleteCustomForm, getFormResponses } from '../../lib/api';
+import { getCustomForms, createCustomForm, deleteCustomForm, getFormResponses, getGyms } from '../../lib/api';
 import { toast } from 'sonner';
 import { Plus, Trash2, FileText, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 export default function AdminForms() {
-  const { admin } = useAuth();
-  const gymId = admin?.gym_id;
+  const { admin, isSuperAdmin } = useAuth();
+  const [selectedGym, setSelectedGym] = useState(admin?.gym_id || '');
+  const [gymsList, setGymsList] = useState([]);
+  const gymId = isSuperAdmin ? selectedGym : admin?.gym_id;
   const [forms, setForms] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
   const [expandedForm, setExpandedForm] = useState(null);
@@ -24,6 +27,15 @@ export default function AdminForms() {
   }, [gymId]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      getGyms().then(res => {
+        setGymsList(res.data);
+        if (res.data.length > 0 && !selectedGym) setSelectedGym(res.data[0].id);
+      }).catch(() => {});
+    }
+  }, [isSuperAdmin]);
 
   const addField = () => {
     setFormData({
@@ -80,14 +92,26 @@ export default function AdminForms() {
 
   return (
     <div className="space-y-6" data-testid="forms-page">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-black text-white">Formularios</h1>
           <p className="text-zinc-400 text-sm">Crea formularios personalizados para tus socios</p>
         </div>
-        <button onClick={() => setShowCreate(!showCreate)} className="btn-gym-primary" data-testid="create-form-btn">
-          <Plus size={16} className="mr-1 inline" /> Nuevo Formulario
-        </button>
+        <div className="flex items-center gap-3">
+          {isSuperAdmin && (
+            <Select value={selectedGym} onValueChange={setSelectedGym}>
+              <SelectTrigger className="bg-zinc-900 border-zinc-700 min-w-[180px]" data-testid="forms-gym-select">
+                <SelectValue placeholder="Gimnasio" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-700">
+                {gymsList.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          )}
+          <button onClick={() => setShowCreate(!showCreate)} className="btn-gym-primary" data-testid="create-form-btn">
+            <Plus size={16} className="mr-1 inline" /> Nuevo Formulario
+          </button>
+        </div>
       </div>
 
       {showCreate && (

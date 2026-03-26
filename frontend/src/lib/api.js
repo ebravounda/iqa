@@ -308,3 +308,10 @@ export const downloadSalesReportPDF = (gymId, period, dateFrom, dateTo) => {
   if (dateTo) params.append('date_to', dateTo);
   return axios.get(`${API}/accounting/sales-report-pdf?${params.toString()}`, { responseType: 'blob' });
 };
+
+// Members Export Excel
+export const exportMembersExcel = (gymId) => {
+  let url = `${API}/members/export/excel`;
+  if (gymId) url += `?gym_id=${gymId}`;
+  return axios.get(url, { responseType: 'blob' });
+};

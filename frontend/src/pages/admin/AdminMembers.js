@@ -278,6 +278,7 @@ export default function AdminMembers() {
               <tr>
                 <th>Socio</th>
                 <th>Código</th>
+                <th>Teléfono</th>
                 <th>Email</th>
                 <th>Estado</th>
                 <th>Registro</th>
@@ -286,9 +287,9 @@ export default function AdminMembers() {
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan={6} className="text-center py-8"><div className="skeleton h-4 w-32 mx-auto" /></td></tr>
+                <tr><td colSpan={7} className="text-center py-8"><div className="skeleton h-4 w-32 mx-auto" /></td></tr>
               ) : filteredMembers.length === 0 ? (
-                <tr><td colSpan={6} className="text-center text-zinc-500 py-8">No se encontraron socios</td></tr>
+                <tr><td colSpan={7} className="text-center text-zinc-500 py-8">No se encontraron socios</td></tr>
               ) : (
                 filteredMembers.map((member) => (
                   <tr key={member.id}>
@@ -306,6 +307,7 @@ export default function AdminMembers() {
                       </div>
                     </td>
                     <td><code className="text-sm bg-zinc-800 px-2 py-1 rounded font-mono">{member.code}</code>{member.qr_mode === 'static' && <span className="ml-1 text-xs bg-cyan-900/30 text-cyan-400 px-1.5 py-0.5 rounded">QR Fijo</span>}</td>
+                    <td className="text-zinc-400 text-sm">{member.phone || '-'}</td>
                     <td className="text-zinc-400">{member.email}</td>
                     <td>{getStatusBadge(member.status)}</td>
                     <td className="text-zinc-400 text-sm">{formatDate(member.created_at)}</td>
@@ -349,7 +351,7 @@ export default function AdminMembers() {
                               <DropdownMenuSeparator className="bg-zinc-700" />
                               <DropdownMenuItem onClick={async () => {
                                 const newMode = member.qr_mode === 'static' ? 'dynamic' : 'static';
-                                try { await setMemberQRMode(member.id, newMode); toast.success(`QR ${newMode === 'static' ? 'estatico' : 'dinamico'} asignado`); fetchData(); }
+                                try { await setMemberQRMode(member.id, newMode); toast.success(`QR ${newMode === 'static' ? 'estatico' : 'dinamico'} asignado`); fetchMembers(); }
                                 catch (e) { toast.error('Error'); }
                               }} className="cursor-pointer text-cyan-400" data-testid={`member-qr-${member.code}`}>
                                 <QrCode size={16} className="mr-2" /> {member.qr_mode === 'static' ? 'Cambiar a QR Dinamico' : 'Asignar QR Estatico'}
@@ -364,7 +366,7 @@ export default function AdminMembers() {
                                 const file = e.target.files[0];
                                 if (!file) return;
                                 if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no puede superar 2MB'); return; }
-                                try { await uploadAvatarAdmin(member.id, file); toast.success('Foto actualizada'); fetchData(); }
+                                try { await uploadAvatarAdmin(member.id, file); toast.success('Foto actualizada'); fetchMembers(); }
                                 catch (err) { toast.error(err.response?.data?.detail || 'Error al subir foto'); }
                               }} />
                             </label>

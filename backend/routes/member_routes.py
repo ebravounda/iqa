@@ -1,8 +1,10 @@
 from fastapi import APIRouter, HTTPException, Depends
+from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone, timedelta
 from typing import Optional
 import uuid
 import logging
+import io
 
 from database import db
 from auth import get_current_admin, create_jwt_token, check_role
@@ -161,6 +163,85 @@ async def check_expired_memberships(admin: dict = Depends(get_current_admin)):
                 }})
                 suspended_count += 1
     return {"message": f"{suspended_count} members suspended due to expired memberships"}
+
+@router.get("/members/export/excel")
+async def export_members_excel(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    
+    members = await db.members.find(query, {"_id": 0}).sort("name", 1).to_list(50000)
+    
+    gym_name = "Todos los gimnasios"
+    if gym_id:
+        gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0, "name": 1})
+        if gym:
+            gym_name = gym["name"]
+    elif admin["role"] != "super_admin" and admin.get("gym_id"):
+        gym = await db.gyms.find_one({"id": admin["gym_id"]}, {"_id": 0, "name": 1})
+        if gym:
+            gym_name = gym["name"]
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Socios"
+    
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="1a1a2e", end_color="1a1a2e", fill_type="solid")
+    header_alignment = Alignment(horizontal="center", vertical="center")
+    thin_border = Border(
+        left=Side(style='thin', color='CCCCCC'),
+        right=Side(style='thin', color='CCCCCC'),
+        top=Side(style='thin', color='CCCCCC'),
+        bottom=Side(style='thin', color='CCCCCC')
+    )
+    
+    headers = ["Nombre", "Numero de Socio", "Telefono", "Email", "Estado", "Fecha Registro"]
+    for col, header in enumerate(headers, 1):
+        cell = ws.cell(row=1, column=col, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = header_alignment
+        cell.border = thin_border
+    
+    status_map = {"active": "Activo", "suspended": "Suspendido", "pending": "Pendiente", "blocked": "Bloqueado"}
+    
+    for row, member in enumerate(members, 2):
+        ws.cell(row=row, column=1, value=member.get("name", "")).border = thin_border
+        ws.cell(row=row, column=2, value=member.get("code", "")).border = thin_border
+        ws.cell(row=row, column=3, value=member.get("phone", "")).border = thin_border
+        ws.cell(row=row, column=4, value=member.get("email", "")).border = thin_border
+        ws.cell(row=row, column=5, value=status_map.get(member.get("status", ""), member.get("status", ""))).border = thin_border
+        created = member.get("created_at", "")
+        if created:
+            ws.cell(row=row, column=6, value=created[:10]).border = thin_border
+        else:
+            ws.cell(row=row, column=6, value="").border = thin_border
+    
+    ws.column_dimensions['A'].width = 30
+    ws.column_dimensions['B'].width = 18
+    ws.column_dimensions['C'].width = 20
+    ws.column_dimensions['D'].width = 35
+    ws.column_dimensions['E'].width = 14
+    ws.column_dimensions['F'].width = 16
+    
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    
+    safe_name = gym_name.replace(" ", "_").replace("/", "_")
+    filename = f"socios_{safe_name}_{datetime.now(timezone.utc).strftime('%Y%m%d')}.xlsx"
+    
+    return StreamingResponse(
+        output,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 
 @router.put("/members/{member_id}/guest-permission")
 async def update_guest_permission(

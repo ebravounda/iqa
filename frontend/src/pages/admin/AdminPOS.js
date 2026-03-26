@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getPOSProducts, createPOSProduct, updatePOSProduct, deletePOSProduct, createPOSSale, getPOSSales, getPOSStats, getGymSaaSFeatures } from '../../lib/api';
+import { getPOSProducts, createPOSProduct, updatePOSProduct, deletePOSProduct, createPOSSale, getPOSSales, getPOSStats, getGymSaaSFeatures, getGyms } from '../../lib/api';
 import { toast } from 'sonner';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 
 const CURRENCY_SYMBOLS = { EUR: '\u20ac', USD: '$', CLP: '$', ARS: '$' };
 
 export default function AdminPOS() {
-  const { admin } = useAuth();
-  const gymId = admin?.gym_id;
+  const { admin, isSuperAdmin } = useAuth();
+  const [selectedGym, setSelectedGym] = useState(admin?.gym_id || '');
+  const [gymsList, setGymsList] = useState([]);
+  const gymId = isSuperAdmin ? selectedGym : admin?.gym_id;
   const [tab, setTab] = useState('sell');
   const [products, setProducts] = useState([]);
   const [sales, setSales] = useState([]);
@@ -19,10 +22,19 @@ export default function AdminPOS() {
   const [productForm, setProductForm] = useState({ gym_id: gymId || '', name: '', description: '', cost_price: 0, sale_price: 0, stock: 0, category: '', barcode: '' });
   const [paymentMethod, setPaymentMethod] = useState('cash');
 
+  useEffect(() => {
+    if (isSuperAdmin) {
+      getGyms().then(res => {
+        setGymsList(res.data);
+        if (res.data.length > 0 && !selectedGym) setSelectedGym(res.data[0].id);
+      }).catch(() => {});
+    }
+  }, [isSuperAdmin]);
+
   const cs = CURRENCY_SYMBOLS[currency] || '$';
 
   const load = useCallback(async () => {
-    if (!gymId && admin?.role !== 'super_admin') return;
+    if (!gymId) return;
     try {
       if (gymId) {
         const feat = await getGymSaaSFeatures(gymId);
@@ -37,7 +49,24 @@ export default function AdminPOS() {
     } catch (e) { toast.error('Error al cargar TPV'); }
   }, [gymId, admin]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { if (gymId) load(); }, [load, gymId]);
+
+  if (!gymId && isSuperAdmin) return (
+    <div className="space-y-6" data-testid="pos-page">
+      <div><h1 className="text-2xl font-black text-white">TPV / Punto de Venta</h1></div>
+      <div className="max-w-sm">
+        <label className="text-sm text-zinc-400 mb-1 block">Seleccionar Gimnasio</label>
+        <Select value={selectedGym} onValueChange={setSelectedGym}>
+          <SelectTrigger className="bg-zinc-900 border-zinc-700" data-testid="pos-gym-select">
+            <SelectValue placeholder="Seleccionar gimnasio" />
+          </SelectTrigger>
+          <SelectContent className="bg-zinc-900 border-zinc-700">
+            {gymsList.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
 
   if (hasAccess === false) return (
     <div className="p-8 text-center" data-testid="pos-no-access">
@@ -108,6 +137,18 @@ export default function AdminPOS() {
           <h1 className="text-2xl font-black text-white">TPV / Punto de Venta</h1>
           <p className="text-zinc-400 text-sm">Ventas, inventario y tickets</p>
         </div>
+        {isSuperAdmin && (
+          <div className="min-w-[200px]">
+            <Select value={selectedGym} onValueChange={setSelectedGym}>
+              <SelectTrigger className="bg-zinc-900 border-zinc-700" data-testid="pos-gym-select">
+                <SelectValue placeholder="Gimnasio" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-700">
+                {gymsList.map(g => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
       </div>
 
       {stats && (
