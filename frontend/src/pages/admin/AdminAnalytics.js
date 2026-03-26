@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { getAnalyticsOverview, getHourlyHeatmap, getRevenueComparison, getMemberRetention, getPeakHours, getGyms } from '../../lib/api';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, LineChart, Line, Legend } from 'recharts';
@@ -165,8 +165,8 @@ export default function AdminAnalytics() {
               <div />
               {hours.map(h => <div key={h} className="text-center text-[10px] text-zinc-500 py-1">{h}</div>)}
               {days.map((day, d) => (
-                <>
-                  <div key={`label-${d}`} className="text-xs text-zinc-400 flex items-center pr-2">{day}</div>
+                <React.Fragment key={`day-${d}`}>
+                  <div className="text-xs text-zinc-400 flex items-center pr-2">{day}</div>
                   {hours.map(h => {
                     const cell = heatmap.find(c => c.day === d && c.hour === h);
                     return (
@@ -177,7 +177,7 @@ export default function AdminAnalytics() {
                       />
                     );
                   })}
-                </>
+                </React.Fragment>
               ))}
             </div>
             <div className="flex items-center gap-2 mt-3 justify-end">
