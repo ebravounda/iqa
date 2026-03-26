@@ -10,11 +10,54 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { 
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode, Camera
+  AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode, Camera,
+  Mail, Phone, Copy, X as XIcon
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
 import { MemberAvatar } from '../../components/MemberAvatar';
+
+function MemberContactPopover({ member, onClose }) {
+  const copyToClipboard = (text, label) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${label} copiado`);
+  };
+
+  return (
+    <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl shadow-black/40 p-3 min-w-[260px] animate-in fade-in slide-in-from-top-1 duration-150"
+      data-testid={`contact-popover-${member.code}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Contacto</span>
+        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+          <XIcon size={14} />
+        </button>
+      </div>
+      {member.email && (
+        <div className="flex items-center gap-2 group">
+          <Mail size={13} className="text-zinc-500 shrink-0" />
+          <span className="text-sm text-zinc-300 truncate flex-1">{member.email}</span>
+          <button onClick={() => copyToClipboard(member.email, 'Email')} 
+            className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-[var(--gym-primary)] transition-all" title="Copiar">
+            <Copy size={13} />
+          </button>
+        </div>
+      )}
+      {member.phone && (
+        <div className="flex items-center gap-2 group mt-1.5">
+          <Phone size={13} className="text-zinc-500 shrink-0" />
+          <span className="text-sm text-zinc-300 truncate flex-1">{member.phone}</span>
+          <button onClick={() => copyToClipboard(member.phone, 'Teléfono')} 
+            className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-[var(--gym-primary)] transition-all" title="Copiar">
+            <Copy size={13} />
+          </button>
+        </div>
+      )}
+      {!member.email && !member.phone && (
+        <p className="text-xs text-zinc-500 italic">Sin datos de contacto</p>
+      )}
+    </div>
+  );
+}
 
 export default function AdminMembers() {
   const { admin, isSuperAdmin } = useAuth();
@@ -33,6 +76,7 @@ export default function AdminMembers() {
   const [suspendReason, setSuspendReason] = useState('');
   const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: admin?.gym_id || '', gender: 'prefer_not_to_say' });
   const [editData, setEditData] = useState({ name: '', email: '', phone: '' });
+  const [expandedContact, setExpandedContact] = useState(null);
   const [selectedPlan, setSelectedPlan] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentNotes, setPaymentNotes] = useState('');
@@ -171,6 +215,18 @@ export default function AdminMembers() {
     } catch (error) { toast.error('Error al registrar pago'); }
   };
 
+  useEffect(() => {
+    if (!expandedContact) return;
+    const handler = (e) => {
+      if (!e.target.closest(`[data-testid="contact-popover-${members.find(m => m.id === expandedContact)?.code}"]`) &&
+          !e.target.closest(`[data-testid^="contact-btn-"]`)) {
+        setExpandedContact(null);
+      }
+    };
+    document.addEventListener('click', handler);
+    return () => document.removeEventListener('click', handler);
+  }, [expandedContact, members]);
+
   const filteredMembers = members.filter(m =>
     m.name.toLowerCase().includes(search.toLowerCase()) ||
     m.email.toLowerCase().includes(search.toLowerCase()) ||
@@ -272,114 +328,125 @@ export default function AdminMembers() {
       </div>
 
       <div className="stat-card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Socio</th>
-                <th>Código</th>
-                <th>Teléfono</th>
-                <th>Email</th>
-                <th>Estado</th>
-                <th>Registro</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr><td colSpan={7} className="text-center py-8"><div className="skeleton h-4 w-32 mx-auto" /></td></tr>
-              ) : filteredMembers.length === 0 ? (
-                <tr><td colSpan={7} className="text-center text-zinc-500 py-8">No se encontraron socios</td></tr>
-              ) : (
-                filteredMembers.map((member) => (
-                  <tr key={member.id}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <MemberAvatar member={member} size={40} />
-                        <div>
-                          <span className="font-medium">{member.name}</span>
-                          {member.status === 'suspended' && member.suspension_reason && (
-                            <p className="text-xs text-orange-400 mt-0.5" data-testid={`member-suspend-reason-${member.code}`}>
-                              {member.suspension_reason}
-                            </p>
-                          )}
-                        </div>
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-zinc-800">
+              <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Socio</th>
+              <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Código</th>
+              <th className="text-center p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Estado</th>
+              <th className="text-center p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider w-[100px]">Contacto</th>
+              <th className="text-right p-3 w-[50px]"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr><td colSpan={5} className="text-center py-8"><div className="skeleton h-4 w-32 mx-auto" /></td></tr>
+            ) : filteredMembers.length === 0 ? (
+              <tr><td colSpan={5} className="text-center text-zinc-500 py-8">No se encontraron socios</td></tr>
+            ) : (
+              filteredMembers.map((member) => (
+                <tr key={member.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/20 transition-colors group">
+                  <td className="p-3">
+                    <div className="flex items-center gap-3">
+                      <MemberAvatar member={member} size={36} />
+                      <div className="min-w-0">
+                        <span className="font-medium text-white block truncate">{member.name}</span>
+                        {member.status === 'suspended' && member.suspension_reason && (
+                          <p className="text-[11px] text-orange-400 truncate max-w-[200px]" data-testid={`member-suspend-reason-${member.code}`}>
+                            {member.suspension_reason}
+                          </p>
+                        )}
                       </div>
-                    </td>
-                    <td><code className="text-sm bg-zinc-800 px-2 py-1 rounded font-mono">{member.code}</code>{member.qr_mode === 'static' && <span className="ml-1 text-xs bg-cyan-900/30 text-cyan-400 px-1.5 py-0.5 rounded">QR Fijo</span>}</td>
-                    <td className="text-zinc-400 text-sm">{member.phone || '-'}</td>
-                    <td className="text-zinc-400">{member.email}</td>
-                    <td>{getStatusBadge(member.status)}</td>
-                    <td className="text-zinc-400 text-sm">{formatDate(member.created_at)}</td>
-                    <td>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" data-testid={`member-actions-${member.code}`}>
-                            <MoreVertical size={16} />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700">
-                          <DropdownMenuItem onClick={() => handleOpenEdit(member)} className="cursor-pointer" data-testid={`member-edit-${member.code}`}>
-                            <Pencil size={16} className="mr-2" /> Editar
+                    </div>
+                  </td>
+                  <td className="p-3">
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <code className="text-xs bg-zinc-800 px-2 py-0.5 rounded font-mono text-zinc-300">{member.code}</code>
+                      {member.qr_mode === 'static' && <span className="text-[10px] bg-cyan-900/30 text-cyan-400 px-1.5 py-0.5 rounded leading-none">QR Fijo</span>}
+                    </div>
+                  </td>
+                  <td className="p-3 text-center">{getStatusBadge(member.status)}</td>
+                  <td className="p-3 text-center relative">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setExpandedContact(expandedContact === member.id ? null : member.id); }}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition-all border border-zinc-700/50 hover:border-zinc-600"
+                      data-testid={`contact-btn-${member.code}`}
+                    >
+                      <Mail size={12} />
+                      <span className="hidden sm:inline">Ver</span>
+                    </button>
+                    {expandedContact === member.id && (
+                      <MemberContactPopover member={member} onClose={() => setExpandedContact(null)} />
+                    )}
+                  </td>
+                  <td className="p-3 text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 opacity-60 group-hover:opacity-100 transition-opacity" data-testid={`member-actions-${member.code}`}>
+                          <MoreVertical size={16} />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-700">
+                        <DropdownMenuItem onClick={() => handleOpenEdit(member)} className="cursor-pointer" data-testid={`member-edit-${member.code}`}>
+                          <Pencil size={16} className="mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSelectedMember(member); setShowMembershipModal(true); }} className="cursor-pointer">
+                          <CreditCard size={16} className="mr-2" /> Asignar Membresía
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenPayment(member)} className="cursor-pointer text-emerald-400" data-testid={`member-payment-${member.code}`}>
+                          <Banknote size={16} className="mr-2" /> Registrar Pago
+                        </DropdownMenuItem>
+                        {member.status === 'pending' && (
+                          <DropdownMenuItem onClick={() => handleApprove(member.id)} className="cursor-pointer text-emerald-500">
+                            <CheckCircle size={16} className="mr-2" /> Aprobar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => { setSelectedMember(member); setShowMembershipModal(true); }} className="cursor-pointer">
-                            <CreditCard size={16} className="mr-2" /> Asignar Membresía
+                        )}
+                        <DropdownMenuSeparator className="bg-zinc-700" />
+                        {(member.status === 'suspended' || member.status === 'blocked') ? (
+                          <DropdownMenuItem onClick={() => handleActivate(member.id)} className="cursor-pointer text-emerald-500" data-testid={`member-activate-${member.code}`}>
+                            <Check size={16} className="mr-2" /> Reactivar
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleOpenPayment(member)} className="cursor-pointer text-emerald-400" data-testid={`member-payment-${member.code}`}>
-                            <Banknote size={16} className="mr-2" /> Registrar Pago
+                        ) : (
+                          <DropdownMenuItem onClick={() => handleOpenSuspend(member)} className="cursor-pointer text-orange-400" data-testid={`member-suspend-${member.code}`}>
+                            <PauseCircle size={16} className="mr-2" /> Suspender
                           </DropdownMenuItem>
-                          {member.status === 'pending' && (
-                            <DropdownMenuItem onClick={() => handleApprove(member.id)} className="cursor-pointer text-emerald-500">
-                              <CheckCircle size={16} className="mr-2" /> Aprobar
+                        )}
+                        <DropdownMenuItem onClick={() => handleOpenDelete(member)} className="cursor-pointer text-red-500" data-testid={`member-delete-${member.code}`}>
+                          <Trash2 size={16} className="mr-2" /> Eliminar
+                        </DropdownMenuItem>
+                        {isSuperAdmin && (
+                          <>
+                            <DropdownMenuSeparator className="bg-zinc-700" />
+                            <DropdownMenuItem onClick={async () => {
+                              const newMode = member.qr_mode === 'static' ? 'dynamic' : 'static';
+                              try { await setMemberQRMode(member.id, newMode); toast.success(`QR ${newMode === 'static' ? 'estatico' : 'dinamico'} asignado`); fetchMembers(); }
+                              catch (e) { toast.error('Error'); }
+                            }} className="cursor-pointer text-cyan-400" data-testid={`member-qr-${member.code}`}>
+                              <QrCode size={16} className="mr-2" /> {member.qr_mode === 'static' ? 'Cambiar a QR Dinamico' : 'Asignar QR Estatico'}
                             </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator className="bg-zinc-700" />
-                          {(member.status === 'suspended' || member.status === 'blocked') ? (
-                            <DropdownMenuItem onClick={() => handleActivate(member.id)} className="cursor-pointer text-emerald-500" data-testid={`member-activate-${member.code}`}>
-                              <Check size={16} className="mr-2" /> Reactivar
-                            </DropdownMenuItem>
-                          ) : (
-                            <DropdownMenuItem onClick={() => handleOpenSuspend(member)} className="cursor-pointer text-orange-400" data-testid={`member-suspend-${member.code}`}>
-                              <PauseCircle size={16} className="mr-2" /> Suspender
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem onClick={() => handleOpenDelete(member)} className="cursor-pointer text-red-500" data-testid={`member-delete-${member.code}`}>
-                            <Trash2 size={16} className="mr-2" /> Eliminar
-                          </DropdownMenuItem>
-                          {isSuperAdmin && (
-                            <>
-                              <DropdownMenuSeparator className="bg-zinc-700" />
-                              <DropdownMenuItem onClick={async () => {
-                                const newMode = member.qr_mode === 'static' ? 'dynamic' : 'static';
-                                try { await setMemberQRMode(member.id, newMode); toast.success(`QR ${newMode === 'static' ? 'estatico' : 'dinamico'} asignado`); fetchMembers(); }
-                                catch (e) { toast.error('Error'); }
-                              }} className="cursor-pointer text-cyan-400" data-testid={`member-qr-${member.code}`}>
-                                <QrCode size={16} className="mr-2" /> {member.qr_mode === 'static' ? 'Cambiar a QR Dinamico' : 'Asignar QR Estatico'}
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          <DropdownMenuSeparator className="bg-zinc-700" />
-                          <DropdownMenuItem className="cursor-pointer text-violet-400 p-0" data-testid={`member-photo-${member.code}`}>
-                            <label className="flex items-center gap-2 cursor-pointer w-full px-2 py-1.5">
-                              <Camera size={16} /> Subir Foto
-                              <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (e) => {
-                                const file = e.target.files[0];
-                                if (!file) return;
-                                if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no puede superar 2MB'); return; }
-                                try { await uploadAvatarAdmin(member.id, file); toast.success('Foto actualizada'); fetchMembers(); }
-                                catch (err) { toast.error(err.response?.data?.detail || 'Error al subir foto'); }
-                              }} />
-                            </label>
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                          </>
+                        )}
+                        <DropdownMenuSeparator className="bg-zinc-700" />
+                        <DropdownMenuItem className="cursor-pointer text-violet-400 p-0" data-testid={`member-photo-${member.code}`}>
+                          <label className="flex items-center gap-2 cursor-pointer w-full px-2 py-1.5">
+                            <Camera size={16} /> Subir Foto
+                            <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (e) => {
+                              const file = e.target.files[0];
+                              if (!file) return;
+                              if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no puede superar 2MB'); return; }
+                              try { await uploadAvatarAdmin(member.id, file); toast.success('Foto actualizada'); fetchMembers(); }
+                              catch (err) { toast.error(err.response?.data?.detail || 'Error al subir foto'); }
+                            }} />
+                          </label>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
       </div>
 
       {/* Membership Modal */}
