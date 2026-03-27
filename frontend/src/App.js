@@ -41,6 +41,9 @@ import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminForms from "./pages/admin/AdminForms";
 import AdminData from "./pages/admin/AdminData";
 import AdminSecurity from "./pages/admin/AdminSecurity";
+import AdminDeviceMonitor from "./pages/admin/AdminDeviceMonitor";
+import AdminGamification from "./pages/admin/AdminGamification";
+import AdminRoutines from "./pages/admin/AdminRoutines";
 import TrainerDashboard from "./pages/admin/TrainerDashboard";
 
 // PWA Pages
@@ -55,6 +58,8 @@ import MemberNotifications from "./pages/pwa/MemberNotifications";
 import MemberGuests from "./pages/pwa/MemberGuests";
 import PaymentSuccess from "./pages/pwa/PaymentSuccess";
 import PublicRegister from "./pages/pwa/PublicRegister";
+import MemberGamification from "./pages/pwa/MemberGamification";
+import MemberRoutines from "./pages/pwa/MemberRoutines";
 
 // Smart Dashboard: shows TrainerDashboard for trainers, AdminDashboard for others
 const SmartDashboard = () => {
@@ -184,6 +189,9 @@ function AppRoutes() {
       <Route path="/admin/forms" element={<AdminRoute><AdminForms /></AdminRoute>} />
       <Route path="/admin/data" element={<AdminRoute><AdminData /></AdminRoute>} />
       <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
+      <Route path="/admin/device-monitor" element={<AdminRoute><AdminDeviceMonitor /></AdminRoute>} />
+      <Route path="/admin/gamification" element={<AdminRoute><AdminGamification /></AdminRoute>} />
+      <Route path="/admin/routines" element={<AdminRoute><AdminRoutines /></AdminRoute>} />
       
       {/* PWA/Member Routes */}
       <Route path="/app/login" element={<MemberLogin />} />
@@ -193,6 +201,8 @@ function AppRoutes() {
       <Route path="/app/guests" element={<MemberRoute><MemberGuests /></MemberRoute>} />
       <Route path="/app/history" element={<MemberRoute><MemberHistory /></MemberRoute>} />
       <Route path="/app/stats" element={<MemberRoute><MemberStats /></MemberRoute>} />
+      <Route path="/app/achievements" element={<MemberRoute><MemberGamification /></MemberRoute>} />
+      <Route path="/app/routines" element={<MemberRoute><MemberRoutines /></MemberRoute>} />
       <Route path="/app/membership" element={<MemberRoute><MemberMembership /></MemberRoute>} />
       <Route path="/app/profile" element={<MemberRoute><MemberProfile /></MemberRoute>} />
       <Route path="/app/payment-success" element={<MemberRoute><PaymentSuccess /></MemberRoute>} />

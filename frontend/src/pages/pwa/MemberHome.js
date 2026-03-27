@@ -5,7 +5,7 @@ import { generateQR } from '../../lib/api';
 import { getMembershipStatus, getDaysRemaining } from '../../lib/utils';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard, BarChart3, Calendar, Clock } from 'lucide-react';
+import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard, BarChart3, Calendar, Clock, Trophy, Dumbbell } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
 export default function MemberHome() {
@@ -250,6 +250,16 @@ export default function MemberHome() {
             <BarChart3 size={22} className="text-[var(--gym-primary)]" />
             <span className="text-xs text-zinc-400">Estadisticas</span>
           </button>
+          <button onClick={() => navigate('/app/achievements')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-achievements">
+            <Trophy size={22} className="text-amber-400" />
+            <span className="text-xs text-zinc-400">Logros</span>
+          </button>
+          <button onClick={() => navigate('/app/routines')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-routines">
+            <Dumbbell size={22} className="text-purple-400" />
+            <span className="text-xs text-zinc-400">Rutinas</span>
+          </button>
+        </div>
+        <div className="grid grid-cols-3 gap-3 mt-3">
           <button onClick={() => navigate('/app/classes')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-classes">
             <Calendar size={22} className="text-emerald-400" />
             <span className="text-xs text-zinc-400">Clases</span>
@@ -257,6 +267,10 @@ export default function MemberHome() {
           <button onClick={() => navigate('/app/history')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-history">
             <Clock size={22} className="text-cyan-400" />
             <span className="text-xs text-zinc-400">Accesos</span>
+          </button>
+          <button onClick={() => navigate('/app/membership')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-membership">
+            <CreditCard size={22} className="text-blue-400" />
+            <span className="text-xs text-zinc-400">Membresia</span>
           </button>
         </div>
       </motion.div>

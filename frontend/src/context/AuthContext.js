@@ -161,12 +161,17 @@ export const AuthProvider = ({ children }) => {
     return { member: memberData, gym: gymData };
   };
 
-  const logout = () => {
+  const logout = async () => {
+    const isDemo = localStorage.getItem('is_demo') === 'true';
+    if (isDemo) {
+      try { await axios.post(`${API}/demo/cleanup`); } catch {}
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('userType');
     localStorage.removeItem('admin');
     localStorage.removeItem('original_admin');
     localStorage.removeItem('original_token');
+    localStorage.removeItem('is_demo');
     setToken(null);
     setUserType(null);
     setAdmin(null);
