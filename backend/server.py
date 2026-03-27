@@ -25,6 +25,7 @@ from routes.upload_routes import router as upload_router
 from routes.form_routes import router as form_router
 from routes.analytics_routes import router as analytics_router
 from routes.device_member_routes import router as device_member_router
+from routes.security_routes import router as security_router
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -61,6 +62,7 @@ app.include_router(upload_router)
 app.include_router(form_router)
 app.include_router(analytics_router)
 app.include_router(device_member_router)
+app.include_router(security_router)
 
 app.add_middleware(
     CORSMiddleware,
@@ -69,6 +71,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def security_headers(request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    return response
 
 @app.on_event("startup")
 async def init_super_admin():

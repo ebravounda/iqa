@@ -9,6 +9,7 @@ from auth import (
     decode_jwt_token, get_current_admin
 )
 from models import AdminCreate, AdminLogin
+from routes.security_routes import is_ip_blocked, record_failed_attempt, record_successful_login, get_client_ip
 
 router = APIRouter(prefix="/api")
 
@@ -28,12 +29,21 @@ async def register_admin(admin: AdminCreate):
     return {"admin": admin_dict, "token": token}
 
 @router.post("/auth/admin/login")
-async def login_admin(login: AdminLogin):
+async def login_admin(login: AdminLogin, request: Request):
+    ip = await get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "")
+    if await is_ip_blocked(ip):
+        raise HTTPException(status_code=429, detail="IP bloqueada temporalmente por multiples intentos fallidos. Intenta en 15 minutos.")
     admin = await db.admins.find_one({"email": login.email})
     if not admin or not verify_password(login.password, admin["password"]):
-        raise HTTPException(status_code=401, detail="Invalid credentials")
+        blocked = await record_failed_attempt(ip, login.email, "admin", user_agent)
+        detail = "Credenciales invalidas"
+        if blocked:
+            detail = "IP bloqueada por multiples intentos fallidos. Intenta en 15 minutos."
+        raise HTTPException(status_code=401, detail=detail)
     if admin.get("active") is False:
         raise HTTPException(status_code=403, detail="Cuenta desactivada. Contacta al administrador.")
+    await record_successful_login(ip, login.email, "admin")
     token = create_jwt_token({"sub": admin["id"], "role": admin["role"], "gym_id": admin.get("gym_id")})
     admin_data = {k: v for k, v in admin.items() if k not in ["_id", "password"]}
     return {"admin": admin_data, "token": token}
@@ -66,11 +76,16 @@ async def impersonate_gym(gym_id: str, credentials: HTTPAuthorizationCredentials
 
 @router.post("/auth/member/login")
 async def login_member(code: str, request: Request, device_fingerprint: str = None):
+    ip = await get_client_ip(request)
+    user_agent = request.headers.get("user-agent", "")
+    if await is_ip_blocked(ip):
+        raise HTTPException(status_code=429, detail="IP bloqueada temporalmente. Intenta en 15 minutos.")
     member = await db.members.find_one({"code": code.upper()}, {"_id": 0})
     if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
+        await record_failed_attempt(ip, code.upper(), "member", user_agent)
+        raise HTTPException(status_code=404, detail="Codigo no encontrado")
     if member.get("status") == "blocked":
-        raise HTTPException(status_code=403, detail="Account blocked")
+        raise HTTPException(status_code=403, detail="Cuenta bloqueada")
     
     # Device registration
     if device_fingerprint:
@@ -84,6 +99,7 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
     membership = await db.memberships.find_one(
         {"member_id": member["id"], "status": "active"}, {"_id": 0}
     )
+    await record_successful_login(ip, code.upper(), "member")
     token = create_jwt_token({"sub": member["id"], "role": "member", "gym_id": member["gym_id"]})
     return {"member": member, "gym": gym, "membership": membership, "token": token}
 

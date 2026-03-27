@@ -28,6 +28,7 @@ const getNavItems = (role, isImpersonating, permissions) => {
     { path: '/admin/staff', icon: UserCog, label: 'Personal', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/iframes', icon: Code, label: 'Iframes', roles: ['gym_admin'] },
     { path: '/admin/devices', icon: Smartphone, label: 'Dispositivos', roles: ['super_admin'] },
+    { path: '/admin/security', icon: Shield, label: 'Seguridad', roles: ['super_admin'] },
     { path: '/admin/templates', icon: Mail, label: 'Plantillas Email', roles: ['super_admin', 'gym_admin'] },
     { path: '/admin/notifications', icon: Bell, label: 'Notificaciones', roles: ['super_admin', 'gym_admin', 'gym_manager'], perm: 'notifications_send' },
     { path: '/admin/broadcast', icon: Megaphone, label: 'Comunicados', roles: ['super_admin', 'gym_admin'] },

@@ -40,6 +40,7 @@ import AdminBroadcast from "./pages/admin/AdminBroadcast";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminForms from "./pages/admin/AdminForms";
 import AdminData from "./pages/admin/AdminData";
+import AdminSecurity from "./pages/admin/AdminSecurity";
 import TrainerDashboard from "./pages/admin/TrainerDashboard";
 
 // PWA Pages
@@ -182,6 +183,7 @@ function AppRoutes() {
       <Route path="/admin/analytics" element={<AdminRoute><AdminAnalytics /></AdminRoute>} />
       <Route path="/admin/forms" element={<AdminRoute><AdminForms /></AdminRoute>} />
       <Route path="/admin/data" element={<AdminRoute><AdminData /></AdminRoute>} />
+      <Route path="/admin/security" element={<AdminRoute><AdminSecurity /></AdminRoute>} />
       
       {/* PWA/Member Routes */}
       <Route path="/app/login" element={<MemberLogin />} />
