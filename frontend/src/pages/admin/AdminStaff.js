@@ -45,6 +45,7 @@ const DANGER_PERMISSIONS = ['members_delete', 'members_suspend', 'data_export'];
 export default function AdminStaff() {
   const { admin, isSuperAdmin } = useAuth();
   const [staff, setStaff] = useState([]);
+  const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showPermsModal, setShowPermsModal] = useState(false);
@@ -52,12 +53,16 @@ export default function AdminStaff() {
   const [editingPerms, setEditingPerms] = useState([]);
   const [savingPerms, setSavingPerms] = useState(false);
   const [createType, setCreateType] = useState('staff');
+  const [selectedGymId, setSelectedGymId] = useState(admin?.gym_id || '');
   const [formData, setFormData] = useState({
     name: '', email: '', password: '', phone: '',
     role: 'gym_manager', specialties: '', bio: ''
   });
 
-  useEffect(() => { fetchStaff(); }, []);
+  useEffect(() => {
+    fetchStaff();
+    if (isSuperAdmin) fetchGyms();
+  }, []);
 
   const fetchStaff = async () => {
     try {
@@ -68,21 +73,35 @@ export default function AdminStaff() {
     } finally { setLoading(false); }
   };
 
+  const fetchGyms = async () => {
+    try {
+      const response = await axios.get(`${API}/gyms`);
+      setGyms(response.data);
+      if (response.data.length > 0 && !selectedGymId) {
+        setSelectedGymId(response.data[0].id);
+      }
+    } catch (error) {
+      console.error('Error fetching gyms:', error);
+    }
+  };
+
   const handleCreate = async () => {
     if (!formData.name || !formData.email || !formData.password) {
-      toast.error('Nombre, email y contraseña son requeridos'); return;
+      toast.error('Nombre, email y contrasena son requeridos'); return;
     }
+    const gymId = admin?.gym_id || selectedGymId;
+    if (!gymId) { toast.error('Selecciona un gimnasio'); return; }
     try {
       if (createType === 'trainer') {
         await axios.post(`${API}/trainers`, {
-          gym_id: admin?.gym_id, name: formData.name, email: formData.email,
+          gym_id: gymId, name: formData.name, email: formData.email,
           password: formData.password, phone: formData.phone || null,
           specialties: formData.specialties ? formData.specialties.split(',').map(s => s.trim()) : [],
           bio: formData.bio || null
         });
       } else {
         await axios.post(`${API}/staff`, {
-          gym_id: admin?.gym_id, name: formData.name, email: formData.email,
+          gym_id: gymId, name: formData.name, email: formData.email,
           password: formData.password, role: formData.role
         });
       }
@@ -149,6 +168,21 @@ export default function AdminStaff() {
           <DialogContent className="bg-zinc-900 border-zinc-800 max-w-md">
             <DialogHeader><DialogTitle>Agregar Usuario</DialogTitle></DialogHeader>
             <div className="space-y-4 mt-4">
+              {isSuperAdmin && (
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Gimnasio</label>
+                  <Select value={selectedGymId} onValueChange={setSelectedGymId}>
+                    <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="staff-gym-select">
+                      <SelectValue placeholder="Seleccionar gimnasio" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-zinc-900 border-zinc-700">
+                      {gyms.map((g) => (
+                        <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="flex gap-2">
                 <button onClick={() => setCreateType('staff')}
                   className={`flex-1 p-3 rounded-lg border text-sm font-medium transition-colors ${createType === 'staff' ? 'border-[var(--gym-primary)] bg-[var(--gym-primary)]/10 text-[var(--gym-primary)]' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'}`}>

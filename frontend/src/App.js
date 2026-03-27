@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from "./context/AuthContext";
 // Layouts
 import { AdminLayout } from "./layouts/AdminLayout";
 import { PWALayout } from "./layouts/PWALayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 // Admin Pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -84,7 +85,7 @@ const AdminRoute = ({ children }) => {
     return <Navigate to="/admin/login" replace />;
   }
   
-  return <AdminLayout>{children}</AdminLayout>;
+  return <AdminLayout><ErrorBoundary>{children}</ErrorBoundary></AdminLayout>;
 };
 
 const MemberRoute = ({ children }) => {
@@ -102,7 +103,7 @@ const MemberRoute = ({ children }) => {
     return <Navigate to="/app/login" replace />;
   }
   
-  return <PWALayout>{children}</PWALayout>;
+  return <PWALayout><ErrorBoundary>{children}</ErrorBoundary></PWALayout>;
 };
 
 // Landing Page

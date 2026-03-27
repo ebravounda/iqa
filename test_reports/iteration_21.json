@@ -1,0 +1,109 @@
+{
+  "summary": "Iteration 21 - Bug Fixes Testing Complete. All backend APIs (12/12 tests passed) and frontend UI components working correctly. Tested: AdminClasses create/edit/delete with all fields, AdminStaff gym selector for Super Admin, AdminSettings Mi Plan SaaS section, AdminMembers email history modal, and ErrorBoundary component.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "passed_tests": [
+    "GET /api/classes returns classes with all fields (id, name, gym_id, max_capacity, duration_minutes, class_type, start_time, end_time, days_of_week, trainer)",
+    "POST /api/classes creates class with all fields (name, description, trainer_id, max_capacity, duration_minutes, class_type, recurring, days_of_week, start_time, end_time, start_date, end_date)",
+    "PUT /api/classes/{id} updates class with start_time, end_time, start_date, end_date, days_of_week",
+    "DELETE /api/classes/{id} removes class from active list",
+    "GET /api/gyms returns list of gyms for super admin",
+    "POST /api/staff with gym_id works for super admin",
+    "GET /api/trainers returns trainers list",
+    "GET /api/saas/my-subscription returns subscription info with plan details",
+    "GET /api/saas/available-plans returns available SaaS plans",
+    "GET /api/emails/member/{id} returns email history",
+    "POST /api/trainers with gym_id creates trainer for super admin",
+    "POST /api/classes with trainer_id returns class with trainer info",
+    "AdminClasses: 'Nueva Clase' button opens create modal with all fields",
+    "AdminClasses: Create class form has name, description, trainer, type, capacity, duration, recurring checkbox, days of week, start/end times, start/end dates",
+    "AdminClasses: Class card shows 3-dot menu on hover with 'Editar' and 'Eliminar' options",
+    "AdminClasses: Edit modal opens with title 'Editar Clase' and pre-populated fields",
+    "AdminClasses: Edit modal has 'Actualizar Clase' button",
+    "AdminStaff: Super Admin sees 'Gimnasio' dropdown in create staff modal",
+    "AdminStaff: Gym dropdown shows all available gyms (10 gyms found)",
+    "AdminSettings: 'Mi Plan SaaS' section visible for Gym Admin",
+    "AdminSettings: Shows plan name 'Plan Inicial' with price '29.99 EUR/mes'",
+    "AdminSettings: Shows capacity bar '11 / 100' members",
+    "AdminSettings: Shows 12 feature items with included/not included indicators",
+    "AdminSettings: Has 'Cambiar Plan' button",
+    "AdminMembers: Dropdown menu has 'Emails' option",
+    "AdminMembers: Email history modal opens with member name",
+    "AdminMembers: Modal shows 'No hay emails enviados a este socio' when empty",
+    "ErrorBoundary: Component exists at /app/frontend/src/components/ErrorBoundary.js",
+    "ErrorBoundary: Wraps AdminRoute children in App.js",
+    "ErrorBoundary: Wraps MemberRoute children in App.js",
+    "ErrorBoundary: Has data-testid='error-boundary-reload' button"
+  ],
+  "test_report_links": [
+    "/app/backend/tests/test_iteration21_bug_fixes.py",
+    "/app/test_reports/pytest/pytest_results_iteration21.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AdminClasses.js: Complete rewrite with full CRUD support - create, edit, delete classes with all fields (start_time, end_time, start_date, end_date, days_of_week, recurring)",
+    "AdminClasses.js: Uses DropdownMenu with Editar/Eliminar options on class cards",
+    "AdminClasses.js: Edit modal correctly pre-populates all fields from existing class data",
+    "AdminStaff.js: Super Admin gym selector properly fetches gyms via fetchGyms() and shows in create modal",
+    "AdminStaff.js: Uses selectedGymId state to track selected gym for staff creation",
+    "AdminSettings.js: MiPlanSection component shows plan details, capacity bar, and feature list",
+    "AdminSettings.js: SAAS_FEATURES array defines all 12 feature flags with icons",
+    "AdminMembers.js: handleOpenEmails function fetches email history via getMemberEmails API",
+    "AdminMembers.js: Email modal shows list with subject, sent_at, status, email_type",
+    "ErrorBoundary.js: Proper React class component with getDerivedStateFromError and componentDidCatch",
+    "App.js: ErrorBoundary wraps children in both AdminRoute and MemberRoute components"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration21_bug_fixes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (12/12 tests passed)",
+    "frontend": "100% (All UI components working)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@ingresoqr.com / admin123",
+    "gym_admin": "admin@fitzone.com / admin123 (FitZone Gym)",
+    "member_code": "NEDFJR (belongs to FitZone Gym)"
+  },
+  "seed_data_creation": "Created test classes during testing (TEST_Yoga_Matutino, TEST_Class_*, etc.) - these are cleaned up by backend tests",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 21 tested the batch of bug fixes: AdminClasses full CRUD with edit/delete dropdown, AdminStaff gym selector for super admin, AdminSettings Mi Plan SaaS section, AdminMembers email history modal, and ErrorBoundary component. FitZone Gym has 'Plan Inicial' SaaS plan assigned with 11/100 members. All features working correctly. The gym admin FitZone has member code NEDFJR.",
+  "feature_verification_details": {
+    "admin_classes": {
+      "status": "WORKING",
+      "create_modal": "Opens with all fields (name, description, trainer, type, capacity, duration, recurring, days, times, dates)",
+      "edit_dropdown": "3-dot menu shows 'Editar' and 'Eliminar' options",
+      "edit_modal": "Opens with title 'Editar Clase' and pre-populated fields",
+      "delete": "Removes class from active list"
+    },
+    "admin_staff_gym_selector": {
+      "status": "WORKING",
+      "visibility": "Super Admin sees 'Gimnasio' dropdown in create modal",
+      "gyms_loaded": "10 gyms available in dropdown"
+    },
+    "admin_settings_saas": {
+      "status": "WORKING",
+      "section": "Mi Plan SaaS section visible",
+      "plan_info": "Shows Plan Inicial, 29.99 EUR/mes, 11/100 members",
+      "features": "12 feature items with included/not included indicators"
+    },
+    "admin_members_email": {
+      "status": "WORKING",
+      "dropdown_option": "Emails option in member dropdown menu",
+      "modal": "Opens with member name and email list (or empty message)"
+    },
+    "error_boundary": {
+      "status": "WORKING",
+      "component": "/app/frontend/src/components/ErrorBoundary.js",
+      "wrapping": "Wraps AdminRoute and MemberRoute children in App.js"
+    }
+  }
+}
