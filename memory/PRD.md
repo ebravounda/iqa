@@ -89,9 +89,8 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - Almacenamiento local (Imagenes) - /opt/gymaccess/uploads/
 
 ## Backlog Pendiente
-- P0: Publicar PWA en Google Play (PWABuilder) - En progreso, necesita deploy del build actualizado
-- P1: Panel remoto de gestion de Raspberry Pis desde Admin dashboard
-- P1: Sistema de check-in/asistencia para clases reservadas
+- P1: Actualizar script Raspberry Pi para enviar heartbeat al backend
+- P1: Check-in de clases reservadas
 - P2: Push notifications reales (Firebase)
-- P3: Gamificacion con rachas de asistencia y badges
+- P3: Gamificacion avanzada (niveles, recompensas)
 - P3: Facturacion SaaS automatica
