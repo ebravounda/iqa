@@ -208,6 +208,9 @@ export const updateSaaSPlan = (id, data) => axios.put(`${API}/saas/plans/${id}`,
 export const deleteSaaSPlan = (id) => axios.delete(`${API}/saas/plans/${id}`);
 export const assignSaaSPlan = (gymId, planId) => axios.put(`${API}/gyms/${gymId}/saas-plan`, { saas_plan_id: planId });
 export const getGymSaaSFeatures = (gymId) => axios.get(`${API}/gyms/${gymId}/saas-features`);
+export const getMySubscription = () => axios.get(`${API}/saas/my-subscription`);
+export const getAvailableSaaSPlans = () => axios.get(`${API}/saas/available-plans`);
+export const subscribeSaaSPlan = (planId) => axios.post(`${API}/saas/subscribe`, { plan_id: planId });
 
 // Broadcasts
 export const createBroadcast = (data) => axios.post(`${API}/broadcast`, data);

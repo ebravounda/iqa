@@ -166,7 +166,15 @@ class GuestCreate(BaseModel):
 class SaaSPlanCreate(BaseModel):
     name: str
     max_members: int = 500
+    has_qr_access: bool = True
+    has_guest_passes: bool = False
+    has_classes: bool = False
     has_pos: bool = False
+    has_analytics: bool = False
+    has_gamification: bool = False
+    has_routines: bool = False
+    has_email_smtp: bool = False
+    has_stripe_members: bool = False
     has_mercadopago: bool = False
     has_iframes: bool = False
     has_advanced_accounting: bool = False
@@ -177,7 +185,15 @@ class SaaSPlanCreate(BaseModel):
 class SaaSPlanUpdate(BaseModel):
     name: Optional[str] = None
     max_members: Optional[int] = None
+    has_qr_access: Optional[bool] = None
+    has_guest_passes: Optional[bool] = None
+    has_classes: Optional[bool] = None
     has_pos: Optional[bool] = None
+    has_analytics: Optional[bool] = None
+    has_gamification: Optional[bool] = None
+    has_routines: Optional[bool] = None
+    has_email_smtp: Optional[bool] = None
+    has_stripe_members: Optional[bool] = None
     has_mercadopago: Optional[bool] = None
     has_iframes: Optional[bool] = None
     has_advanced_accounting: Optional[bool] = None

@@ -1,7 +1,8 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Request
 from datetime import datetime, timezone
 from typing import Optional
 import uuid
+import os
 import logging
 
 from database import db
@@ -10,6 +11,12 @@ from models import SaaSPlanCreate, SaaSPlanUpdate, BroadcastCreate
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
+
+SAAS_FEATURE_KEYS = [
+    "has_qr_access", "has_guest_passes", "has_classes", "has_pos",
+    "has_analytics", "has_gamification", "has_routines", "has_email_smtp",
+    "has_stripe_members", "has_mercadopago", "has_iframes", "has_advanced_accounting"
+]
 
 # ==================== SaaS PLANS ====================
 
@@ -71,25 +78,172 @@ async def get_gym_saas_features(gym_id: str, admin: dict = Depends(get_current_a
     plan_id = gym.get("saas_plan_id")
     if not plan_id:
         return {
-            "has_pos": False, "has_mercadopago": False, "has_iframes": False,
-            "has_advanced_accounting": False, "max_members": gym.get("max_members", 500),
-            "plan_name": "Sin Plan"
+            **{k: False for k in SAAS_FEATURE_KEYS},
+            "has_qr_access": True,
+            "max_members": gym.get("max_members", 500),
+            "plan_name": "Sin Plan",
+            "price_monthly": 0,
+            "currency": "EUR",
+            "description": None
         }
     plan = await db.saas_plans.find_one({"id": plan_id}, {"_id": 0})
     if not plan:
         return {
-            "has_pos": False, "has_mercadopago": False, "has_iframes": False,
-            "has_advanced_accounting": False, "max_members": gym.get("max_members", 500),
-            "plan_name": "Plan no encontrado"
+            **{k: False for k in SAAS_FEATURE_KEYS},
+            "has_qr_access": True,
+            "max_members": gym.get("max_members", 500),
+            "plan_name": "Plan no encontrado",
+            "price_monthly": 0,
+            "currency": "EUR",
+            "description": None
         }
+    result = {k: plan.get(k, False) for k in SAAS_FEATURE_KEYS}
+    result["max_members"] = plan.get("max_members", 500)
+    result["plan_name"] = plan.get("name", "")
+    result["price_monthly"] = plan.get("price_monthly", 0)
+    result["currency"] = plan.get("currency", "EUR")
+    result["description"] = plan.get("description")
+    return result
+
+# ==================== SaaS SUBSCRIPTION (Gym pays Platform) ====================
+
+@router.get("/saas/my-subscription")
+async def get_my_subscription(admin: dict = Depends(get_current_admin)):
+    """Gym Admin gets their current SaaS subscription details"""
+    gym_id = admin.get("gym_id")
+    if not gym_id:
+        raise HTTPException(status_code=400, detail="No gym_id asociado")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    plan_id = gym.get("saas_plan_id")
+    plan = None
+    if plan_id:
+        plan = await db.saas_plans.find_one({"id": plan_id, "active": True}, {"_id": 0})
+    member_count = await db.members.count_documents({"gym_id": gym_id, "status": {"$ne": "deleted"}})
+    last_payment = await db.saas_payments.find_one(
+        {"gym_id": gym_id, "status": "completed"},
+        {"_id": 0},
+        sort=[("created_at", -1)]
+    )
     return {
-        "has_pos": plan.get("has_pos", False),
-        "has_mercadopago": plan.get("has_mercadopago", False),
-        "has_iframes": plan.get("has_iframes", False),
-        "has_advanced_accounting": plan.get("has_advanced_accounting", False),
-        "max_members": plan.get("max_members", 500),
-        "plan_name": plan.get("name", "")
+        "gym_name": gym.get("name"),
+        "plan": plan,
+        "member_count": member_count,
+        "max_members": gym.get("max_members", 500),
+        "last_payment": last_payment,
+        "saas_plan_id": plan_id
     }
+
+@router.get("/saas/available-plans")
+async def get_available_saas_plans():
+    """Public endpoint - get available SaaS plans for gyms to subscribe"""
+    plans = await db.saas_plans.find({"active": True}, {"_id": 0}).to_list(20)
+    return plans
+
+@router.post("/saas/subscribe")
+async def subscribe_saas_plan(request: Request, admin: dict = Depends(get_current_admin)):
+    """Gym Admin subscribes to a SaaS plan via Stripe (pays Platform owner)"""
+    gym_id = admin.get("gym_id")
+    if not gym_id:
+        raise HTTPException(status_code=400, detail="Solo Gym Admins pueden suscribirse")
+    body = await request.json()
+    plan_id = body.get("plan_id")
+    if not plan_id:
+        raise HTTPException(status_code=400, detail="plan_id requerido")
+    plan = await db.saas_plans.find_one({"id": plan_id, "active": True}, {"_id": 0})
+    if not plan:
+        raise HTTPException(status_code=404, detail="Plan SaaS no encontrado")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    platform_stripe_key = os.environ.get("PLATFORM_STRIPE_KEY", "")
+    if not platform_stripe_key:
+        raise HTTPException(status_code=500, detail="Stripe de la plataforma no configurado. Contacta al administrador.")
+    try:
+        import stripe
+        stripe.api_key = platform_stripe_key
+        currency = plan.get("currency", "EUR").lower()
+        amount = int(plan["price_monthly"] * 100)
+        if amount <= 0:
+            await db.gyms.update_one({"id": gym_id}, {"$set": {
+                "saas_plan_id": plan_id,
+                "saas_plan_name": plan["name"],
+                "max_members": plan["max_members"],
+                "updated_at": datetime.now(timezone.utc).isoformat()
+            }})
+            return {"message": "Plan gratuito asignado", "free": True}
+        frontend_url = "https://app.ingresoqr.com"
+        session = stripe.checkout.Session.create(
+            payment_method_types=["card"],
+            line_items=[{
+                "price_data": {
+                    "currency": currency,
+                    "product_data": {
+                        "name": f"IngresoQR - {plan['name']}",
+                        "description": plan.get("description", f"Plan SaaS para {gym['name']}")
+                    },
+                    "unit_amount": amount,
+                    "recurring": {"interval": "month"}
+                },
+                "quantity": 1,
+            }],
+            mode="subscription",
+            success_url=f"{frontend_url}/admin/settings?saas_payment=success",
+            cancel_url=f"{frontend_url}/admin/settings?saas_payment=cancel",
+            metadata={
+                "gym_id": gym_id,
+                "saas_plan_id": plan_id,
+                "type": "saas_subscription"
+            },
+            customer_email=admin.get("email") or gym.get("email"),
+        )
+        payment_record = {
+            "id": str(uuid.uuid4()),
+            "stripe_session_id": session.id,
+            "gym_id": gym_id,
+            "saas_plan_id": plan_id,
+            "amount": plan["price_monthly"],
+            "currency": currency,
+            "status": "pending",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+        }
+        await db.saas_payments.insert_one(payment_record)
+        return {"payment_url": session.url, "session_id": session.id}
+    except ImportError:
+        raise HTTPException(status_code=500, detail="Stripe SDK no instalado")
+    except Exception as e:
+        logger.error(f"SaaS Stripe error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error de Stripe: {str(e)}")
+
+@router.post("/saas/stripe-webhook")
+async def saas_stripe_webhook(request: Request):
+    """Webhook for SaaS subscription payments"""
+    body = await request.json()
+    event_type = body.get("type")
+    if event_type in ("checkout.session.completed", "invoice.paid"):
+        session = body.get("data", {}).get("object", {})
+        metadata = session.get("metadata", {})
+        if metadata.get("type") == "saas_subscription":
+            gym_id = metadata.get("gym_id")
+            plan_id = metadata.get("saas_plan_id")
+            if gym_id and plan_id:
+                plan = await db.saas_plans.find_one({"id": plan_id}, {"_id": 0})
+                if plan:
+                    await db.gyms.update_one({"id": gym_id}, {"$set": {
+                        "saas_plan_id": plan_id,
+                        "saas_plan_name": plan["name"],
+                        "max_members": plan["max_members"],
+                        "saas_subscription_active": True,
+                        "saas_last_payment": datetime.now(timezone.utc).isoformat(),
+                        "updated_at": datetime.now(timezone.utc).isoformat()
+                    }})
+                    await db.saas_payments.update_one(
+                        {"stripe_session_id": session.get("id")},
+                        {"$set": {"status": "completed", "completed_at": datetime.now(timezone.utc).isoformat()}}
+                    )
+                    logger.info(f"[SAAS] Plan '{plan['name']}' activated for gym {gym_id}")
+    return {"received": True}
 
 # ==================== BROADCAST ====================
 

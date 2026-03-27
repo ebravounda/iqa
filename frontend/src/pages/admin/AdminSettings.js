@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices } from '../../lib/api';
+import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices, getMySubscription, getAvailableSaaSPlans, subscribeSaaSPlan } from '../../lib/api';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe, Smartphone, UserCog } from 'lucide-react';
+import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe, Smartphone, UserCog, Crown, QrCode, Users, Calendar, ShoppingCart, BarChart3, Trophy, Dumbbell, Shield, Code, DollarSign, ExternalLink, Check, X as XIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -62,11 +62,18 @@ export default function AdminSettings() {
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
 
+  // SaaS Subscription (for Gym Admins)
+  const [subscription, setSubscription] = useState(null);
+  const [availablePlans, setAvailablePlans] = useState([]);
+  const [subscribing, setSubscribing] = useState(false);
+  const [showPlanSelector, setShowPlanSelector] = useState(false);
+
   useEffect(() => {
     if (admin?.gym_id) {
       fetchGym();
       fetchStripeConfig();
       fetchMpConfig();
+      fetchSubscription();
     } else {
       setLoading(false);
     }
@@ -74,6 +81,36 @@ export default function AdminSettings() {
       setAccountData(prev => ({ ...prev, email: admin.email }));
     }
   }, [admin]);
+
+  const fetchSubscription = async () => {
+    try {
+      const [subRes, plansRes] = await Promise.all([
+        getMySubscription(),
+        getAvailableSaaSPlans()
+      ]);
+      setSubscription(subRes.data);
+      setAvailablePlans(plansRes.data);
+    } catch (e) { console.error('Error fetching subscription:', e); }
+  };
+
+  const handleSubscribe = async (planId) => {
+    setSubscribing(true);
+    try {
+      const res = await subscribeSaaSPlan(planId);
+      if (res.data.free) {
+        toast.success('Plan gratuito activado');
+        fetchSubscription();
+      } else if (res.data.payment_url) {
+        toast.success('Redirigiendo a Stripe...');
+        window.open(res.data.payment_url, '_blank');
+      }
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error al suscribirse');
+    } finally {
+      setSubscribing(false);
+      setShowPlanSelector(false);
+    }
+  };
 
   const fetchGym = async () => {
     try {
@@ -316,8 +353,20 @@ export default function AdminSettings() {
       {/* Gym-specific settings only if gym_id exists */}
       {!admin?.gym_id && !isSuperAdmin && (
         <div className="text-center py-12">
-          <p className="text-zinc-500">No tienes un gimnasio asignado</p>
+          <p style={{ color: 'var(--text-muted)' }}>No tienes un gimnasio asignado</p>
         </div>
+      )}
+
+      {/* Mi Plan SaaS Section - for Gym Admins */}
+      {admin?.gym_id && (
+        <MiPlanSection 
+          subscription={subscription} 
+          availablePlans={availablePlans} 
+          subscribing={subscribing} 
+          showPlanSelector={showPlanSelector}
+          setShowPlanSelector={setShowPlanSelector}
+          handleSubscribe={handleSubscribe} 
+        />
       )}
 
       {admin?.gym_id && (<>
@@ -868,6 +917,143 @@ export default function AdminSettings() {
         </Button>
       </div>
       </>)}
+    </div>
+  );
+}
+
+
+const SAAS_FEATURES = [
+  { key: 'has_qr_access', label: 'Control de Acceso QR', icon: QrCode },
+  { key: 'has_guest_passes', label: 'Pases de Invitados', icon: Users },
+  { key: 'has_classes', label: 'Clases y Reservas', icon: Calendar },
+  { key: 'has_pos', label: 'TPV / Punto de Venta', icon: ShoppingCart },
+  { key: 'has_analytics', label: 'Analytics Avanzado', icon: BarChart3 },
+  { key: 'has_gamification', label: 'Gamificacion', icon: Trophy },
+  { key: 'has_routines', label: 'Rutinas de Ejercicio', icon: Dumbbell },
+  { key: 'has_email_smtp', label: 'Emails Automaticos (SMTP)', icon: Mail },
+  { key: 'has_stripe_members', label: 'Pagos Stripe (Socios)', icon: CreditCard },
+  { key: 'has_mercadopago', label: 'MercadoPago', icon: DollarSign },
+  { key: 'has_iframes', label: 'Iframes Personalizados', icon: Code },
+  { key: 'has_advanced_accounting', label: 'Contabilidad Avanzada', icon: Shield },
+];
+
+function MiPlanSection({ subscription, availablePlans, subscribing, showPlanSelector, setShowPlanSelector, handleSubscribe }) {
+  const plan = subscription?.plan;
+  const memberCount = subscription?.member_count || 0;
+  const maxMembers = subscription?.max_members || 500;
+  const usagePercent = maxMembers > 0 ? Math.min((memberCount / maxMembers) * 100, 100) : 0;
+
+  return (
+    <div className="stat-card" style={{ border: '2px solid var(--border-secondary)' }} data-testid="my-saas-plan-section">
+      <div className="flex items-center gap-2 mb-6">
+        <Crown size={20} style={{ color: 'var(--gym-primary)' }} />
+        <h3 className="font-bold text-lg">Mi Plan SaaS</h3>
+      </div>
+
+      {plan ? (
+        <div className="space-y-5">
+          {/* Current plan info */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-xl" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)' }}>
+            <div>
+              <h4 className="text-xl font-black mb-1">{plan.name}</h4>
+              {plan.description && <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{plan.description}</p>}
+            </div>
+            <div className="text-right">
+              <p className="text-2xl font-black" style={{ color: 'var(--gym-primary)' }}>
+                {plan.price_monthly > 0 ? `${plan.price_monthly} ${plan.currency}/mes` : 'Gratis'}
+              </p>
+            </div>
+          </div>
+
+          {/* Capacity bar */}
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <span style={{ color: 'var(--text-secondary)' }}>Capacidad de socios</span>
+              <span className="font-mono font-bold">{memberCount} / {maxMembers.toLocaleString()}</span>
+            </div>
+            <div className="w-full h-3 rounded-full" style={{ background: 'var(--bg-tertiary)' }}>
+              <div className="h-full rounded-full transition-all" style={{
+                width: `${usagePercent}%`,
+                background: usagePercent > 90 ? '#EF4444' : usagePercent > 70 ? '#F59E0B' : 'var(--gym-primary)'
+              }} />
+            </div>
+            <p className="text-xs mt-1" style={{ color: usagePercent > 90 ? '#EF4444' : 'var(--text-muted)' }}>
+              {usagePercent > 90 ? 'Cerca del limite! Considera actualizar tu plan.' : `${usagePercent.toFixed(0)}% utilizado`}
+            </p>
+          </div>
+
+          {/* Features list */}
+          <div>
+            <p className="text-sm font-medium mb-3" style={{ color: 'var(--text-secondary)' }}>Caracteristicas incluidas</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {SAAS_FEATURES.map(f => {
+                const included = plan[f.key];
+                const Icon = f.icon;
+                return (
+                  <div key={f.key} className="flex items-center gap-2 p-2 rounded-lg text-sm" style={{ background: 'var(--bg-tertiary)' }}>
+                    {included ? <Check size={14} className="text-emerald-500 shrink-0" /> : <XIcon size={14} className="text-red-400 shrink-0" />}
+                    <Icon size={14} style={{ color: included ? 'var(--text-secondary)' : 'var(--text-dim)' }} />
+                    <span style={{ color: included ? 'var(--text-primary)' : 'var(--text-dim)' }}>{f.label}</span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Change plan */}
+          <button onClick={() => setShowPlanSelector(!showPlanSelector)} className="text-sm px-4 py-2 rounded-lg transition-colors" style={{ background: 'var(--bg-tertiary)', color: 'var(--gym-primary)', border: '1px solid var(--border-secondary)' }} data-testid="change-plan-btn">
+            Cambiar Plan
+          </button>
+        </div>
+      ) : (
+        <div className="text-center py-6">
+          <AlertTriangle size={40} className="mx-auto mb-3 text-amber-500" />
+          <p className="font-bold mb-2">Sin plan asignado</p>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>Contacta al administrador o elige un plan disponible</p>
+          <button onClick={() => setShowPlanSelector(true)} className="btn-gym-primary" data-testid="select-plan-btn">
+            <CreditCard size={16} className="inline mr-2" /> Ver Planes Disponibles
+          </button>
+        </div>
+      )}
+
+      {/* Plan selector */}
+      {showPlanSelector && availablePlans.length > 0 && (
+        <div className="mt-5 p-4 rounded-xl" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)' }} data-testid="plan-selector">
+          <h4 className="font-bold mb-3">Planes Disponibles</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {availablePlans.map(p => {
+              const isCurrent = subscription?.saas_plan_id === p.id;
+              const featureCount = SAAS_FEATURES.filter(f => p[f.key]).length;
+              return (
+                <div key={p.id} className="p-4 rounded-xl relative transition-colors" style={{
+                  background: 'var(--bg-secondary)',
+                  border: isCurrent ? '2px solid var(--gym-primary)' : '1px solid var(--border-secondary)'
+                }} data-testid={`available-plan-${p.id}`}>
+                  {isCurrent && <span className="absolute top-2 right-2 text-[10px] px-2 py-0.5 rounded-full font-bold" style={{ background: 'var(--gym-primary)', color: '#000' }}>ACTUAL</span>}
+                  <h5 className="font-bold text-lg">{p.name}</h5>
+                  <p className="text-2xl font-black mt-1" style={{ color: 'var(--gym-primary)' }}>
+                    {p.price_monthly > 0 ? `${p.price_monthly} ${p.currency}/mes` : 'Gratis'}
+                  </p>
+                  {p.description && <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>{p.description}</p>}
+                  <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>{p.max_members.toLocaleString()} socios | {featureCount} caracteristicas</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {SAAS_FEATURES.filter(f => p[f.key]).map(f => (
+                      <span key={f.key} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}>{f.label.split(' ')[0]}</span>
+                    ))}
+                  </div>
+                  {!isCurrent && (
+                    <button onClick={() => handleSubscribe(p.id)} disabled={subscribing} className="mt-3 w-full btn-gym-primary text-sm" data-testid={`subscribe-plan-${p.id}`}>
+                      {subscribing ? <Loader2 size={14} className="animate-spin inline mr-1" /> : <ExternalLink size={14} className="inline mr-1" />}
+                      {p.price_monthly > 0 ? 'Suscribirse con Stripe' : 'Activar Plan Gratis'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+          <button onClick={() => setShowPlanSelector(false)} className="mt-3 text-sm" style={{ color: 'var(--text-muted)' }}>Cerrar</button>
+        </div>
+      )}
     </div>
   );
 }
