@@ -1,24 +1,31 @@
 {
-  "short_name": "GymAccess",
-  "name": "Gym Access Control",
-  "description": "Sistema de control de acceso para gimnasios con QR dinámico",
+  "short_name": "IngresoQR",
+  "name": "IngresoQR - Control de Acceso",
+  "description": "Sistema de control de acceso para gimnasios con QR",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
     },
     {
       "src": "logo192.png",
       "type": "image/png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     },
     {
       "src": "logo512.png",
       "type": "image/png",
       "sizes": "512x512",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
     }
   ],
   "start_url": "/app",
@@ -26,6 +33,17 @@
   "theme_color": "#09090B",
   "background_color": "#09090B",
   "orientation": "portrait",
-  "scope": "/app",
-  "categories": ["fitness", "health", "utilities"]
+  "scope": "/",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["fitness", "health", "utilities"],
+  "screenshots": [
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "IngresoQR"
+    }
+  ]
 }
