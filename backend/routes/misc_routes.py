@@ -32,7 +32,7 @@ async def send_gym_email(gym_id: str, to_email: str, subject: str, html_body: st
     if not smtp_host or not smtp_user or not smtp_password:
         raise HTTPException(status_code=400, detail="SMTP no configurado para este gimnasio")
     msg = MIMEMultipart("alternative")
-    msg["From"] = f"{gym.get('name', 'GymAccess')} <{smtp_from}>"
+    msg["From"] = f"{gym.get('name', 'IngresoQR')} <{smtp_from}>"
     msg["To"] = to_email
     msg["Subject"] = subject
     msg.attach(MIMEText(html_body, "html"))
@@ -64,7 +64,7 @@ async def send_templated_email(gym_id: str, template_type: str, to_email: str, v
     html_body = f"""
     <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
         <div style="text-align:center;margin-bottom:20px;">
-            <h1 style="color:{color};margin:0;font-size:24px;">{gym.get('name','GymAccess')}</h1>
+            <h1 style="color:{color};margin:0;font-size:24px;">{gym.get('name','IngresoQR')}</h1>
         </div>
         <div style="line-height:1.6;">{body.replace(chr(10), '<br/>')}</div>
     </div>
@@ -87,7 +87,7 @@ async def test_email(admin: dict = Depends(get_current_admin)):
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:20px;">
         <h2 style="color:{gym.get('primary_color','#E1FF01')};">Prueba de Email</h2>
-        <p>Este es un correo de prueba desde <strong>{gym.get('name','GymAccess')}</strong>.</p>
+        <p>Este es un correo de prueba desde <strong>{gym.get('name','IngresoQR')}</strong>.</p>
         <p>Si recibes este correo, tu configuracion SMTP es correcta.</p>
     </div>
     """
@@ -105,7 +105,7 @@ async def send_welcome_email(member_id: str, admin: dict = Depends(get_current_a
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
         <div style="text-align:center;margin-bottom:20px;">
-            <h1 style="color:{color};margin:0;">{gym.get('name','GymAccess')}</h1>
+            <h1 style="color:{color};margin:0;">{gym.get('name','IngresoQR')}</h1>
         </div>
         <h2>Bienvenido/a, {member.get('name','Socio')}</h2>
         <p>Tu registro en <strong>{gym.get('name')}</strong> ha sido completado.</p>

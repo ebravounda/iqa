@@ -42,7 +42,7 @@ export default function AdminLogin() {
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-black tracking-tight mb-2">
-            <span style={{ color: 'var(--gym-primary)' }}>GYM</span>ACCESS
+            <span style={{ color: 'var(--gym-primary)' }}>Ingreso</span>QR
           </h1>
           <p className="text-zinc-400">Panel de Administración</p>
         </div>
@@ -57,7 +57,7 @@ export default function AdminLogin() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@gymaccess.com"
+                placeholder="admin@tugimnasio.com"
                 className="input-dark"
                 data-testid="admin-email-input"
               />
@@ -93,7 +93,7 @@ export default function AdminLogin() {
           </form>
 
           <p className="text-center text-xs text-zinc-500 mt-6">
-            Credenciales por defecto: admin@gymaccess.com / admin123
+            Credenciales por defecto: admin@ingresoqr.com / admin123
           </p>
         </div>
       </div>

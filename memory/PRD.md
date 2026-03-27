@@ -1,4 +1,4 @@
-# GymAccess - PRD (Product Requirements Document)
+# IngresoQR - PRD (Product Requirements Document)
 
 ## Problema Original
 Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard admin, PWA para socios, QR dinamicos/estaticos, pagos Stripe y MercadoPago, POS (TPV), formularios personalizados, avatares de perfil, analytics, roles multi-nivel, reservas de clases, y script para Raspberry Pi con control de torniquetes.
@@ -6,7 +6,8 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 ## Dominios de Produccion
 - **Frontend**: https://app.ingresoqr.com
 - **Backend API**: https://c.ingresoqr.com
-- **Dominio anterior**: gym.ticketpro.es / gymapi.ticketpro.es (puede seguir activo)
+
+## Version Actual: V 1.2.19
 
 ## Arquitectura
 - **Backend**: FastAPI (Python) modular con APIRouter - Corre en /opt/gymaccess/
@@ -34,7 +35,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 ```
 
 ## Procedimiento de Actualizacion
-1. Frontend: Subir build/ a app.ingresoqr.com/ via Plesk File Manager
+1. Frontend: Hacer `yarn build`, Guardar en Github, subir build/ a app.ingresoqr.com/ via Plesk File Manager
 2. Backend: Subir .py y routes/ a c.ingresoqr.com/ via Plesk, luego SSH: sudo /opt/gymaccess/actualizar.sh
 
 ## Funcionalidades Implementadas
@@ -48,7 +49,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - Contabilidad avanzada, Iframes, Broadcast
 - Formularios personalizados, Avatares, Analytics dashboard
 
-### Fase 9-11: Exportacion, POS Imagenes, Tabla Rediseñada
+### Fase 9-11: Exportacion, POS Imagenes, Tabla Rediseniada
 ### Fase 12: Sistema de Permisos Granulares (RBAC)
 ### Fase 13: Control de Dispositivos y Estadisticas PWA
 ### Fase 14: Automatizacion y Dashboard Trainer
@@ -60,6 +61,12 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - Migracion de dominio a ingresoqr.com
 - Service Worker + iconos PWA para Google Play
 
+### Fase 15: Rebranding a IngresoQR (27 Mar 2026)
+- Cambio completo de nombre "GymAccess" a "IngresoQR" en frontend y backend
+- Actualizacion de manifest.json y metadatos PWA
+- Version V 1.2.19
+- Build de produccion generado y listo para despliegue
+
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123
 
@@ -69,6 +76,9 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - Almacenamiento local (Imagenes) - /opt/gymaccess/uploads/
 
 ## Backlog Pendiente
-- P0: Publicar PWA en Google Play (PWABuilder)
+- P0: Publicar PWA en Google Play (PWABuilder) - En progreso, necesita deploy del build actualizado
+- P1: Panel remoto de gestion de Raspberry Pis desde Admin dashboard
+- P1: Sistema de check-in/asistencia para clases reservadas
 - P2: Push notifications reales (Firebase)
-- P3: Facturacion SaaS automatica, Wearables, Gamificacion
+- P3: Gamificacion con rachas de asistencia y badges
+- P3: Facturacion SaaS automatica
