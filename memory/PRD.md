@@ -68,9 +68,11 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - CSS Variables en :root (dark) y .light-theme (light)
 - Toggle en AdminLayout.js (sidebar) y PWALayout.js (header)
 - Overrides globales para clases Tailwind zinc en .light-theme
+- Override global de text-white -> dark text en light-theme con excepciones para botones con fondos de color
+- Layouts actualizados con inline styles usando CSS variables
 - Persistencia en localStorage (key: ingresoqr-theme)
+- Testing: 15/15 tests pasados (iteration_18.json) + verificacion visual de 10+ paginas
 - Build de produccion generado con URL https://c.ingresoqr.com
-- Testing: 15/15 tests pasados (iteration_18.json)
 
 ## Credenciales
 - Super Admin: admin@ingresoqr.com / admin123

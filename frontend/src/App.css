@@ -458,6 +458,24 @@
 .light-theme .bg-zinc-900\/80 { background-color: rgba(255, 255, 255, 0.85); }
 .light-theme .border-\[var\(--gym-primary\)\] { border-color: var(--gym-primary); }
 
+/* CRITICAL: text-white -> dark in light theme */
+.light-theme .text-white { color: #0F172A; }
+
+/* Exceptions: Keep white text on colored button/banner backgrounds */
+.light-theme [class*="bg-blue-"].text-white,
+.light-theme [class*="bg-red-"].text-white,
+.light-theme [class*="bg-green-"].text-white,
+.light-theme [class*="bg-emerald-"].text-white,
+.light-theme [class*="bg-orange-"].text-white,
+.light-theme [class*="bg-amber-"].text-white,
+.light-theme [class*="bg-cyan-"].text-white,
+.light-theme [class*="bg-purple-"].text-white,
+.light-theme [class*="bg-blue-"] .text-white,
+.light-theme [class*="bg-red-"] .text-white,
+.light-theme [class*="bg-green-"] .text-white,
+.light-theme [class*="bg-emerald-"] .text-white,
+.light-theme [class*="bg-orange-"] .text-white { color: #FFFFFF; }
+
 /* Login page text overrides */
 .light-theme .hover\:text-white:hover { color: #0F172A; }
 
