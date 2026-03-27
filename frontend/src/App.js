@@ -110,7 +110,7 @@ const LandingPage = () => {
       
       <div className="relative z-10 text-center max-w-xl">
         <h1 className="text-5xl sm:text-6xl font-black tracking-tight mb-4">
-          <span style={{ color: 'var(--gym-primary)' }}>GYM</span>ACCESS
+          <span style={{ color: 'var(--gym-primary)' }}>Ingreso</span>QR
         </h1>
         <p className="text-zinc-400 text-lg mb-12">
           Sistema de control de acceso inteligente para gimnasios
