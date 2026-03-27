@@ -67,6 +67,17 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - Version V 1.2.19
 - Build de produccion generado y listo para despliegue
 
+### Fase 16: Sistema de Seguridad (27 Mar 2026)
+- Rate limiting: 5 intentos fallidos bloquean IP por 15 minutos
+- Registro de todos los intentos de login (admin y socios) con IP, fecha, user agent
+- Panel de Seguridad en Super Admin (/admin/security):
+  - Estadisticas: IPs bloqueadas, fallos 24h/7d, exitosos, historial
+  - Tab IPs Bloqueadas: ver, desbloquear individual o masivo
+  - Tab Intentos de Acceso: tabla con filtros por tipo, resultado, busqueda
+- Security headers HTTP (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy)
+- Mensajes de error genericos (no revelan si email existe)
+- Proteccion de ruta /admin/security solo para super_admin
+
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123
 

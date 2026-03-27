@@ -1,13 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Navigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { toast } from 'sonner';
 import { ShieldAlert, ShieldCheck, ShieldX, Unlock, Trash2, RefreshCw, Search, Filter } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function AdminSecurity() {
+  const { admin } = useAuth();
   const [stats, setStats] = useState(null);
   const [blockedIps, setBlockedIps] = useState({ active: [], expired: [] });
   const [attempts, setAttempts] = useState([]);
@@ -18,6 +21,7 @@ export default function AdminSecurity() {
   const [searchTerm, setSearchTerm] = useState('');
 
   const fetchData = useCallback(async () => {
+    if (admin?.role !== 'super_admin') return;
     setLoading(true);
     try {
       const [statsRes, blockedRes, attemptsRes] = await Promise.all([
@@ -33,9 +37,11 @@ export default function AdminSecurity() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [admin]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  if (admin?.role !== 'super_admin') return <Navigate to="/admin" replace />;
 
   const handleUnblock = async (ip) => {
     try {
