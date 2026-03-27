@@ -351,8 +351,8 @@
 
 /* Chart container */
 .chart-container {
-  background: #18181B;
-  border: 1px solid #27272A;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
   border-radius: 12px;
   padding: 24px;
 }
@@ -361,7 +361,7 @@
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  color: #71717A;
+  color: var(--text-muted);
 }
 
 .empty-state-icon {
@@ -398,3 +398,72 @@
   background: var(--gym-primary);
   color: var(--gym-primary-foreground);
 }
+
+/* ========================================
+   Light Theme - Tailwind Zinc Overrides
+   Remap hardcoded zinc classes globally
+   ======================================== */
+.light-theme .text-zinc-400 { color: #64748B; }
+.light-theme .text-zinc-500 { color: #475569; }
+.light-theme .text-zinc-300 { color: #334155; }
+.light-theme .text-zinc-200 { color: #1E293B; }
+.light-theme .text-zinc-600 { color: #334155; }
+
+.light-theme .bg-zinc-800 { background-color: #E2E8F0; }
+.light-theme .bg-zinc-900 { background-color: #F1F5F9; }
+.light-theme .bg-zinc-950 { background-color: #F8FAFC; }
+.light-theme .bg-zinc-800\/50 { background-color: rgba(226, 232, 240, 0.5); }
+
+.light-theme .border-zinc-800 { border-color: #E2E8F0; }
+.light-theme .border-zinc-700 { border-color: #CBD5E1; }
+.light-theme .border-zinc-600 { border-color: #CBD5E1; }
+
+.light-theme .hover\:bg-zinc-800:hover { background-color: #E2E8F0; }
+.light-theme .hover\:bg-zinc-700:hover { background-color: #CBD5E1; }
+.light-theme .hover\:bg-zinc-800\/50:hover { background-color: rgba(226, 232, 240, 0.5); }
+.light-theme .hover\:text-white:hover { color: #0F172A; }
+.light-theme .hover\:text-zinc-300:hover { color: #334155; }
+
+.light-theme .divide-zinc-800 > :not([hidden]) ~ :not([hidden]) { border-color: #E2E8F0; }
+
+/* Fix specific hardcoded background patterns */
+.light-theme .bg-black\/60 { background-color: rgba(0, 0, 0, 0.3); }
+.light-theme .bg-black\/80 { background-color: rgba(0, 0, 0, 0.4); }
+
+/* Ring and focus overrides */
+.light-theme .ring-zinc-700 { --tw-ring-color: #CBD5E1; }
+.light-theme .focus\:ring-zinc-500:focus { --tw-ring-color: #94A3B8; }
+
+/* Active nav items - keep readable in light */
+.light-theme .bg-zinc-800.text-white { 
+  background-color: #E2E8F0; 
+  color: #0F172A; 
+}
+
+/* Scrollbar in light */
+.light-theme .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+}
+.light-theme .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+.light-theme .scrollbar-thin {
+  scrollbar-color: #CBD5E1 transparent;
+}
+
+/* Arbitrary value class overrides */
+.light-theme .bg-\[\#09090B\] { background-color: #F8FAFC; }
+.light-theme .bg-\[\#0a0a0b\] { background-color: #FFFFFF; }
+.light-theme .bg-\[\#18181B\] { background-color: #FFFFFF; }
+.light-theme .bg-zinc-900\/80 { background-color: rgba(255, 255, 255, 0.85); }
+.light-theme .border-\[var\(--gym-primary\)\] { border-color: var(--gym-primary); }
+
+/* Login page text overrides */
+.light-theme .hover\:text-white:hover { color: #0F172A; }
+
+/* Ensure code blocks are readable in light */
+.light-theme code.bg-zinc-800 { background-color: #E2E8F0; color: #0F172A; }
+
+/* Fix placeholder visibility */
+.light-theme .placeholder-zinc-500::placeholder { color: #94A3B8; }
+.light-theme .placeholder-zinc-600::placeholder { color: #64748B; }

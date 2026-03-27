@@ -107,7 +107,7 @@ export const PWALayout = ({ children }) => {
       {/* Install prompt banner */}
       {showInstallPrompt && (
         <div className="fixed top-16 left-3 right-3 z-50 max-w-lg mx-auto">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-xl p-3 sm:p-4 flex items-center gap-3">
+          <div className="rounded-xl p-3 sm:p-4 flex items-center gap-3" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)' }}>
             <div 
               className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0"
               style={{ backgroundColor: 'var(--gym-primary)' }}
@@ -116,7 +116,7 @@ export const PWALayout = ({ children }) => {
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-bold text-xs sm:text-sm">Crear Acceso Directo</p>
-              <p className="text-[10px] sm:text-xs text-zinc-400">Accede más rápido</p>
+              <p className="text-[10px] sm:text-xs" style={{ color: 'var(--text-muted)' }}>Accede más rápido</p>
             </div>
             <button
               onClick={handleInstall}
@@ -127,7 +127,8 @@ export const PWALayout = ({ children }) => {
             </button>
             <button
               onClick={() => setShowInstallPrompt(false)}
-              className="text-zinc-500 p-1 shrink-0"
+              className="p-1 shrink-0"
+              style={{ color: 'var(--text-muted)' }}
             >
               <span className="text-lg leading-none">&times;</span>
             </button>
@@ -152,14 +153,14 @@ export const PWALayout = ({ children }) => {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`flex flex-col items-center gap-0.5 py-1.5 px-2 sm:px-4 rounded-xl transition-colors ${
-                  isActive 
-                    ? 'text-white' 
-                    : 'text-zinc-500 hover:text-zinc-300'
-                }`}
+                className="flex flex-col items-center gap-0.5 py-1.5 px-2 sm:px-4 rounded-xl transition-colors"
+                style={isActive 
+                  ? { color: 'var(--text-primary)' }
+                  : { color: 'var(--text-muted)' }
+                }
                 data-testid={`pwa-nav-${item.label.toLowerCase()}`}
               >
-                <div className={`p-1.5 sm:p-2 rounded-xl ${isActive ? 'bg-zinc-800' : ''}`}>
+                <div className="p-1.5 sm:p-2 rounded-xl" style={isActive ? { background: 'var(--bg-tertiary)' } : {}}>
                   <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                 </div>
                 <span className="text-[10px] sm:text-xs font-medium">{item.label}</span>

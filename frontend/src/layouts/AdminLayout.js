@@ -106,10 +106,10 @@ export const AdminLayout = ({ children }) => {
       )}
 
       {/* Mobile header */}
-      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 bg-[#0a0a0b] border-b border-zinc-800 px-4 py-3"
-        style={{ top: isImpersonating ? '36px' : '0' }}>
+      <header className="lg:hidden fixed top-0 left-0 right-0 z-40 border-b px-4 py-3"
+        style={{ top: isImpersonating ? '36px' : '0', background: 'var(--sidebar-bg)', borderColor: 'var(--border-primary)' }}>
         <div className="flex items-center justify-between">
-          <button onClick={() => setSidebarOpen(true)} className="p-2 text-zinc-400" data-testid="mobile-menu-btn">
+          <button onClick={() => setSidebarOpen(true)} className="p-2" style={{ color: 'var(--text-secondary)' }} data-testid="mobile-menu-btn">
             <Menu size={24} />
           </button>
           <div className="flex items-center gap-2">
@@ -138,12 +138,13 @@ export const AdminLayout = ({ children }) => {
             </div>
             <div>
               <h1 className="font-bold text-sm">IngresoQR</h1>
-              <p className="text-xs text-zinc-500">{admin?.role === 'super_admin' && !isImpersonating ? 'Super Admin' : 'Panel Admin'}</p>
+              <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{admin?.role === 'super_admin' && !isImpersonating ? 'Super Admin' : 'Panel Admin'}</p>
             </div>
           </div>
           <button 
             onClick={() => setSidebarOpen(false)} 
-            className="lg:hidden p-1 text-zinc-500"
+            className="lg:hidden p-1"
+            style={{ color: 'var(--text-muted)' }}
           >
             <X size={20} />
           </button>
@@ -159,11 +160,13 @@ export const AdminLayout = ({ children }) => {
                   key={item.path}
                   to={item.path}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
-                    isActive 
-                      ? 'bg-zinc-800 text-white' 
-                      : 'text-zinc-400 hover:text-white hover:bg-zinc-800/50'
-                  }`}
+                  className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors"
+                  style={isActive 
+                    ? { background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }
+                    : { color: 'var(--text-secondary)' }
+                  }
+                  onMouseEnter={e => { if (!isActive) { e.currentTarget.style.background = 'var(--bg-hover)'; e.currentTarget.style.color = 'var(--text-primary)'; }}}
+                  onMouseLeave={e => { if (!isActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = 'var(--text-secondary)'; }}}
                   data-testid={`nav-${item.label.toLowerCase()}`}
                 >
                   <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
@@ -199,7 +202,8 @@ export const AdminLayout = ({ children }) => {
             </button>
             <button
               onClick={handleLogout}
-              className="flex items-center gap-2 flex-1 px-4 py-2 text-sm text-zinc-500 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-colors"
+              className="flex items-center gap-2 flex-1 px-4 py-2 text-sm hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-colors"
+              style={{ color: 'var(--text-muted)' }}
               data-testid="admin-logout-btn"
             >
               <LogOut size={18} />
