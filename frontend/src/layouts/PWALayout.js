@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { QrCode, User, Calendar, Bell, UserPlus } from 'lucide-react';
+import { QrCode, User, Calendar, Bell, UserPlus, Sun, Moon } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const navItems = [
@@ -17,6 +17,18 @@ export const PWALayout = ({ children }) => {
   const navigate = useNavigate();
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [theme, setTheme] = useState(() => localStorage.getItem('ingresoqr-theme') || 'dark');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+    localStorage.setItem('ingresoqr-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
 
   useEffect(() => {
     const handler = (e) => {
@@ -47,9 +59,9 @@ export const PWALayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen min-h-[100dvh] bg-[#09090B]">
+    <div className="min-h-screen min-h-[100dvh]" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl bg-[#09090B]/80 border-b border-zinc-800/50">
+      <header className="fixed top-0 left-0 right-0 z-40 backdrop-blur-xl" style={{ background: 'var(--bg-primary)', borderBottom: '1px solid var(--border-primary)' }}>
         <div className="flex items-center justify-between max-w-lg mx-auto px-4 py-3 sm:py-4">
           <div className="flex items-center gap-3 min-w-0">
             {gym?.logo_url ? (
@@ -68,16 +80,27 @@ export const PWALayout = ({ children }) => {
             )}
             <div className="min-w-0">
               <h1 className="font-bold text-sm truncate">{gym?.name || 'IngresoQR'}</h1>
-              <p className="text-[10px] sm:text-xs text-zinc-500">Socio</p>
+              <p className="text-[10px] sm:text-xs" style={{ color: 'var(--text-muted)' }}>Socio</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-zinc-500 hover:text-white text-xs sm:text-sm shrink-0 ml-2"
-            data-testid="pwa-logout-btn"
-          >
-            Salir
-          </button>
+          <div className="flex items-center gap-2 shrink-0 ml-2">
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-lg transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+              data-testid="pwa-theme-toggle-btn"
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="text-xs sm:text-sm"
+              style={{ color: 'var(--text-muted)' }}
+              data-testid="pwa-logout-btn"
+            >
+              Salir
+            </button>
+          </div>
         </div>
       </header>
 

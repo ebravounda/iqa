@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { 
   LayoutDashboard, Users, CreditCard, Building2, UserCog, Settings, 
   Calendar, Clock, Bell, Shield, QrCode, Menu, X, ChevronLeft,
   LogOut, Smartphone, UserCheck, DollarSign, Mail, ShoppingCart,
-  Layers, Code, Megaphone, BarChart3, ClipboardList, Database, Monitor, Trophy, Dumbbell
+  Layers, Code, Megaphone, BarChart3, ClipboardList, Database, Monitor, Trophy, Dumbbell,
+  Sun, Moon
 } from 'lucide-react';
 
 const getNavItems = (role, isImpersonating, permissions) => {
@@ -55,6 +56,18 @@ export const AdminLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [theme, setTheme] = useState(() => localStorage.getItem('ingresoqr-theme') || 'dark');
+
+  useEffect(() => {
+    if (theme === 'light') {
+      document.documentElement.classList.add('light-theme');
+    } else {
+      document.documentElement.classList.remove('light-theme');
+    }
+    localStorage.setItem('ingresoqr-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
   
   const navItems = getNavItems(admin?.role, isImpersonating, admin?.permissions);
 
@@ -69,7 +82,7 @@ export const AdminLayout = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#09090B]">
+    <div className="min-h-screen" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
       {/* Impersonation Banner */}
       {isImpersonating && (
         <div className="fixed top-0 left-0 right-0 z-[60] bg-blue-600 text-white py-2 px-4" data-testid="impersonation-banner">
@@ -164,24 +177,35 @@ export const AdminLayout = ({ children }) => {
           </div>
         </nav>
 
-        <div className="p-4 border-t border-zinc-800">
+        <div className="p-4 border-t" style={{ borderColor: 'var(--border-primary)' }}>
           <div className="flex items-center gap-3 mb-4 px-2">
-            <div className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-sm font-bold">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style={{ background: 'var(--bg-tertiary)' }}>
               {admin?.name?.charAt(0) || 'A'}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-medium truncate">{admin?.name}</p>
-              <p className="text-xs text-zinc-500 truncate">{admin?.email}</p>
+              <p className="text-xs truncate" style={{ color: 'var(--text-muted)' }}>{admin?.email}</p>
             </div>
           </div>
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-2 w-full px-4 py-2 text-sm text-zinc-500 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-colors"
-            data-testid="admin-logout-btn"
-          >
-            <LogOut size={18} />
-            Cerrar Sesión
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              className="flex items-center justify-center w-10 h-10 rounded-lg transition-colors"
+              style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)' }}
+              data-testid="theme-toggle-btn"
+              title={theme === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-2 flex-1 px-4 py-2 text-sm text-zinc-500 hover:text-red-500 hover:bg-red-500/5 rounded-lg transition-colors"
+              data-testid="admin-logout-btn"
+            >
+              <LogOut size={18} />
+              Cerrar Sesion
+            </button>
+          </div>
         </div>
       </aside>
 
