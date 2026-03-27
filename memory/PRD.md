@@ -7,7 +7,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - **Frontend**: https://app.ingresoqr.com
 - **Backend API**: https://c.ingresoqr.com
 
-## Version Actual: V 1.2.19
+## Version Actual: V 1.3.0
 
 ## Arquitectura
 - **Backend**: FastAPI (Python) modular con APIRouter - Corre en /opt/gymaccess/
@@ -53,44 +53,36 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 ### Fase 12: Sistema de Permisos Granulares (RBAC)
 ### Fase 13: Control de Dispositivos y Estadisticas PWA
 ### Fase 14: Automatizacion y Dashboard Trainer
-- Auto-suspension CRON a medianoche UTC
-- Emails recordatorio 1/3/7 dias antes de vencimiento
-- Dashboard especifico para Trainers
-- Navegacion por fechas en Asistencia
-- Almacenamiento local de imagenes (sin dependencia externa)
-- Migracion de dominio a ingresoqr.com
-- Service Worker + iconos PWA para Google Play
+### Fase 15: Rebranding a IngresoQR
+### Fase 16: Sistema de Seguridad (Rate limiting, IP blocking, login tracking)
+### Fase 17: V1.3.0 - Modulos Avanzados
+- Monitor remoto de Raspberry Pi (Heartbeat)
+- Gamificacion (Insignias/Rachas/Ranking)
+- Rutinas de entrenamiento para socios
+- Facturacion automatizada con Stripe (real, multi-tenant)
+- Sistema de cuentas Demo
+- Pases de invitado configurables por admin
+- Moneda por defecto EUR
 
-### Fase 15: Rebranding a IngresoQR (27 Mar 2026)
-- Cambio completo de nombre "GymAccess" a "IngresoQR" en frontend y backend
-- Actualizacion de manifest.json y metadatos PWA
-- Version V 1.2.19
-- Build de produccion generado y listo para despliegue
-
-### Fase 16: Sistema de Seguridad (27 Mar 2026)
-- Rate limiting: 5 intentos fallidos bloquean IP por 15 minutos
-- Registro de todos los intentos de login (admin y socios) con IP, fecha, user agent
-- Panel de Seguridad en Super Admin (/admin/security):
-  - Estadisticas: IPs bloqueadas, fallos 24h/7d, exitosos, historial
-  - Tab IPs Bloqueadas: ver, desbloquear individual o masivo
-  - Tab Intentos de Acceso: tabla con filtros por tipo, resultado, busqueda
-- Security headers HTTP (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy)
-- Mensajes de error genericos (no revelan si email existe)
-- Proteccion de ruta /admin/security solo para super_admin
-- Modificar email y contraseña del Super Admin desde Configuracion
-- Texto login cambiado a "Inicia sesion con tus credenciales de acceso"
+### Fase 18: Modo Dark/Light (27 Mar 2026)
+- CSS Variables en :root (dark) y .light-theme (light)
+- Toggle en AdminLayout.js (sidebar) y PWALayout.js (header)
+- Overrides globales para clases Tailwind zinc en .light-theme
+- Persistencia en localStorage (key: ingresoqr-theme)
+- Build de produccion generado con URL https://c.ingresoqr.com
+- Testing: 15/15 tests pasados (iteration_18.json)
 
 ## Credenciales
-- Super Admin: admin@gymaccess.com / admin123
+- Super Admin: admin@ingresoqr.com / admin123
 
 ## Integraciones
 - MercadoPago (Payments) - REAL
-- Stripe (Payments) - MOCKED
+- Stripe (Payments) - REAL (multi-tenant, cada gym usa su propia API key)
 - Almacenamiento local (Imagenes) - /opt/gymaccess/uploads/
 
 ## Backlog Pendiente
-- P1: Actualizar script Raspberry Pi para enviar heartbeat al backend
+- P1: Portal de registro publico (auto-registro + pago online)
 - P1: Check-in de clases reservadas
 - P2: Push notifications reales (Firebase)
-- P3: Gamificacion avanzada (niveles, recompensas)
-- P3: Facturacion SaaS automatica
+- P3: Chat directo entre trainers y socios
+- P3: Reportes PDF exportables
