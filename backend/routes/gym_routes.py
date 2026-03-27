@@ -165,5 +165,5 @@ async def get_gym_public_info(gym_id: str):
         "has_payments": has_stripe or has_mercadopago,
         "has_stripe": has_stripe,
         "has_mercadopago": has_mercadopago,
-        "currency": gym.get("currency", gym.get("stripe_currency", "usd"))
+        "currency": gym.get("currency", gym.get("stripe_currency", "eur"))
     }

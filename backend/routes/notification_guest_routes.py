@@ -82,12 +82,14 @@ async def create_guest_pass(guest: GuestCreate, credentials: HTTPAuthorizationCr
     if guests_this_month >= max_guests:
         raise HTTPException(status_code=400, detail=f"Has alcanzado el limite de {max_guests} invitados este mes")
     guest_code = "G" + generate_member_code()
-    valid_until = datetime.now(timezone.utc) + timedelta(days=guest.valid_days)
+    max_valid_days = member.get("guest_valid_days", 1)
+    requested_days = min(guest.valid_days, max_valid_days) if guest.valid_days else max_valid_days
+    valid_until = datetime.now(timezone.utc) + timedelta(days=requested_days)
     guest_dict = {
         "id": str(uuid.uuid4()), "code": guest_code, "name": guest.name,
         "phone": guest.phone, "invited_by": member_id, "invited_by_name": member["name"],
         "gym_id": member["gym_id"], "valid_until": valid_until.isoformat(),
-        "valid_days": guest.valid_days, "status": "active", "accesses": 0,
+        "valid_days": requested_days, "status": "active", "accesses": 0,
         "created_at": datetime.now(timezone.utc).isoformat()
     }
     await db.guests.insert_one(guest_dict)

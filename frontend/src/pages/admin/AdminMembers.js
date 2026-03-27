@@ -75,7 +75,7 @@ export default function AdminMembers() {
   const [selectedMember, setSelectedMember] = useState(null);
   const [suspendReason, setSuspendReason] = useState('');
   const [newMember, setNewMember] = useState({ name: '', email: '', phone: '', gym_id: admin?.gym_id || '', gender: 'prefer_not_to_say' });
-  const [editData, setEditData] = useState({ name: '', email: '', phone: '' });
+  const [editData, setEditData] = useState({ name: '', email: '', phone: '', can_bring_guests: false, max_guests_per_month: 2, guest_valid_days: 1 });
   const [expandedContact, setExpandedContact] = useState(null);
   const [showDevicesModal, setShowDevicesModal] = useState(false);
   const [devicesMember, setDevicesMember] = useState(null);
@@ -125,7 +125,7 @@ export default function AdminMembers() {
 
   const handleOpenEdit = (member) => {
     setSelectedMember(member);
-    setEditData({ name: member.name, email: member.email || '', phone: member.phone || '' });
+    setEditData({ name: member.name, email: member.email || '', phone: member.phone || '', can_bring_guests: member.can_bring_guests || false, max_guests_per_month: member.max_guests_per_month || 2, guest_valid_days: member.guest_valid_days || 1 });
     setShowEditModal(true);
   };
 
@@ -541,6 +541,25 @@ export default function AdminMembers() {
               <label className="text-sm text-zinc-400 mb-1 block">Teléfono</label>
               <Input value={editData.phone} onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
                 className="input-dark" />
+            </div>
+            {/* Guest Config */}
+            <div className="border-t border-zinc-800 pt-4">
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={editData.can_bring_guests} onChange={(e) => setEditData({ ...editData, can_bring_guests: e.target.checked })} className="w-4 h-4 rounded" data-testid="edit-guest-toggle" />
+                <span className="text-sm">Puede traer invitados</span>
+              </label>
+              {editData.can_bring_guests && (
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div>
+                    <label className="text-xs text-zinc-500 mb-1 block">Max invitados/mes</label>
+                    <Input type="number" min="1" max="10" value={editData.max_guests_per_month} onChange={(e) => setEditData({ ...editData, max_guests_per_month: parseInt(e.target.value) || 2 })} className="input-dark" data-testid="edit-max-guests" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-zinc-500 mb-1 block">Dias validez invitacion</label>
+                    <Input type="number" min="1" max="30" value={editData.guest_valid_days} onChange={(e) => setEditData({ ...editData, guest_valid_days: parseInt(e.target.value) || 1 })} className="input-dark" data-testid="edit-guest-days" />
+                  </div>
+                </div>
+              )}
             </div>
             <Button onClick={handleUpdateMember} className="w-full btn-gym-primary" data-testid="update-member-btn">
               <Pencil size={20} className="mr-2" /> Guardar Cambios

@@ -36,7 +36,7 @@ export function formatTime(dateString) {
   });
 }
 
-export function formatCurrency(amount, currency = 'USD') {
+export function formatCurrency(amount, currency = 'EUR') {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
     currency
