@@ -202,7 +202,7 @@ export default function MemberProfile() {
 
       {/* App Info */}
       <div className="text-center text-xs text-zinc-600 pt-4">
-        <p>GymAccess v1.0.0</p>
+        <p>IngresoQR v1.2.19</p>
         <p>© {new Date().getFullYear()} Todos los derechos reservados</p>
       </div>
     </div>

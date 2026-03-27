@@ -67,7 +67,7 @@ export const PWALayout = ({ children }) => {
               </div>
             )}
             <div className="min-w-0">
-              <h1 className="font-bold text-sm truncate">{gym?.name || 'GymAccess'}</h1>
+              <h1 className="font-bold text-sm truncate">{gym?.name || 'IngresoQR'}</h1>
               <p className="text-[10px] sm:text-xs text-zinc-500">Socio</p>
             </div>
           </div>

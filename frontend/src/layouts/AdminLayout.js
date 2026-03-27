@@ -97,7 +97,7 @@ export const AdminLayout = ({ children }) => {
           </button>
           <div className="flex items-center gap-2">
             <QrCode size={24} style={{ color: 'var(--gym-primary)' }} />
-            <span className="font-bold">GymAccess</span>
+            <span className="font-bold">IngresoQR</span>
           </div>
           <div className="w-10" />
         </div>
@@ -120,7 +120,7 @@ export const AdminLayout = ({ children }) => {
               <QrCode size={22} className="text-black" />
             </div>
             <div>
-              <h1 className="font-bold text-sm">GymAccess</h1>
+              <h1 className="font-bold text-sm">IngresoQR</h1>
               <p className="text-xs text-zinc-500">{admin?.role === 'super_admin' && !isImpersonating ? 'Super Admin' : 'Panel Admin'}</p>
             </div>
           </div>

@@ -397,7 +397,7 @@ export default function AdminDevices() {
                 <p className="text-zinc-500"># Crear servicio:</p>
                 <p className="text-emerald-400">sudo bash -c 'cat &gt; /etc/systemd/system/gymaccess.service &lt;&lt; EOF</p>
                 <p className="text-amber-400">[Unit]</p>
-                <p className="text-amber-400">Description=GymAccess Control</p>
+                <p className="text-amber-400">Description=IngresoQR Control</p>
                 <p className="text-amber-400">After=network.target</p>
                 <p className="text-amber-400">[Service]</p>
                 <p className="text-amber-400">Type=simple</p>
