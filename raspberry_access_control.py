@@ -2,9 +2,9 @@
 import os
 import sys
 import time
-import json
 import logging
 import threading
+import subprocess
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -30,14 +30,14 @@ except ImportError:
 
 import requests
 
-SERVER_URL = os.environ.get('GYMACCESS_SERVER_URL', 'https://gymapi.ticketpro.es')
+SERVER_URL = os.environ.get('GYMACCESS_SERVER_URL', 'https://c.ingresoqr.com')
 GYM_TOKEN = os.environ.get('GYMACCESS_GYM_TOKEN', 'TU_TOKEN_AQUI')
 DEVICE_ID = os.environ.get('GYMACCESS_DEVICE_ID', 'TU_DEVICE_ID')
-RELAY_ENTRADA = int(os.environ.get('GYMACCESS_RELAY_ENTRADA', '12'))
-RELAY_SALIDA = int(os.environ.get('GYMACCESS_RELAY_SALIDA', '16'))
+RELAY_ENTRADA = 11
+RELAY_SALIDA = 16
 TIEMPO_APERTURA = 3
 PING_INTERVAL = 60
-SCANNER_MAP_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'scanner_map.json')
+HEARTBEAT_INTERVAL = 60
 
 KEYS = {
     ecodes.KEY_0: '0', ecodes.KEY_1: '1', ecodes.KEY_2: '2',
@@ -68,6 +68,43 @@ SHIFT_KEYS = {
 }
 
 
+def get_system_info():
+    info = {}
+    try:
+        temp = subprocess.check_output(["vcgencmd", "measure_temp"]).decode()
+        info["cpu_temp"] = float(temp.replace("temp=", "").replace("'C\n", ""))
+    except:
+        info["cpu_temp"] = None
+    try:
+        load = os.getloadavg()
+        info["cpu_usage"] = round(load[0] * 100 / os.cpu_count(), 1)
+    except:
+        info["cpu_usage"] = None
+    try:
+        mem = subprocess.check_output(["free", "-m"]).decode().split("\n")[1].split()
+        info["memory_usage"] = round(int(mem[2]) / int(mem[1]) * 100, 1)
+    except:
+        info["memory_usage"] = None
+    try:
+        uptime_sec = float(open("/proc/uptime").read().split()[0])
+        info["uptime"] = int(uptime_sec)
+    except:
+        info["uptime"] = None
+    try:
+        ip = subprocess.check_output(["hostname", "-I"]).decode().strip().split()[0]
+        info["local_ip"] = ip
+    except:
+        info["local_ip"] = None
+    try:
+        ext_ip = subprocess.check_output(
+            ["curl", "-s", "--max-time", "5", "https://api.ipify.org"]
+        ).decode().strip()
+        info["ip_address"] = ext_ip
+    except:
+        info["ip_address"] = None
+    return info
+
+
 class GPIOController:
     def __init__(self):
         self.initialized = False
@@ -78,22 +115,22 @@ class GPIOController:
                 GPIO.setup(RELAY_ENTRADA, GPIO.OUT, initial=GPIO.HIGH)
                 GPIO.setup(RELAY_SALIDA, GPIO.OUT, initial=GPIO.HIGH)
                 self.initialized = True
-                logger.info(f"GPIO inicializado - ENTRADA: pin {RELAY_ENTRADA}, SALIDA: pin {RELAY_SALIDA}")
+                logger.info("GPIO inicializado correctamente")
             except Exception as e:
                 logger.error(f"Error inicializando GPIO: {e}")
 
     def abrir_torno(self, direccion):
         pin = RELAY_ENTRADA if direccion == 'entrada' else RELAY_SALIDA
-        nombre = direccion.upper()
-        logger.info(f"Abriendo torno {nombre} - GPIO pin {pin}")
+        nombre = "ENTRADA" if direccion == 'entrada' else "SALIDA"
+        logger.info(f"Abriendo torno {nombre}...")
         if self.initialized:
             GPIO.output(pin, GPIO.LOW)
             time.sleep(TIEMPO_APERTURA)
             GPIO.output(pin, GPIO.HIGH)
-            logger.info(f"Torno {nombre} cerrado")
         else:
-            logger.info(f"[SIMULACION] Torno {nombre} pin {pin} abierto por {TIEMPO_APERTURA}s")
+            logger.info(f"[SIMULACION] Torno {nombre} abierto por {TIEMPO_APERTURA}s")
             time.sleep(TIEMPO_APERTURA)
+        logger.info(f"Torno {nombre} cerrado")
 
     def cleanup(self):
         if self.initialized:
@@ -106,14 +143,10 @@ class GymAccessClient:
 
     def validar_qr(self, qr_code, direccion):
         try:
-            qr_code_clean = qr_code.strip().replace('\n', '').replace('\r', '').replace('\x00', '')
-            if qr_code_clean != qr_code:
-                logger.info(f"QR limpiado: {len(qr_code)} -> {len(qr_code_clean)} chars")
-
             response = requests.post(
                 f"{self.api_url}/access/validate",
                 json={
-                    "qr_code": qr_code_clean,
+                    "qr_code": qr_code,
                     "gym_token": GYM_TOKEN,
                     "direction": direccion
                 },
@@ -141,6 +174,47 @@ class GymAccessClient:
         except:
             return False
 
+    def heartbeat(self):
+        try:
+            info = get_system_info()
+            info["gym_token"] = GYM_TOKEN
+            info["software_version"] = "2.0"
+            response = requests.post(
+                f"{self.api_url}/devices/{DEVICE_ID}/heartbeat",
+                json=info,
+                timeout=10
+            )
+            if response.status_code == 200:
+                data = response.json()
+                cmd = data.get("command")
+                if cmd:
+                    logger.info(f"[HEARTBEAT] Comando recibido: {cmd}")
+                    self.execute_command(cmd)
+                return True
+            else:
+                logger.warning(f"[HEARTBEAT] Error: {response.status_code}")
+                return False
+        except Exception as e:
+            logger.error(f"[HEARTBEAT] Error: {e}")
+            return False
+
+    def execute_command(self, command):
+        try:
+            if command == "reboot":
+                logger.info("[CMD] Reiniciando dispositivo...")
+                os.system("sudo reboot")
+            elif command == "restart_service":
+                logger.info("[CMD] Reiniciando servicio gymaccess...")
+                os.system("sudo systemctl restart gymaccess.service")
+            elif command == "update":
+                logger.info("[CMD] Actualizando software...")
+                os.system("cd /home/pi/gymaccess && git pull")
+                os.system("sudo systemctl restart gymaccess.service")
+            else:
+                logger.warning(f"[CMD] Comando desconocido: {command}")
+        except Exception as e:
+            logger.error(f"[CMD] Error ejecutando comando: {e}")
+
 
 def find_scanners():
     scanners = []
@@ -149,115 +223,12 @@ def find_scanners():
         if 'MEGAHUNT' in dev.name.upper() or 'HID' in dev.name.upper():
             if 'Keyboard' in dev.name:
                 scanners.append(dev)
-                logger.info(f"Lector encontrado: {dev.path} - {dev.name} (phys: {dev.phys})")
+                logger.info(f"Lector encontrado: {dev.path} - {dev.name}")
     return scanners
 
 
-def load_scanner_map():
-    """Load saved scanner-to-direction mapping"""
-    if os.path.exists(SCANNER_MAP_FILE):
-        try:
-            with open(SCANNER_MAP_FILE, 'r') as f:
-                return json.load(f)
-        except:
-            pass
-    return None
-
-
-def save_scanner_map(mapping):
-    """Save scanner-to-direction mapping"""
-    with open(SCANNER_MAP_FILE, 'w') as f:
-        json.dump(mapping, f, indent=2)
-    logger.info(f"Mapa de lectores guardado en {SCANNER_MAP_FILE}")
-
-
-def assign_scanners(scanners):
-    """Assign scanners to directions using saved physical USB mapping"""
-    scanner_map = load_scanner_map()
-    
-    if scanner_map:
-        # Try to match by physical USB path
-        entrada_dev = None
-        salida_dev = None
-        
-        for scanner in scanners:
-            phys = scanner.phys
-            if phys == scanner_map.get("entrada_phys"):
-                entrada_dev = scanner
-                logger.info(f"ENTRADA asignado por USB: {scanner.path} (phys: {phys})")
-            elif phys == scanner_map.get("salida_phys"):
-                salida_dev = scanner
-                logger.info(f"SALIDA asignado por USB: {scanner.path} (phys: {phys})")
-        
-        if entrada_dev and salida_dev:
-            return entrada_dev, salida_dev
-        else:
-            logger.warning("No se encontro mapeo USB guardado, usando calibracion...")
-    
-    # No saved mapping - use default order and save
-    if len(scanners) >= 2:
-        mapping = {
-            "entrada_phys": scanners[0].phys,
-            "entrada_path": scanners[0].path,
-            "salida_phys": scanners[1].phys,
-            "salida_path": scanners[1].path,
-        }
-        save_scanner_map(mapping)
-        logger.info(f"Mapa inicial creado: ENTRADA={scanners[0].path}, SALIDA={scanners[1].path}")
-        return scanners[0], scanners[1]
-    elif len(scanners) == 1:
-        return scanners[0], None
-    return None, None
-
-
-def calibrate(scanners):
-    """Interactive calibration - assigns scanners to directions"""
-    print("\n" + "=" * 50)
-    print("   CALIBRACION DE LECTORES")
-    print("=" * 50)
-    print(f"\nSe encontraron {len(scanners)} lectores:")
-    for i, s in enumerate(scanners):
-        print(f"  {i+1}. {s.path} - {s.name} (phys: {s.phys})")
-    
-    print("\nEscanea un QR en el lector de ENTRADA...")
-    
-    # Wait for a scan on any reader
-    import select
-    devices = {s.fd: s for s in scanners}
-    
-    while True:
-        r, w, x = select.select(devices.keys(), [], [], 10)
-        if not r:
-            print("Timeout. Intentando de nuevo...")
-            continue
-        for fd in r:
-            dev = devices[fd]
-            for event in dev.read():
-                if event.type == ecodes.EV_KEY:
-                    key_event = evdev.categorize(event)
-                    if key_event.keystate == 1 and key_event.scancode == ecodes.KEY_ENTER:
-                        entrada_dev = dev
-                        salida_dev = [s for s in scanners if s != dev][0] if len(scanners) > 1 else None
-                        
-                        mapping = {
-                            "entrada_phys": entrada_dev.phys,
-                            "entrada_path": entrada_dev.path,
-                        }
-                        if salida_dev:
-                            mapping["salida_phys"] = salida_dev.phys
-                            mapping["salida_path"] = salida_dev.path
-                        
-                        save_scanner_map(mapping)
-                        print(f"\n ENTRADA = {entrada_dev.path} (phys: {entrada_dev.phys})")
-                        if salida_dev:
-                            print(f" SALIDA  = {salida_dev.path} (phys: {salida_dev.phys})")
-                        print("\nCalibracion completada! Reinicia el servicio:")
-                        print("  sudo systemctl restart gymaccess")
-                        return
-
-
 def read_scanner(device, direccion, gpio, client):
-    logger.info(f"Escuchando {direccion}: {device.path} (phys: {device.phys})")
+    logger.info(f"Escuchando {direccion}: {device.path}")
     buffer = ""
     shift_pressed = False
 
@@ -288,9 +259,8 @@ def read_scanner(device, direccion, gpio, client):
                 resultado = client.validar_qr(code, direccion)
                 if resultado.get('valid'):
                     nombre = resultado.get('member_name', 'Socio')
-                    real_dir = resultado.get('direction', direccion)
-                    logger.info(f"ACCESO PERMITIDO: {nombre} ({real_dir})")
-                    print(f"\nBienvenido, {nombre}! [{real_dir.upper()}]\n")
+                    logger.info(f"ACCESO PERMITIDO: {nombre} ({direccion})")
+                    print(f"\nBienvenido, {nombre}! [{direccion.upper()}]\n")
                     threading.Thread(target=gpio.abrir_torno, args=(direccion,)).start()
                 else:
                     razon = resultado.get('reason', 'Desconocido')
@@ -306,18 +276,20 @@ def read_scanner(device, direccion, gpio, client):
                 buffer += char
 
 
-def ping_loop(client):
+def heartbeat_loop(client):
     while True:
-        client.ping()
-        time.sleep(PING_INTERVAL)
+        ok = client.heartbeat()
+        if ok:
+            logger.info("[HEARTBEAT] OK - estado enviado al servidor")
+        time.sleep(HEARTBEAT_INTERVAL)
 
 
 def main():
     if GYM_TOKEN == 'TU_TOKEN_AQUI':
-        logger.error("Configura GYM_TOKEN en .env")
+        logger.error("Configura GYMACCESS_GYM_TOKEN en .env")
         sys.exit(1)
     if DEVICE_ID == 'TU_DEVICE_ID':
-        logger.error("Configura DEVICE_ID en .env")
+        logger.error("Configura GYMACCESS_DEVICE_ID en .env")
         sys.exit(1)
 
     gpio = GPIOController()
@@ -328,33 +300,25 @@ def main():
         logger.error("No se encontraron lectores QR USB")
         sys.exit(1)
 
-    # Calibration mode
-    if '--calibrar' in sys.argv or '--calibrate' in sys.argv:
-        calibrate(scanners)
-        return
-
-    # Assign scanners using saved mapping
-    entrada_dev, salida_dev = assign_scanners(scanners)
-
     print("\n" + "=" * 40)
-    print("   SISTEMA DE ACCESO ACTIVO")
+    print("   INGRESOQR - SISTEMA DE ACCESO v2.0")
     print(f"   {len(scanners)} lector(es) detectados")
-    if entrada_dev:
-        print(f"   ENTRADA: {entrada_dev.path}")
-    if salida_dev:
-        print(f"   SALIDA:  {salida_dev.path}")
+    print(f"   Servidor: {SERVER_URL}")
+    print(f"   Device ID: {DEVICE_ID}")
     print("   Escanea tu codigo QR")
     print("=" * 40 + "\n")
 
-    threading.Thread(target=ping_loop, args=(client,), daemon=True).start()
+    # Heartbeat: reporta estado cada 60 segundos
+    threading.Thread(target=heartbeat_loop, args=(client,), daemon=True).start()
+    logger.info("Heartbeat iniciado - reportando cada 60 segundos")
 
     threads = []
-    if entrada_dev:
-        t1 = threading.Thread(target=read_scanner, args=(entrada_dev, 'entrada', gpio, client), daemon=True)
+    if len(scanners) >= 1:
+        t1 = threading.Thread(target=read_scanner, args=(scanners[0], 'entrada', gpio, client), daemon=True)
         t1.start()
         threads.append(t1)
-    if salida_dev:
-        t2 = threading.Thread(target=read_scanner, args=(salida_dev, 'salida', gpio, client), daemon=True)
+    if len(scanners) >= 2:
+        t2 = threading.Thread(target=read_scanner, args=(scanners[1], 'salida', gpio, client), daemon=True)
         t2.start()
         threads.append(t2)
 
