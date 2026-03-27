@@ -20,7 +20,7 @@ ROOT_DIR = Path(__file__).parent.parent
 
 # ==================== EMAIL ====================
 
-async def send_gym_email(gym_id: str, to_email: str, subject: str, html_body: str):
+async def send_gym_email(gym_id: str, to_email: str, subject: str, html_body: str, member_id: str = None, email_type: str = "general"):
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
         raise HTTPException(status_code=404, detail="Gym not found")
@@ -39,9 +39,22 @@ async def send_gym_email(gym_id: str, to_email: str, subject: str, html_body: st
     try:
         await aiosmtplib.send(msg, hostname=smtp_host, port=smtp_port, username=smtp_user,
                               password=smtp_password, use_tls=smtp_port == 465, start_tls=smtp_port != 465)
+        # Log email
+        log = {
+            "id": str(uuid.uuid4()), "gym_id": gym_id, "member_id": member_id,
+            "to_email": to_email, "subject": subject, "email_type": email_type,
+            "status": "sent", "sent_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.email_logs.insert_one(log)
         return True
     except Exception as e:
         logger.error(f"Email send error: {e}")
+        log = {
+            "id": str(uuid.uuid4()), "gym_id": gym_id, "member_id": member_id,
+            "to_email": to_email, "subject": subject, "email_type": email_type,
+            "status": "failed", "error": str(e), "sent_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.email_logs.insert_one(log)
         raise HTTPException(status_code=500, detail=f"Error al enviar email: {str(e)}")
 
 async def send_templated_email(gym_id: str, template_type: str, to_email: str, variables: dict):
@@ -102,6 +115,22 @@ async def send_welcome_email(member_id: str, admin: dict = Depends(get_current_a
     gym_id = member.get("gym_id")
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     color = gym.get("primary_color", "#E1FF01")
+    membership = await db.memberships.find_one({"member_id": member_id, "status": "active"}, {"_id": 0})
+    plan = None
+    payment_btn = ""
+    if membership:
+        plan = await db.plans.find_one({"id": membership.get("plan_id")}, {"_id": 0})
+    if plan:
+        payment_btn = f"""
+        <div style="background:#18181B;padding:15px;border-radius:12px;margin:15px 0;">
+            <p style="color:#a1a1aa;margin:0 0 5px;">Plan contratado</p>
+            <p style="font-size:18px;font-weight:700;color:{color};margin:0;">{plan.get('name','')}</p>
+            <p style="color:#a1a1aa;margin:5px 0 0;">{plan.get('price',0)} {gym.get('currency','EUR')} / {plan.get('duration_days',30)} dias</p>
+        </div>
+        <div style="text-align:center;margin:20px 0;">
+            <a href="https://app.ingresoqr.com/app/login" style="display:inline-block;padding:14px 32px;background:{color};color:#000;font-weight:700;text-decoration:none;border-radius:10px;font-size:16px;">Acceder a Mi Cuenta</a>
+        </div>
+        """
     html = f"""
     <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
         <div style="text-align:center;margin-bottom:20px;">
@@ -113,10 +142,71 @@ async def send_welcome_email(member_id: str, admin: dict = Depends(get_current_a
             <p style="color:#a1a1aa;margin:0 0 8px;">Tu codigo de acceso</p>
             <p style="font-size:32px;font-weight:900;color:{color};font-family:monospace;letter-spacing:4px;margin:0;">{member.get('code','------')}</p>
         </div>
+        {payment_btn}
     </div>
     """
-    await send_gym_email(gym_id, member["email"], f"Bienvenido/a a {gym.get('name')}", html)
+    await send_gym_email(gym_id, member["email"], f"Bienvenido/a a {gym.get('name')}", html, member_id=member_id, email_type="welcome")
     return {"message": f"Email de bienvenida enviado a {member['email']}"}
+
+@router.get("/emails/member/{member_id}")
+async def get_member_emails(member_id: str, admin: dict = Depends(get_current_admin)):
+    """Get email history for a specific member"""
+    emails = await db.email_logs.find({"member_id": member_id}, {"_id": 0}).sort("sent_at", -1).to_list(50)
+    return emails
+
+@router.post("/emails/resend/{email_id}")
+async def resend_email(email_id: str, admin: dict = Depends(get_current_admin)):
+    """Resend a previously sent email (max 1 per minute per member)"""
+    email_log = await db.email_logs.find_one({"id": email_id}, {"_id": 0})
+    if not email_log:
+        raise HTTPException(status_code=404, detail="Email no encontrado")
+    member_id = email_log.get("member_id")
+    if member_id:
+        one_min_ago = (datetime.now(timezone.utc) - __import__('datetime').timedelta(minutes=1)).isoformat()
+        recent = await db.email_logs.find_one({
+            "member_id": member_id, "sent_at": {"$gte": one_min_ago}, "status": "sent"
+        })
+        if recent:
+            raise HTTPException(status_code=429, detail="Espera al menos 1 minuto entre reenvios")
+    member = await db.members.find_one({"id": member_id}, {"_id": 0}) if member_id else None
+    to_email = member.get("email") if member else email_log.get("to_email")
+    gym_id = email_log.get("gym_id")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    if email_log.get("email_type") == "welcome" and member:
+        color = gym.get("primary_color", "#E1FF01")
+        membership = await db.memberships.find_one({"member_id": member_id, "status": "active"}, {"_id": 0})
+        plan = None
+        if membership:
+            plan = await db.plans.find_one({"id": membership.get("plan_id")}, {"_id": 0})
+        plan_info = ""
+        if plan:
+            plan_info = f"""
+            <div style="background:#18181B;padding:15px;border-radius:12px;margin:15px 0;">
+                <p style="color:#a1a1aa;margin:0 0 5px;">Plan contratado</p>
+                <p style="font-size:18px;font-weight:700;color:{color};margin:0;">{plan.get('name','')}</p>
+                <p style="color:#a1a1aa;margin:5px 0 0;">{plan.get('price',0)} {gym.get('currency','EUR')} / {plan.get('duration_days',30)} dias</p>
+            </div>
+            """
+        html = f"""
+        <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
+            <div style="text-align:center;margin-bottom:20px;">
+                <h1 style="color:{color};margin:0;">{gym.get('name','IngresoQR')}</h1>
+            </div>
+            <h2>Bienvenido/a, {member.get('name','Socio')}</h2>
+            <p>Tu registro en <strong>{gym.get('name')}</strong> ha sido completado.</p>
+            <div style="background:#18181B;padding:20px;border-radius:12px;text-align:center;margin:20px 0;">
+                <p style="color:#a1a1aa;margin:0 0 8px;">Tu codigo de acceso</p>
+                <p style="font-size:32px;font-weight:900;color:{color};font-family:monospace;letter-spacing:4px;margin:0;">{member.get('code','------')}</p>
+            </div>
+            {plan_info}
+        </div>
+        """
+        await send_gym_email(gym_id, to_email, f"Bienvenido/a a {gym.get('name')}", html, member_id=member_id, email_type="welcome_resend")
+    else:
+        raise HTTPException(status_code=400, detail="Solo se pueden reenviar emails de bienvenida")
+    return {"message": f"Email reenviado a {to_email}"}
 
 # ==================== KIOSK ====================
 

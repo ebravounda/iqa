@@ -32,19 +32,13 @@ export default function AdminClasses() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedGymId, setSelectedGymId] = useState(admin?.gym_id || '');
-  const [newClass, setNewClass] = useState({
-    name: '',
-    description: '',
-    trainer_id: '',
-    max_capacity: 20,
-    duration_minutes: 60,
-    class_type: 'group',
-    recurring: false,
-    days_of_week: [],
-    start_time: '09:00',
-    single_date: '',
-    single_start_time: '09:00'
-  });
+  const [editClass, setEditClass] = useState(null);
+  const defaultClass = {
+    name: '', description: '', trainer_id: '', max_capacity: 20, duration_minutes: 60,
+    class_type: 'group', recurring: false, days_of_week: [], start_time: '09:00',
+    end_time: '10:00', start_date: '', end_date: '', single_date: '', single_start_time: '09:00'
+  };
+  const [newClass, setNewClass] = useState({ ...defaultClass });
 
   useEffect(() => {
     fetchClasses();
@@ -85,45 +79,39 @@ export default function AdminClasses() {
   };
 
   const handleCreateClass = async () => {
-    if (!newClass.name) {
-      toast.error('El nombre es requerido');
-      return;
-    }
-
+    if (!newClass.name) { toast.error('El nombre es requerido'); return; }
     try {
       const gymId = admin?.gym_id || selectedGymId;
-      if (!gymId) {
-        toast.error('Selecciona un gimnasio');
-        return;
-      }
+      if (!gymId) { toast.error('Selecciona un gimnasio'); return; }
       const payload = {
-        ...newClass,
-        gym_id: gymId,
-        max_capacity: parseInt(newClass.max_capacity),
-        duration_minutes: parseInt(newClass.duration_minutes),
-        trainer_id: newClass.trainer_id || null
+        ...newClass, gym_id: gymId, max_capacity: parseInt(newClass.max_capacity),
+        duration_minutes: parseInt(newClass.duration_minutes), trainer_id: newClass.trainer_id || null
       };
-
-      await axios.post(`${API}/classes`, payload);
-      toast.success('Clase creada exitosamente');
-      setShowCreateModal(false);
-      setNewClass({
-        name: '',
-        description: '',
-        trainer_id: '',
-        max_capacity: 20,
-        duration_minutes: 60,
-        class_type: 'group',
-        recurring: false,
-        days_of_week: [],
-        start_time: '09:00',
-        single_date: '',
-        single_start_time: '09:00'
-      });
+      if (editClass) {
+        await axios.put(`${API}/classes/${editClass.id}`, payload);
+        toast.success('Clase actualizada');
+      } else {
+        await axios.post(`${API}/classes`, payload);
+        toast.success('Clase creada exitosamente');
+      }
+      setShowCreateModal(false); setEditClass(null); setNewClass({ ...defaultClass });
       fetchClasses();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error al crear clase');
+      toast.error(error.response?.data?.detail || 'Error');
     }
+  };
+
+  const openEditClass = (cls) => {
+    setEditClass(cls);
+    setNewClass({
+      name: cls.name || '', description: cls.description || '', trainer_id: cls.trainer_id || '',
+      max_capacity: cls.max_capacity || 20, duration_minutes: cls.duration_minutes || 60,
+      class_type: cls.class_type || 'group', recurring: cls.recurring || false,
+      days_of_week: cls.days_of_week || [], start_time: cls.start_time || '09:00',
+      end_time: cls.end_time || '10:00', start_date: cls.start_date || '', end_date: cls.end_date || '',
+      single_date: cls.single_date || '', single_start_time: cls.single_start_time || '09:00'
+    });
+    setShowCreateModal(true);
   };
 
   const handleDeleteClass = async (classId) => {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -11,7 +11,7 @@ import {
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
   AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode, Camera,
-  Mail, Phone, Copy, X as XIcon, Smartphone
+  Mail, Phone, Copy, X as XIcon, Smartphone, Building2, Loader2, Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
@@ -24,37 +24,54 @@ function MemberContactPopover({ member, onClose }) {
   };
 
   return (
-    <div className="absolute right-0 top-full mt-1 z-50 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl shadow-black/40 p-3 min-w-[260px] animate-in fade-in slide-in-from-top-1 duration-150"
+    <div className="absolute right-0 top-full mt-1 z-50 rounded-lg shadow-xl shadow-black/40 p-4 min-w-[300px] animate-in fade-in slide-in-from-top-1 duration-150"
+      style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-secondary)' }}
       data-testid={`contact-popover-${member.code}`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-zinc-500">Contacto</span>
-        <button onClick={onClose} className="text-zinc-500 hover:text-zinc-300 transition-colors">
+      <div className="flex items-center justify-between mb-3">
+        <span className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--text-muted)' }}>Datos del Socio</span>
+        <button onClick={onClose} style={{ color: 'var(--text-muted)' }} className="hover:text-red-400 transition-colors">
           <XIcon size={14} />
         </button>
       </div>
-      {member.email && (
-        <div className="flex items-center gap-2 group">
-          <Mail size={13} className="text-zinc-500 shrink-0" />
-          <span className="text-sm text-zinc-300 truncate flex-1">{member.email}</span>
-          <button onClick={() => copyToClipboard(member.email, 'Email')} 
-            className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-[var(--gym-primary)] transition-all" title="Copiar">
-            <Copy size={13} />
-          </button>
+      <div className="space-y-2 text-sm">
+        <div className="flex items-center gap-2">
+          <span style={{ color: 'var(--text-muted)' }} className="w-20 shrink-0">Codigo:</span>
+          <span className="font-mono font-bold" style={{ color: 'var(--gym-primary)' }}>{member.code}</span>
+          <button onClick={() => copyToClipboard(member.code, 'Codigo')} style={{ color: 'var(--text-muted)' }} className="hover:text-white"><Copy size={12} /></button>
         </div>
-      )}
-      {member.phone && (
-        <div className="flex items-center gap-2 group mt-1.5">
-          <Phone size={13} className="text-zinc-500 shrink-0" />
-          <span className="text-sm text-zinc-300 truncate flex-1">{member.phone}</span>
-          <button onClick={() => copyToClipboard(member.phone, 'Teléfono')} 
-            className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-[var(--gym-primary)] transition-all" title="Copiar">
-            <Copy size={13} />
-          </button>
-        </div>
-      )}
-      {!member.email && !member.phone && (
-        <p className="text-xs text-zinc-500 italic">Sin datos de contacto</p>
-      )}
+        {member.email && (
+          <div className="flex items-center gap-2">
+            <span style={{ color: 'var(--text-muted)' }} className="w-20 shrink-0">Email:</span>
+            <span className="truncate">{member.email}</span>
+            <button onClick={() => copyToClipboard(member.email, 'Email')} style={{ color: 'var(--text-muted)' }} className="hover:text-white"><Copy size={12} /></button>
+          </div>
+        )}
+        {member.phone && (
+          <div className="flex items-center gap-2">
+            <span style={{ color: 'var(--text-muted)' }} className="w-20 shrink-0">Telefono:</span>
+            <span>{member.phone}</span>
+            <button onClick={() => copyToClipboard(member.phone, 'Telefono')} style={{ color: 'var(--text-muted)' }} className="hover:text-white"><Copy size={12} /></button>
+          </div>
+        )}
+        {member.membership_plan_name && (
+          <div className="flex items-center gap-2">
+            <span style={{ color: 'var(--text-muted)' }} className="w-20 shrink-0">Plan:</span>
+            <span>{member.membership_plan_name}</span>
+          </div>
+        )}
+        {member.membership_end_date && (
+          <div className="flex items-center gap-2">
+            <span style={{ color: 'var(--text-muted)' }} className="w-20 shrink-0">Vence:</span>
+            <span>{new Date(member.membership_end_date).toLocaleDateString('es')}</span>
+          </div>
+        )}
+        {member.created_at && (
+          <div className="flex items-center gap-2">
+            <span style={{ color: 'var(--text-muted)' }} className="w-20 shrink-0">Registro:</span>
+            <span>{new Date(member.created_at).toLocaleDateString('es')}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -78,6 +95,10 @@ export default function AdminMembers() {
   const [editData, setEditData] = useState({ name: '', email: '', phone: '', can_bring_guests: false, max_guests_per_month: 2, guest_valid_days: 1 });
   const [expandedContact, setExpandedContact] = useState(null);
   const [showDevicesModal, setShowDevicesModal] = useState(false);
+  const [showEmailsModal, setShowEmailsModal] = useState(false);
+  const [memberEmails, setMemberEmails] = useState([]);
+  const [resendingId, setResendingId] = useState(null);
+  const [selectedGymFilter, setSelectedGymFilter] = useState('all');
   const [devicesMember, setDevicesMember] = useState(null);
   const [memberDevices, setMemberDevices] = useState([]);
   const [selectedPlan, setSelectedPlan] = useState('');
@@ -239,6 +260,27 @@ export default function AdminMembers() {
     } catch { setMemberDevices([]); }
   };
 
+  const handleOpenEmails = async (member) => {
+    setSelectedMember(member);
+    setShowEmailsModal(true);
+    try {
+      const res = await getMemberEmails(member.id);
+      setMemberEmails(res.data);
+    } catch { setMemberEmails([]); }
+  };
+
+  const handleResendEmail = async (emailId) => {
+    setResendingId(emailId);
+    try {
+      await resendEmail(emailId);
+      toast.success('Email reenviado exitosamente');
+      const res = await getMemberEmails(selectedMember.id);
+      setMemberEmails(res.data);
+    } catch (e) {
+      toast.error(e.response?.data?.detail || 'Error al reenviar');
+    } finally { setResendingId(null); }
+  };
+
   const handleDeactivateDevice = async (deviceId) => {
     try {
       await deactivateDevice(deviceId);
@@ -258,11 +300,18 @@ export default function AdminMembers() {
     } catch { toast.error('Error'); }
   };
 
-  const filteredMembers = members.filter(m =>
-    m.name.toLowerCase().includes(search.toLowerCase()) ||
-    m.email.toLowerCase().includes(search.toLowerCase()) ||
-    m.code.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredMembers = members.filter(m => {
+    const matchSearch = (m.name || '').toLowerCase().includes(search.toLowerCase()) ||
+      (m.email || '').toLowerCase().includes(search.toLowerCase()) ||
+      m.code.toLowerCase().includes(search.toLowerCase());
+    const matchGym = selectedGymFilter === 'all' || m.gym_id === selectedGymFilter;
+    return matchSearch && matchGym;
+  });
+
+  const getGymName = (gymId) => {
+    const gym = gyms.find(g => g.id === gymId);
+    return gym?.name || '';
+  };
 
   const getStatusBadge = (status) => {
     const badges = { active: 'badge-success', pending: 'badge-warning', blocked: 'badge-danger', suspended: 'bg-orange-500/20 text-orange-400 border border-orange-500/30' };
@@ -275,9 +324,16 @@ export default function AdminMembers() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Socios</h1>
-          <p className="text-zinc-400 text-sm">{members.length} socios registrados</p>
+          <p style={{ color: 'var(--text-secondary)' }} className="text-sm">{filteredMembers.length} socios registrados</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {isSuperAdmin && gyms.length > 0 && (
+            <select value={selectedGymFilter} onChange={e => setSelectedGymFilter(e.target.value)}
+              className="input-gym text-sm h-10 min-w-[180px]" data-testid="gym-filter-select">
+              <option value="all">Todos los gimnasios</option>
+              {gyms.map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
+            </select>
+          )}
           <Button variant="outline" className="border-zinc-700 text-zinc-300" onClick={handleCheckExpired}
             data-testid="check-expired-btn" title="Suspender socios con membresía vencida">
             <RefreshCw size={16} className="mr-2" /> Verificar Vencidos
@@ -363,7 +419,8 @@ export default function AdminMembers() {
           <thead>
             <tr className="border-b border-zinc-800">
               <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Socio</th>
-              <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Código</th>
+              <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Codigo</th>
+              {isSuperAdmin && <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Gimnasio</th>}
               <th className="text-center p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Estado</th>
               <th className="text-center p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider w-[100px]">Contacto</th>
               <th className="text-right p-3 w-[50px]"></th>
@@ -392,10 +449,15 @@ export default function AdminMembers() {
                   </td>
                   <td className="p-3">
                     <div className="flex items-center gap-1.5 flex-wrap">
-                      <code className="text-xs bg-zinc-800 px-2 py-0.5 rounded font-mono text-zinc-300">{member.code}</code>
+                      <code className="text-xs px-2 py-0.5 rounded font-mono" style={{ background: 'var(--bg-tertiary)', color: 'var(--gym-primary)' }}>{member.code}</code>
                       {member.qr_mode === 'static' && <span className="text-[10px] bg-cyan-900/30 text-cyan-400 px-1.5 py-0.5 rounded leading-none">QR Fijo</span>}
                     </div>
                   </td>
+                  {isSuperAdmin && (
+                    <td className="p-3">
+                      <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{getGymName(member.gym_id)}</span>
+                    </td>
+                  )}
                   <td className="p-3 text-center">{getStatusBadge(member.status)}</td>
                   <td className="p-3 text-center relative">
                     <button
@@ -484,6 +546,9 @@ export default function AdminMembers() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenDevices(member)} className="cursor-pointer text-zinc-400" data-testid={`member-devices-${member.code}`}>
                           <Smartphone size={16} className="mr-2" /> Dispositivos
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenEmails(member)} className="cursor-pointer text-blue-400" data-testid={`member-emails-${member.code}`}>
+                          <Mail size={16} className="mr-2" /> Emails
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -722,6 +787,47 @@ export default function AdminMembers() {
                 ))}
               </>
             )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Emails Modal */}
+      <Dialog open={showEmailsModal} onOpenChange={setShowEmailsModal}>
+        <DialogContent style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }} className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mail size={18} /> Emails de {selectedMember?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mt-2 space-y-3 max-h-[400px] overflow-y-auto" data-testid="emails-list">
+            {memberEmails.length === 0 ? (
+              <p className="text-center py-6" style={{ color: 'var(--text-muted)' }}>No hay emails enviados a este socio</p>
+            ) : memberEmails.map(email => (
+              <div key={email.id} className="p-3 rounded-lg flex items-center justify-between" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{email.subject}</p>
+                  <div className="flex items-center gap-2 text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                    <span>{new Date(email.sent_at).toLocaleString('es')}</span>
+                    <span className={`px-1.5 py-0.5 rounded ${email.status === 'sent' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-red-900/30 text-red-400'}`}>
+                      {email.status === 'sent' ? 'Enviado' : 'Fallido'}
+                    </span>
+                    <span className="px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>{email.email_type}</span>
+                  </div>
+                </div>
+                {email.status === 'sent' && email.email_type === 'welcome' && (
+                  <button
+                    onClick={() => handleResendEmail(email.id)}
+                    disabled={resendingId === email.id}
+                    className="shrink-0 ml-2 px-3 py-1.5 text-xs rounded-lg transition-colors flex items-center gap-1"
+                    style={{ background: 'var(--bg-secondary)', color: 'var(--gym-primary)', border: '1px solid var(--border-secondary)' }}
+                    data-testid={`resend-email-${email.id}`}
+                  >
+                    {resendingId === email.id ? <Loader2 size={12} className="animate-spin" /> : <Send size={12} />}
+                    Reenviar
+                  </button>
+                )}
+              </div>
+            ))}
           </div>
         </DialogContent>
       </Dialog>

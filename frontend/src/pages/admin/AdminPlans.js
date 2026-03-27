@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getPlans, createPlan, deletePlan, getGyms } from '../../lib/api';
+import { getPlans, createPlan, deletePlan, updatePlan, getGyms } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, Trash2, Calendar, DollarSign, Clock, Building2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, Building2, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminPlans() {
@@ -19,6 +19,7 @@ export default function AdminPlans() {
   });
   const [gyms, setGyms] = useState([]);
   const [collapsedGyms, setCollapsedGyms] = useState({});
+  const [editPlan, setEditPlan] = useState(null);
 
   useEffect(() => {
     fetchPlans();
@@ -54,14 +55,33 @@ export default function AdminPlans() {
     const gymId = isSuperAdmin ? newPlan.gym_id : admin?.gym_id;
     if (!gymId) { toast.error('Selecciona un gimnasio'); return; }
     try {
-      await createPlan({ ...newPlan, gym_id: gymId, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days) });
-      toast.success('Plan creado exitosamente');
+      if (editPlan) {
+        await updatePlan(editPlan.id, { ...newPlan, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days) });
+        toast.success('Plan actualizado');
+      } else {
+        await createPlan({ ...newPlan, gym_id: gymId, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days) });
+        toast.success('Plan creado exitosamente');
+      }
       setShowCreateModal(false);
+      setEditPlan(null);
       setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '' });
       fetchPlans();
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Error al crear plan');
+      toast.error(error.response?.data?.detail || 'Error');
     }
+  };
+
+  const openEditPlan = (plan) => {
+    setEditPlan(plan);
+    setNewPlan({
+      name: plan.name || '',
+      description: plan.description || '',
+      price: plan.price?.toString() || '',
+      duration_days: plan.duration_days?.toString() || '',
+      access_type: plan.access_type || 'unlimited',
+      gym_id: plan.gym_id || ''
+    });
+    setShowCreateModal(true);
   };
 
   const handleDeletePlan = async (planId) => {
@@ -102,15 +122,15 @@ export default function AdminPlans() {
           <h1 className="text-2xl font-black tracking-tight">Planes de Membresia</h1>
           <p style={{ color: 'var(--text-secondary)' }} className="text-sm">{plans.length} planes en {Object.keys(plansByGym).length} gimnasio(s)</p>
         </div>
-        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+        <Dialog open={showCreateModal} onOpenChange={(v) => { setShowCreateModal(v); if (!v) setEditPlan(null); }}>
           <DialogTrigger asChild>
-            <Button className="btn-gym-primary" data-testid="create-plan-btn">
+            <Button className="btn-gym-primary" data-testid="create-plan-btn" onClick={() => { setEditPlan(null); setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '' }); }}>
               <Plus size={20} className="mr-2" /> Nuevo Plan
             </Button>
           </DialogTrigger>
           <DialogContent style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }}>
             <DialogHeader>
-              <DialogTitle>Crear Nuevo Plan</DialogTitle>
+              <DialogTitle>{editPlan ? 'Editar Plan' : 'Crear Nuevo Plan'}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
               {isSuperAdmin && (
@@ -156,7 +176,7 @@ export default function AdminPlans() {
                 ))}
               </div>
               <Button onClick={handleCreatePlan} className="w-full btn-gym-primary" data-testid="save-plan-btn">
-                <Plus size={20} className="mr-2" /> Crear Plan
+                {editPlan ? <><Pencil size={20} className="mr-2" /> Guardar Cambios</> : <><Plus size={20} className="mr-2" /> Crear Plan</>}
               </Button>
             </div>
           </DialogContent>
@@ -188,9 +208,14 @@ export default function AdminPlans() {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {gymPlans.map((plan) => (
                     <div key={plan.id} className="relative group p-4 rounded-xl border transition-colors" style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border-primary)' }}>
-                      <button onClick={() => handleDeletePlan(plan.id)} className="absolute top-3 right-3 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500" style={{ background: 'var(--bg-secondary)' }} data-testid={`delete-plan-${plan.id}`}>
-                        <Trash2 size={14} />
-                      </button>
+                      <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => openEditPlan(plan)} className="p-1.5 rounded-lg hover:text-blue-400" style={{ background: 'var(--bg-secondary)' }} data-testid={`edit-plan-${plan.id}`}>
+                          <Pencil size={14} />
+                        </button>
+                        <button onClick={() => handleDeletePlan(plan.id)} className="p-1.5 rounded-lg hover:text-red-500" style={{ background: 'var(--bg-secondary)' }} data-testid={`delete-plan-${plan.id}`}>
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
                       <h3 className="font-bold mb-2">{plan.name}</h3>
                       <div className="flex items-baseline gap-1 mb-3">
                         <span className="text-3xl font-black" style={{ color: 'var(--gym-primary)' }}>{formatCurrency(plan.price)}</span>
@@ -211,9 +236,14 @@ export default function AdminPlans() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {plans.map((plan) => (
             <div key={plan.id} className="stat-card relative group">
-              <button onClick={() => handleDeletePlan(plan.id)} className="absolute top-4 right-4 p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:text-red-500" style={{ background: 'var(--bg-tertiary)' }} data-testid={`delete-plan-${plan.id}`}>
-                <Trash2 size={16} />
-              </button>
+              <div className="absolute top-4 right-4 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={() => openEditPlan(plan)} className="p-2 rounded-lg hover:text-blue-400" style={{ background: 'var(--bg-tertiary)' }} data-testid={`edit-plan-${plan.id}`}>
+                  <Pencil size={16} />
+                </button>
+                <button onClick={() => handleDeletePlan(plan.id)} className="p-2 rounded-lg hover:text-red-500" style={{ background: 'var(--bg-tertiary)' }} data-testid={`delete-plan-${plan.id}`}>
+                  <Trash2 size={16} />
+                </button>
+              </div>
               <h3 className="font-bold text-lg mb-2">{plan.name}</h3>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-4xl font-black" style={{ color: 'var(--gym-primary)' }}>{formatCurrency(plan.price)}</span>

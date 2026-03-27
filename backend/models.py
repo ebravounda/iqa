@@ -117,6 +117,9 @@ class ClassCreate(BaseModel):
     recurring: bool = False
     days_of_week: Optional[List[int]] = None
     start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     single_date: Optional[str] = None
     single_start_time: Optional[str] = None
 
@@ -126,6 +129,13 @@ class ClassUpdate(BaseModel):
     trainer_id: Optional[str] = None
     max_capacity: Optional[int] = None
     duration_minutes: Optional[int] = None
+    class_type: Optional[str] = None
+    recurring: Optional[bool] = None
+    days_of_week: Optional[List[int]] = None
+    start_time: Optional[str] = None
+    end_time: Optional[str] = None
+    start_date: Optional[str] = None
+    end_date: Optional[str] = None
     active: Optional[bool] = None
 
 class ClassScheduleCreate(BaseModel):

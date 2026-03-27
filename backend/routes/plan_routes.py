@@ -41,6 +41,17 @@ async def delete_plan(plan_id: str, admin: dict = Depends(get_current_admin)):
     await db.plans.update_one({"id": plan_id}, {"$set": {"active": False}})
     return {"message": "Plan deleted"}
 
+@router.put("/plans/{plan_id}")
+async def update_plan(plan_id: str, plan_update: dict, admin: dict = Depends(get_current_admin)):
+    allowed_fields = {"name", "description", "price", "duration_days", "access_type"}
+    update_data = {k: v for k, v in plan_update.items() if k in allowed_fields and v is not None}
+    if not update_data:
+        raise HTTPException(status_code=400, detail="No data to update")
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    await db.plans.update_one({"id": plan_id}, {"$set": update_data})
+    plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
+    return plan
+
 @router.post("/memberships")
 async def create_membership(membership: MembershipCreate, admin: dict = Depends(get_current_admin)):
     plan = await db.plans.find_one({"id": membership.plan_id})

@@ -229,13 +229,22 @@ async def update_class(class_id: str, class_update: ClassUpdate, admin: dict = D
     update_data = {k: v for k, v in class_update.model_dump().items() if v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.classes.update_one({"id": class_id}, {"$set": update_data})
-    return {"message": "Class updated"}
+    # Regenerate schedules if recurring settings changed
+    if any(k in update_data for k in ["days_of_week", "start_time", "end_time", "start_date", "end_date", "recurring"]):
+        cls = await db.classes.find_one({"id": class_id}, {"_id": 0})
+        if cls and cls.get("recurring") and cls.get("days_of_week") and cls.get("start_time"):
+            await db.class_schedules.delete_many({"class_id": class_id, "current_bookings": 0})
+            await generate_recurring_schedules(cls, weeks=4)
+    updated = await db.classes.find_one({"id": class_id}, {"_id": 0})
+    return updated
 
 @router.delete("/classes/{class_id}")
 async def delete_class(class_id: str, admin: dict = Depends(get_current_admin)):
     check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
     await db.classes.update_one({"id": class_id}, {"$set": {"active": False}})
+    await db.class_schedules.delete_many({"class_id": class_id})
     return {"message": "Class deleted"}
 
 # ==================== SCHEDULE ROUTES ====================
