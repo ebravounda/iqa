@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { 
   Plus, Building2, Search, MoreVertical, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle, LogIn, Users, Mail, Shield
+  AlertTriangle, LogIn, Users, Mail, Shield, CreditCard
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -92,7 +92,19 @@ export default function AdminGyms() {
   const handleSuspend = async (gym) => {
     try {
       const res = await axios.put(`${API}/gyms/${gym.id}/suspend`);
-      toast.success(res.data.status === 'suspended' ? 'Gimnasio suspendido' : 'Gimnasio reactivado');
+      toast.success(res.data.status === 'active' ? 'Gimnasio reactivado' : 'Gimnasio suspendido');
+      fetchGyms();
+    } catch (error) {
+      toast.error('Error al cambiar estado');
+    }
+  };
+
+  const handlePaymentSuspend = async (gym) => {
+    const action = gym.status === 'payment_suspended' ? 'reactivar' : 'suspender por falta de pago';
+    if (!window.confirm(`¿${gym.status === 'payment_suspended' ? 'Reactivar' : 'Suspender por falta de pago'} "${gym.name}"? ${gym.status !== 'payment_suspended' ? 'El gimnasio y todos sus socios perderán acceso al sistema.' : ''}`)) return;
+    try {
+      const res = await axios.put(`${API}/gyms/${gym.id}/payment-suspend`);
+      toast.success(res.data.message);
       fetchGyms();
     } catch (error) {
       toast.error('Error al cambiar estado');
@@ -255,11 +267,18 @@ export default function AdminGyms() {
         ) : (
           filteredGyms.map((gym) => (
             <div key={gym.id} className={`stat-card transition-colors relative ${
-              gym.status === 'suspended' ? 'border-red-500/30 opacity-70' : 'hover:border-zinc-600'
+              gym.status === 'suspended' ? 'border-red-500/30 opacity-70' 
+              : gym.status === 'payment_suspended' ? 'border-orange-500/30 opacity-80' 
+              : 'hover:border-zinc-600'
             }`}>
               {gym.status === 'suspended' && (
                 <div className="absolute top-3 right-14 px-2 py-0.5 bg-red-500/20 border border-red-500/40 rounded text-red-400 text-xs font-bold" data-testid={`gym-suspended-badge-${gym.id}`}>
                   SUSPENDIDO
+                </div>
+              )}
+              {gym.status === 'payment_suspended' && (
+                <div className="absolute top-3 right-14 px-2 py-0.5 bg-orange-500/20 border border-orange-500/40 rounded text-orange-400 text-xs font-bold" data-testid={`gym-payment-suspended-badge-${gym.id}`}>
+                  IMPAGO
                 </div>
               )}
               
@@ -290,6 +309,13 @@ export default function AdminGyms() {
                         <><CheckCircle size={16} className="mr-2 text-green-500" /> Reactivar</>
                       ) : (
                         <><Ban size={16} className="mr-2 text-yellow-500" /> Suspender</>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handlePaymentSuspend(gym)} className="cursor-pointer" data-testid={`gym-payment-suspend-${gym.id}`}>
+                      {gym.status === 'payment_suspended' ? (
+                        <><CheckCircle size={16} className="mr-2 text-green-500" /> Reactivar (Pago recibido)</>
+                      ) : (
+                        <><CreditCard size={16} className="mr-2 text-orange-500" /> Suspender por Impago</>
                       )}
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleDeleteConfirm(gym)} className="cursor-pointer text-red-500" data-testid={`gym-delete-${gym.id}`}>

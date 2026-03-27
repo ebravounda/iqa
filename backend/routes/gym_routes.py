@@ -112,9 +112,21 @@ async def suspend_gym(gym_id: str, admin: dict = Depends(get_current_admin)):
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
         raise HTTPException(status_code=404, detail="Gym not found")
-    new_status = "active" if gym.get("status") == "suspended" else "suspended"
+    new_status = "active" if gym.get("status") in ("suspended", "payment_suspended") else "suspended"
     await db.gyms.update_one({"id": gym_id}, {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}})
     return {"message": f"Gym {'reactivated' if new_status == 'active' else 'suspended'}", "status": new_status}
+
+@router.put("/gyms/{gym_id}/payment-suspend")
+async def payment_suspend_gym(gym_id: str, admin: dict = Depends(get_current_admin)):
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Only super admin can suspend gyms")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gym not found")
+    new_status = "active" if gym.get("status") == "payment_suspended" else "payment_suspended"
+    await db.gyms.update_one({"id": gym_id}, {"$set": {"status": new_status, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    label = "reactivado" if new_status == "active" else "suspendido por falta de pago"
+    return {"message": f"Gimnasio {label}", "status": new_status}
 
 @router.delete("/gyms/{gym_id}")
 async def delete_gym(gym_id: str, admin: dict = Depends(get_current_admin)):

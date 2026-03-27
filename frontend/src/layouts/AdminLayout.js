@@ -6,7 +6,7 @@ import {
   Calendar, Clock, Bell, Shield, QrCode, Menu, X, ChevronLeft,
   LogOut, Smartphone, UserCheck, DollarSign, Mail, ShoppingCart,
   Layers, Code, Megaphone, BarChart3, ClipboardList, Database, Monitor, Trophy, Dumbbell,
-  Sun, Moon
+  Sun, Moon, AlertOctagon
 } from 'lucide-react';
 
 const getNavItems = (role, isImpersonating, permissions) => {
@@ -80,6 +80,43 @@ export const AdminLayout = ({ children }) => {
     exitImpersonation();
     navigate('/admin/gyms');
   };
+
+  // Payment suspended - block all modules
+  if (admin?.gym_status === 'payment_suspended' && admin?.role !== 'super_admin' && !isImpersonating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>
+        <div className="max-w-md w-full text-center space-y-6" data-testid="payment-suspended-screen">
+          <div className="w-24 h-24 rounded-full bg-orange-500/10 border-2 border-orange-500/40 flex items-center justify-center mx-auto">
+            <AlertOctagon size={48} className="text-orange-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black mb-2">Cuenta Suspendida</h1>
+            <p className="text-lg font-semibold text-orange-400">por falta de pago</p>
+          </div>
+          <div className="p-4 rounded-xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)' }}>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Tu cuenta ha sido suspendida temporalmente debido a un pago pendiente. 
+              Todos los modulos y accesos estan bloqueados hasta que se regularice la situacion.
+            </p>
+          </div>
+          <div className="p-4 rounded-xl" style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-secondary)' }}>
+            <p className="text-sm font-medium mb-1">Contacta a Soporte</p>
+            <p className="text-sm" style={{ color: 'var(--text-muted)' }}>
+              Escribe a <strong>soporte@ingresoqr.com</strong> o comunicate con tu representante para resolver esta situacion.
+            </p>
+          </div>
+          <button
+            onClick={handleLogout}
+            className="px-6 py-3 rounded-xl text-sm font-semibold transition-colors"
+            style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', border: '1px solid var(--border-secondary)' }}
+            data-testid="suspended-logout-btn"
+          >
+            <LogOut size={16} className="inline mr-2" /> Cerrar Sesion
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}>

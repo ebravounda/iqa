@@ -43,9 +43,16 @@ async def login_admin(login: AdminLogin, request: Request):
         raise HTTPException(status_code=401, detail=detail)
     if admin.get("active") is False:
         raise HTTPException(status_code=403, detail="Cuenta desactivada. Contacta al administrador.")
+    # Check gym payment suspension
+    gym_status = None
+    if admin.get("gym_id"):
+        gym = await db.gyms.find_one({"id": admin["gym_id"]}, {"_id": 0})
+        if gym:
+            gym_status = gym.get("status")
     await record_successful_login(ip, login.email, "admin")
     token = create_jwt_token({"sub": admin["id"], "role": admin["role"], "gym_id": admin.get("gym_id")})
     admin_data = {k: v for k, v in admin.items() if k not in ["_id", "password"]}
+    admin_data["gym_status"] = gym_status
     return {"admin": admin_data, "token": token}
 
 @router.post("/auth/admin/impersonate/{gym_id}")
@@ -87,6 +94,11 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
     if member.get("status") == "blocked":
         raise HTTPException(status_code=403, detail="Cuenta bloqueada")
     
+    # Check gym payment suspension BEFORE device check
+    gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0})
+    if gym and gym.get("status") == "payment_suspended":
+        raise HTTPException(status_code=403, detail="Cuenta Bloqueada")
+    
     # Device registration
     if device_fingerprint:
         from routes.device_member_routes import register_member_device
@@ -95,7 +107,6 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
         if not success:
             raise HTTPException(status_code=403, detail=error_msg)
     
-    gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0})
     membership = await db.memberships.find_one(
         {"member_id": member["id"], "status": "active"}, {"_id": 0}
     )
@@ -112,6 +123,8 @@ async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(secu
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
     gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0})
+    if gym and gym.get("status") == "payment_suspended":
+        raise HTTPException(status_code=403, detail="Cuenta Bloqueada")
     membership = await db.memberships.find_one(
         {"member_id": member["id"], "status": "active"}, {"_id": 0}
     )

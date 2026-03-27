@@ -103,6 +103,8 @@ async def validate_access(validation: AccessValidation):
     gym = await db.gyms.find_one({"api_token": validation.gym_token}, {"_id": 0})
     if not gym:
         return {"valid": False, "reason": "Invalid gym token"}
+    if gym.get("status") == "payment_suspended":
+        return {"valid": False, "reason": "Gimnasio suspendido por falta de pago"}
     max_age = max(gym.get("qr_refresh_seconds", 10) + 5, 300)
     result = validate_qr_data(validation.qr_code, max_age)
     if not result["valid"]:

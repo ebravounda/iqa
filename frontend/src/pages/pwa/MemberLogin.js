@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
-import { Loader2, QrCode } from 'lucide-react';
+import { Loader2, QrCode, AlertOctagon } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function MemberLogin() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const { loginMember } = useAuth();
   const navigate = useNavigate();
 
@@ -25,7 +26,12 @@ export default function MemberLogin() {
       toast.success('¡Bienvenido!');
       navigate('/app');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Código no encontrado');
+      const detail = error.response?.data?.detail || '';
+      if (detail === 'Cuenta Bloqueada') {
+        setBlocked(true);
+      } else {
+        toast.error(detail || 'Código no encontrado');
+      }
     } finally {
       setLoading(false);
     }
@@ -34,7 +40,30 @@ export default function MemberLogin() {
   const handleCodeChange = (e) => {
     const value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
     setCode(value);
+    if (blocked) setBlocked(false);
   };
+
+  if (blocked) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-6 noise-overlay" data-testid="member-blocked-screen">
+        <div className="relative z-10 w-full max-w-sm text-center space-y-6">
+          <div className="w-24 h-24 rounded-full bg-red-500/10 border-2 border-red-500/40 flex items-center justify-center mx-auto">
+            <AlertOctagon size={48} className="text-red-500" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-black mb-2">Cuenta Bloqueada</h1>
+            <p className="text-zinc-400 text-sm">El acceso a tu gimnasio ha sido temporalmente suspendido.</p>
+          </div>
+          <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-800">
+            <p className="text-zinc-400 text-sm">Comunicate con la administracion de tu gimnasio para mas informacion.</p>
+          </div>
+          <button onClick={() => setBlocked(false)} className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors">
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-6 noise-overlay">
