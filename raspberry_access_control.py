@@ -218,62 +218,80 @@ class GymAccessClient:
 
 def find_scanners():
     scanners = []
-    for path in evdev.list_devices():
+    for path in sorted(evdev.list_devices()):
         dev = evdev.InputDevice(path)
-        if 'MEGAHUNT' in dev.name.upper() or 'HID' in dev.name.upper():
-            if 'Keyboard' in dev.name:
-                scanners.append(dev)
-                logger.info(f"Lector encontrado: {dev.path} - {dev.name}")
+        name_upper = dev.name.upper()
+        if 'MEGAHUNT' in name_upper or ('HID' in name_upper and 'Keyboard' in dev.name):
+            scanners.append(dev)
+            logger.info(f"Lector encontrado: {dev.path} - {dev.name}")
+    if len(scanners) < 2:
+        # Segundo intento: buscar cualquier dispositivo HID que no sea HDMI
+        for path in sorted(evdev.list_devices()):
+            dev = evdev.InputDevice(path)
+            if dev not in scanners and 'hdmi' not in dev.name.lower() and hasattr(dev, 'capabilities'):
+                caps = dev.capabilities(verbose=True)
+                has_keys = any('EV_KEY' in str(k) for k in caps.keys())
+                if has_keys and 'Keyboard' in dev.name:
+                    scanners.append(dev)
+                    logger.info(f"Lector adicional encontrado: {dev.path} - {dev.name}")
     return scanners
 
 
 def read_scanner(device, direccion, gpio, client):
-    logger.info(f"Escuchando {direccion}: {device.path}")
+    logger.info(f"[{direccion.upper()}] Escuchando en: {device.path} ({device.name})")
     buffer = ""
     shift_pressed = False
 
     try:
         device.grab()
-    except:
-        logger.warning(f"No se pudo tomar control exclusivo de {device.path}")
+        logger.info(f"[{direccion.upper()}] Control exclusivo OK: {device.path}")
+    except Exception as e:
+        logger.warning(f"[{direccion.upper()}] No se pudo tomar control exclusivo de {device.path}: {e}")
 
-    for event in device.read_loop():
-        if event.type != ecodes.EV_KEY:
-            continue
+    try:
+        for event in device.read_loop():
+            if event.type != ecodes.EV_KEY:
+                continue
 
-        key_event = evdev.categorize(event)
+            key_event = evdev.categorize(event)
 
-        if key_event.keycode in ('KEY_LEFTSHIFT', 'KEY_RIGHTSHIFT'):
-            shift_pressed = (key_event.keystate == 1)
-            continue
+            if key_event.keycode in ('KEY_LEFTSHIFT', 'KEY_RIGHTSHIFT'):
+                shift_pressed = (key_event.keystate == 1)
+                continue
 
-        if key_event.keystate != 1:
-            continue
+            if key_event.keystate != 1:
+                continue
 
-        if key_event.scancode == ecodes.KEY_ENTER:
-            if buffer:
-                code = buffer.strip()
-                buffer = ""
-                logger.info(f"[{direccion.upper()}] QR: {code[:20]}...")
+            if key_event.scancode == ecodes.KEY_ENTER:
+                if buffer:
+                    code = buffer.strip()
+                    buffer = ""
+                    logger.info(f"[{direccion.upper()}] QR leido: {code[:20]}...")
 
-                resultado = client.validar_qr(code, direccion)
-                if resultado.get('valid'):
-                    nombre = resultado.get('member_name', 'Socio')
-                    logger.info(f"ACCESO PERMITIDO: {nombre} ({direccion})")
-                    print(f"\nBienvenido, {nombre}! [{direccion.upper()}]\n")
-                    threading.Thread(target=gpio.abrir_torno, args=(direccion,)).start()
-                else:
-                    razon = resultado.get('reason', 'Desconocido')
-                    logger.warning(f"ACCESO DENEGADO: {razon} ({direccion})")
-                    print(f"\nAcceso denegado: {razon} [{direccion.upper()}]\n")
-        else:
-            if shift_pressed and key_event.scancode in SHIFT_KEYS:
-                buffer += SHIFT_KEYS[key_event.scancode]
-            elif key_event.scancode in KEYS:
-                char = KEYS[key_event.scancode]
-                if shift_pressed and char.isalpha():
-                    char = char.upper()
-                buffer += char
+                    resultado = client.validar_qr(code, direccion)
+                    if resultado.get('valid'):
+                        nombre = resultado.get('member_name', 'Socio')
+                        logger.info(f"[{direccion.upper()}] ACCESO PERMITIDO: {nombre}")
+                        print(f"\nBienvenido, {nombre}! [{direccion.upper()}]\n")
+                        threading.Thread(target=gpio.abrir_torno, args=(direccion,)).start()
+                    else:
+                        razon = resultado.get('reason', 'Desconocido')
+                        logger.warning(f"[{direccion.upper()}] ACCESO DENEGADO: {razon}")
+                        print(f"\nAcceso denegado: {razon} [{direccion.upper()}]\n")
+            else:
+                if shift_pressed and key_event.scancode in SHIFT_KEYS:
+                    buffer += SHIFT_KEYS[key_event.scancode]
+                elif key_event.scancode in KEYS:
+                    char = KEYS[key_event.scancode]
+                    if shift_pressed and char.isalpha():
+                        char = char.upper()
+                    buffer += char
+    except OSError as e:
+        logger.error(f"[{direccion.upper()}] Lector desconectado o error: {e}")
+        logger.error(f"[{direccion.upper()}] Hilo terminado para {device.path}")
+    except Exception as e:
+        logger.error(f"[{direccion.upper()}] Error inesperado: {e}")
+        logger.error(f"[{direccion.upper()}] Hilo terminado para {device.path}")
 
 
 def heartbeat_loop(client):
@@ -300,13 +318,18 @@ def main():
         logger.error("No se encontraron lectores QR USB")
         sys.exit(1)
 
-    print("\n" + "=" * 40)
-    print("   INGRESOQR - SISTEMA DE ACCESO v2.0")
+    print("\n" + "=" * 50)
+    print("   INGRESOQR - SISTEMA DE ACCESO v2.1")
     print(f"   {len(scanners)} lector(es) detectados")
     print(f"   Servidor: {SERVER_URL}")
     print(f"   Device ID: {DEVICE_ID}")
-    print("   Escanea tu codigo QR")
-    print("=" * 40 + "\n")
+    print("-" * 50)
+    for i, s in enumerate(scanners):
+        rol = "ENTRADA" if i == 0 else "SALIDA"
+        print(f"   {rol}: {s.path} ({s.name})")
+    print("-" * 50)
+    print("   Escanea tu codigo QR para entrar o salir")
+    print("=" * 50 + "\n")
 
     # Heartbeat: reporta estado cada 60 segundos
     threading.Thread(target=heartbeat_loop, args=(client,), daemon=True).start()
@@ -314,17 +337,26 @@ def main():
 
     threads = []
     if len(scanners) >= 1:
-        t1 = threading.Thread(target=read_scanner, args=(scanners[0], 'entrada', gpio, client), daemon=True)
+        t1 = threading.Thread(target=read_scanner, args=(scanners[0], 'entrada', gpio, client))
+        t1.daemon = True
         t1.start()
         threads.append(t1)
+        logger.info(f"Hilo ENTRADA iniciado: {scanners[0].path}")
     if len(scanners) >= 2:
-        t2 = threading.Thread(target=read_scanner, args=(scanners[1], 'salida', gpio, client), daemon=True)
+        t2 = threading.Thread(target=read_scanner, args=(scanners[1], 'salida', gpio, client))
+        t2.daemon = True
         t2.start()
         threads.append(t2)
+        logger.info(f"Hilo SALIDA iniciado: {scanners[1].path}")
 
     try:
         while True:
-            time.sleep(1)
+            # Verificar que los hilos sigan vivos
+            for i, t in enumerate(threads):
+                if not t.is_alive():
+                    rol = "ENTRADA" if i == 0 else "SALIDA"
+                    logger.error(f"ALERTA: Hilo {rol} se detuvo! Revisa el lector USB.")
+            time.sleep(5)
     except KeyboardInterrupt:
         logger.info("Cerrando sistema...")
         gpio.cleanup()
