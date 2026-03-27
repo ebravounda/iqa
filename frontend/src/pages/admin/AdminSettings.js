@@ -4,8 +4,9 @@ import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoC
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe, Smartphone } from 'lucide-react';
+import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe, Smartphone, UserCog } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 export default function AdminSettings() {
   const { admin, isSuperAdmin } = useAuth();
@@ -55,6 +56,12 @@ export default function AdminSettings() {
   const [maxDevices, setMaxDevices] = useState(2);
   const [savingDevices, setSavingDevices] = useState(false);
 
+  // Account settings (Super Admin)
+  const [accountData, setAccountData] = useState({ email: '', password: '', current_password: '' });
+  const [savingAccount, setSavingAccount] = useState(false);
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+
   useEffect(() => {
     if (admin?.gym_id) {
       fetchGym();
@@ -62,6 +69,9 @@ export default function AdminSettings() {
       fetchMpConfig();
     } else {
       setLoading(false);
+    }
+    if (admin?.email) {
+      setAccountData(prev => ({ ...prev, email: admin.email }));
     }
   }, [admin]);
 
@@ -139,6 +149,39 @@ export default function AdminSettings() {
     } catch (error) { toast.error('Error al guardar moneda'); }
   };
 
+  const handleSaveAccount = async () => {
+    if (!accountData.current_password) {
+      toast.error('Debes ingresar tu contraseña actual');
+      return;
+    }
+    if (!accountData.email && !accountData.password) {
+      toast.error('Ingresa un nuevo email o contraseña');
+      return;
+    }
+    setSavingAccount(true);
+    try {
+      const API_URL = `${process.env.REACT_APP_BACKEND_URL}/api`;
+      const res = await axios.put(`${API_URL}/auth/admin/update-profile`, {
+        email: accountData.email,
+        password: accountData.password,
+        current_password: accountData.current_password
+      });
+      toast.success(res.data.message);
+      if (res.data.token) {
+        localStorage.setItem('token', res.data.token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${res.data.token}`;
+      }
+      if (res.data.admin) {
+        localStorage.setItem('admin', JSON.stringify(res.data.admin));
+      }
+      setAccountData(prev => ({ ...prev, password: '', current_password: '' }));
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al actualizar perfil');
+    } finally {
+      setSavingAccount(false);
+    }
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
@@ -208,10 +251,76 @@ export default function AdminSettings() {
   return (
     <div className="space-y-6" data-testid="admin-settings">
       <div>
-        <h1 className="text-2xl font-black tracking-tight">Configuración del Gimnasio</h1>
-        <p className="text-zinc-400 text-sm">Personaliza tu gimnasio y configura opciones</p>
+        <h1 className="text-2xl font-black tracking-tight">Configuracion</h1>
+        <p className="text-zinc-400 text-sm">{admin?.gym_id ? 'Personaliza tu gimnasio y configura opciones' : 'Administra tu cuenta'}</p>
       </div>
 
+      {/* My Account Section */}
+      {isSuperAdmin && !admin?.gym_id && (
+        <div className="stat-card border-2 border-zinc-700/50">
+          <div className="flex items-center gap-2 mb-6">
+            <UserCog size={20} style={{ color: 'var(--gym-primary)' }} />
+            <h3 className="font-bold text-lg">Mi Cuenta (Super Admin)</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-sm text-zinc-400 mb-2 block">Email</label>
+              <Input
+                type="email"
+                value={accountData.email}
+                onChange={(e) => setAccountData({ ...accountData, email: e.target.value })}
+                className="input-dark"
+                data-testid="account-email-input"
+              />
+            </div>
+            <div>
+              <label className="text-sm text-zinc-400 mb-2 block">Nueva Contraseña <span className="text-zinc-600">(dejar vacio para no cambiar)</span></label>
+              <div className="relative">
+                <Input
+                  type={showNewPw ? 'text' : 'password'}
+                  value={accountData.password}
+                  onChange={(e) => setAccountData({ ...accountData, password: e.target.value })}
+                  placeholder="Min. 6 caracteres"
+                  className="input-dark pr-10"
+                  data-testid="account-new-password-input"
+                />
+                <button type="button" onClick={() => setShowNewPw(!showNewPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+                  {showNewPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+            <div className="md:col-span-2">
+              <label className="text-sm text-zinc-400 mb-2 block">Contraseña Actual <span className="text-red-400">*</span></label>
+              <div className="relative">
+                <Input
+                  type={showCurrentPw ? 'text' : 'password'}
+                  value={accountData.current_password}
+                  onChange={(e) => setAccountData({ ...accountData, current_password: e.target.value })}
+                  placeholder="Ingresa tu contraseña actual para confirmar"
+                  className="input-dark pr-10"
+                  data-testid="account-current-password-input"
+                />
+                <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+                  {showCurrentPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <Button onClick={handleSaveAccount} disabled={savingAccount} className="btn-gym-primary mt-6" data-testid="save-account-btn">
+            <Save size={16} className="mr-2" />
+            {savingAccount ? 'Guardando...' : 'Guardar Cambios de Cuenta'}
+          </Button>
+        </div>
+      )}
+
+      {/* Gym-specific settings only if gym_id exists */}
+      {!admin?.gym_id && !isSuperAdmin && (
+        <div className="text-center py-12">
+          <p className="text-zinc-500">No tienes un gimnasio asignado</p>
+        </div>
+      )}
+
+      {admin?.gym_id && (<>
       {/* Stripe / Payment Gateway Configuration */}
       <div className="stat-card border-2 border-zinc-700/50">
         <div className="flex items-center gap-2 mb-6">
@@ -758,6 +867,7 @@ export default function AdminSettings() {
           {saving ? 'Guardando...' : 'Guardar Cambios'}
         </Button>
       </div>
+      </>)}
     </div>
   );
 }

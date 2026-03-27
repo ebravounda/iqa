@@ -77,6 +77,8 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios. Incluye dashboard
 - Security headers HTTP (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy)
 - Mensajes de error genericos (no revelan si email existe)
 - Proteccion de ruta /admin/security solo para super_admin
+- Modificar email y contraseña del Super Admin desde Configuracion
+- Texto login cambiado a "Inicia sesion con tus credenciales de acceso"
 
 ## Credenciales
 - Super Admin: admin@gymaccess.com / admin123

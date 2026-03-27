@@ -119,3 +119,32 @@ async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(secu
     if membership:
         plan = await db.plans.find_one({"id": membership["plan_id"]}, {"_id": 0})
     return {"member": member, "gym": gym, "membership": membership, "plan": plan}
+
+
+@router.put("/auth/admin/update-profile")
+async def update_admin_profile(request: Request, admin: dict = Depends(get_current_admin)):
+    body = await request.json()
+    new_email = body.get("email", "").strip()
+    new_password = body.get("password", "").strip()
+    current_password = body.get("current_password", "").strip()
+    if not current_password:
+        raise HTTPException(status_code=400, detail="Debes ingresar tu contraseña actual")
+    stored = await db.admins.find_one({"id": admin["id"]})
+    if not stored or not verify_password(current_password, stored["password"]):
+        raise HTTPException(status_code=401, detail="Contraseña actual incorrecta")
+    updates = {}
+    if new_email and new_email != stored.get("email"):
+        existing = await db.admins.find_one({"email": new_email, "id": {"$ne": admin["id"]}})
+        if existing:
+            raise HTTPException(status_code=400, detail="Ese email ya esta en uso por otro administrador")
+        updates["email"] = new_email
+    if new_password:
+        if len(new_password) < 6:
+            raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
+        updates["password"] = hash_password(new_password)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No hay cambios para guardar")
+    await db.admins.update_one({"id": admin["id"]}, {"$set": updates})
+    updated = await db.admins.find_one({"id": admin["id"]}, {"_id": 0, "password": 0})
+    new_token = create_jwt_token({"sub": updated["id"], "role": updated["role"], "gym_id": updated.get("gym_id")})
+    return {"message": "Perfil actualizado correctamente", "admin": updated, "token": new_token}

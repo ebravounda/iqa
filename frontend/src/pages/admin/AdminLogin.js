@@ -93,7 +93,7 @@ export default function AdminLogin() {
           </form>
 
           <p className="text-center text-xs text-zinc-500 mt-6">
-            Credenciales por defecto: admin@ingresoqr.com / admin123
+            Inicia sesion con tus credenciales de acceso
           </p>
         </div>
       </div>
