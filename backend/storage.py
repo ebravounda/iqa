@@ -1,39 +1,30 @@
-import requests
 import os
 import logging
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-STORAGE_URL = "https://integrations.emergentagent.com/objstore/api/v1/storage"
-EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
-APP_NAME = "gymaccess"
-storage_key = None
+# Local storage directory
+UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", "/opt/gymaccess/uploads"))
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 def init_storage():
-    global storage_key
-    if storage_key:
-        return storage_key
-    resp = requests.post(f"{STORAGE_URL}/init", json={"emergent_key": EMERGENT_KEY}, timeout=30)
-    resp.raise_for_status()
-    storage_key = resp.json()["storage_key"]
-    logger.info("Object storage initialized")
-    return storage_key
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    return "local"
 
 def put_object(path: str, data: bytes, content_type: str) -> dict:
-    key = init_storage()
-    resp = requests.put(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key, "Content-Type": content_type},
-        data=data, timeout=120
-    )
-    resp.raise_for_status()
-    return resp.json()
+    file_path = UPLOAD_DIR / path
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_bytes(data)
+    logger.info(f"File saved locally: {path} ({len(data)} bytes)")
+    return {"path": path}
 
 def get_object(path: str) -> tuple:
-    key = init_storage()
-    resp = requests.get(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key}, timeout=60
-    )
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+    file_path = UPLOAD_DIR / path
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {path}")
+    data = file_path.read_bytes()
+    ext = file_path.suffix.lower()
+    content_types = {".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp"}
+    content_type = content_types.get(ext, "application/octet-stream")
+    return data, content_type
