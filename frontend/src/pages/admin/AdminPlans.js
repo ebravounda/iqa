@@ -6,7 +6,7 @@ import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, Trash2, Calendar, Clock, Building2, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, Building2, ChevronDown, ChevronRight, Pencil, DollarSign } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminPlans() {
