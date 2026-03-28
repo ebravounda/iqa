@@ -276,7 +276,7 @@ export default function AdminAccess() {
 
       {/* Member Stats Modal */}
       <Dialog open={showMemberModal} onOpenChange={setShowMemberModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-2xl">
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <User size={20} />

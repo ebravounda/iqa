@@ -580,14 +580,39 @@ export default function AdminSettings() {
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="text-sm text-zinc-400 mb-2 block">URL del Logo</label>
-            <div className="flex gap-3">
+            <label className="text-sm text-zinc-400 mb-2 block">Logo del Gimnasio</label>
+            <div className="flex gap-3 items-center">
               <Input
                 value={formData.logo_url}
                 onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
-                placeholder="https://..."
+                placeholder="URL del logo o sube un archivo"
                 className="input-dark flex-1"
               />
+              <label className="cursor-pointer px-3 py-2 rounded-lg text-sm font-medium transition-colors" style={{ background: 'var(--bg-tertiary)', color: 'var(--text-secondary)', border: '1px solid var(--border-primary)' }}>
+                Subir
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    try {
+                      const res = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/upload/gym-logo/${gym?.id}`, fd, {
+                        headers: { 'Content-Type': 'multipart/form-data' }
+                      });
+                      const logoUrl = res.data.logo_url.startsWith('http') ? res.data.logo_url : `${process.env.REACT_APP_BACKEND_URL}${res.data.logo_url}`;
+                      setFormData(prev => ({ ...prev, logo_url: logoUrl }));
+                      toast.success('Logo subido correctamente');
+                    } catch (err) {
+                      toast.error(err.response?.data?.detail || 'Error al subir logo');
+                    }
+                    e.target.value = '';
+                  }}
+                />
+              </label>
               {formData.logo_url && (
                 <img src={formData.logo_url} alt="Logo" className="w-10 h-10 rounded-lg object-cover" />
               )}

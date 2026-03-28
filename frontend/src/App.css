@@ -17,6 +17,8 @@
   --skeleton-via: #3F3F46;
   --pwa-nav-bg: rgba(9, 9, 11, 0.9);
   --shadow-color: rgba(0,0,0,0.3);
+  --gym-primary: #E1FF01;
+  --gym-primary-foreground: #0F172A;
 }
 
 .light-theme {
@@ -37,6 +39,7 @@
   --skeleton-via: #CBD5E1;
   --pwa-nav-bg: rgba(255, 255, 255, 0.95);
   --shadow-color: rgba(0,0,0,0.08);
+  --gym-primary-foreground: #0F172A;
 }
 
 
@@ -461,7 +464,9 @@
 /* CRITICAL: text-white -> dark in light theme */
 .light-theme .text-white { color: #0F172A; }
 
-/* Exceptions: Keep white text on colored button/banner backgrounds */
+/* Exceptions: Keep white text on colored/button backgrounds */
+.light-theme .btn-gym-primary .text-white,
+.light-theme .btn-gym-primary.text-white,
 .light-theme [class*="bg-blue-"].text-white,
 .light-theme [class*="bg-red-"].text-white,
 .light-theme [class*="bg-green-"].text-white,
@@ -475,6 +480,37 @@
 .light-theme [class*="bg-green-"] .text-white,
 .light-theme [class*="bg-emerald-"] .text-white,
 .light-theme [class*="bg-orange-"] .text-white { color: #FFFFFF; }
+
+/* Keep foreground color correct on primary buttons in light theme */
+.light-theme .btn-gym-primary {
+  color: var(--gym-primary-foreground);
+}
+
+/* Stat cards in light theme */
+.light-theme .stat-card {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+/* Dropdown menus in light theme */
+.light-theme [role="menu"] {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+/* Dialog content in light theme */
+.light-theme [role="dialog"] {
+  background: var(--bg-secondary);
+  border-color: var(--border-primary);
+}
+
+/* Input fields in light theme */
+.light-theme .input-dark,
+.light-theme .input-gym {
+  background: var(--input-bg);
+  border-color: var(--border-secondary);
+  color: var(--text-primary);
+}
 
 /* Login page text overrides */
 .light-theme .hover\:text-white:hover { color: #0F172A; }

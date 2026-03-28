@@ -1,0 +1,87 @@
+{
+  "summary": "Comprehensive bug fix testing for iteration 22. All 17 backend tests passed (100%). Frontend testing verified: SaaS plan editing with boolean preservation, class create/edit/delete with date ranges, members 'Ver' contact button, attendance modal scroll, staff gym selector for super admin, light/dark mode toggle. Demo button confirmed removed from login page.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration22_bug_fixes.py",
+    "/app/test_reports/pytest/pytest_results_iteration22.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration22_bug_fixes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (17/17 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@ingresoqr.com / admin123",
+    "gym_admin": "admin@fitzone.com / admin123"
+  },
+  "seed_data_creation": "Test classes created and deleted during testing (TEST_DateRange_Class, TEST_EditDays_Class, TEST_Delete_Class)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "All bug fixes from iteration 22 verified working: 1) SaaS plan boolean False preservation works correctly, 2) Class scheduling respects start_date/end_date, 3) Class edit regenerates schedules, 4) Class delete removes all schedules, 5) File upload endpoints work (gym logo, member avatar), 6) Members 'Ver' contact button visible and popover works, 7) Attendance modal has scroll (overflow-y-auto), 8) Demo button removed from login, 9) Staff gym selector visible for super admin, 10) Light/dark mode toggle works. 5 active classes, 11 members in FitZone, 10 gyms, 3 SaaS plans in system.",
+  "features_verified": {
+    "saas_plan_edit": {
+      "status": "PASS",
+      "details": "PUT /api/saas/plans/{id} correctly preserves boolean False values (has_classes=true, has_pos=false, has_analytics=false)"
+    },
+    "class_create_with_dates": {
+      "status": "PASS",
+      "details": "Creating class with start_date and end_date generates schedules only within date range"
+    },
+    "class_edit_days": {
+      "status": "PASS",
+      "details": "Editing days_of_week regenerates schedules correctly"
+    },
+    "class_delete": {
+      "status": "PASS",
+      "details": "Deleting class removes all associated schedules from class_schedules collection"
+    },
+    "gym_logo_upload": {
+      "status": "PASS",
+      "details": "POST /api/upload/gym-logo/{gym_id} endpoint works and returns logo_url"
+    },
+    "member_avatar_upload": {
+      "status": "PASS",
+      "details": "POST /api/upload/avatar/admin/{member_id} endpoint works"
+    },
+    "file_serving": {
+      "status": "PASS",
+      "details": "GET /api/files/{path} handles missing files correctly (404)"
+    },
+    "members_ver_button": {
+      "status": "PASS",
+      "details": "11 'Ver' contact buttons visible on Members page, popover shows member details (Codigo, Email, Telefono, Registro)"
+    },
+    "attendance_modal_scroll": {
+      "status": "PASS",
+      "details": "Attendance dialog has overflow-y-auto class for scrolling"
+    },
+    "demo_button_removed": {
+      "status": "PASS",
+      "details": "Demo button NOT visible on admin login page"
+    },
+    "staff_gym_selector": {
+      "status": "PASS",
+      "details": "Super admin sees gym selector dropdown with 10+ gyms in create staff modal"
+    },
+    "light_dark_mode": {
+      "status": "PASS",
+      "details": "Theme toggle works, stat cards visible in both modes"
+    },
+    "admin_classes_edit": {
+      "status": "PASS",
+      "details": "Edit modal shows 'Editar Clase' title, save button shows 'Actualizar Clase', start_date/end_date fields present"
+    }
+  }
+}

@@ -39,7 +39,18 @@ async def get_saas_plans(admin: dict = Depends(get_current_admin)):
 @router.put("/saas/plans/{plan_id}")
 async def update_saas_plan(plan_id: str, plan_update: SaaSPlanUpdate, admin: dict = Depends(get_current_admin)):
     check_role(admin, ["super_admin"])
-    update_data = {k: v for k, v in plan_update.model_dump().items() if v is not None}
+    raw = plan_update.model_dump()
+    update_data = {}
+    for k, v in raw.items():
+        if v is not None:
+            update_data[k] = v
+        elif k in SAAS_FEATURE_KEYS:
+            # For feature flags, treat None as "not sent" but include False explicitly
+            pass
+    # Ensure boolean feature flags are always written when present in the request body
+    for k in SAAS_FEATURE_KEYS:
+        if raw.get(k) is not None:
+            update_data[k] = raw[k]
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()

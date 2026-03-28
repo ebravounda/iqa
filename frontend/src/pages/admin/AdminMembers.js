@@ -466,7 +466,7 @@ export default function AdminMembers() {
                       data-testid={`contact-btn-${member.code}`}
                     >
                       <Mail size={12} />
-                      <span className="hidden sm:inline">Ver</span>
+                      <span>Ver</span>
                     </button>
                     {expandedContact === member.id && (
                       <MemberContactPopover member={member} onClose={() => setExpandedContact(null)} />

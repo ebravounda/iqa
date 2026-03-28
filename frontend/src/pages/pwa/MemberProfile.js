@@ -142,7 +142,7 @@ export default function MemberProfile() {
         <div className="flex items-center gap-4">
           {gym?.logo_url ? (
             <img 
-              src={gym.logo_url} 
+              src={gym.logo_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${gym.logo_url}` : gym.logo_url} 
               alt={gym.name}
               className="w-14 h-14 rounded-xl object-cover"
             />

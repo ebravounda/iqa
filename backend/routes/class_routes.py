@@ -18,24 +18,42 @@ def calculate_end_time(start_time: str, duration_minutes: int) -> str:
     end_minutes = total_minutes % 60
     return f"{end_hours:02d}:{end_minutes:02d}"
 
-async def generate_recurring_schedules(class_data: dict, weeks: int = 4):
+async def generate_recurring_schedules(class_data: dict, weeks: int = 8):
     today = date.today()
+    # Respect start_date and end_date from class config
+    start_date_str = class_data.get("start_date")
+    end_date_str = class_data.get("end_date")
+    range_start = today
+    if start_date_str and start_date_str.strip():
+        try:
+            parsed = date.fromisoformat(start_date_str)
+            if parsed > today:
+                range_start = parsed
+        except ValueError:
+            pass
+    range_end = range_start + timedelta(days=weeks * 7)
+    if end_date_str and end_date_str.strip():
+        try:
+            parsed = date.fromisoformat(end_date_str)
+            range_end = parsed
+        except ValueError:
+            pass
+    end_time = class_data.get("end_time") or calculate_end_time(class_data["start_time"], class_data["duration_minutes"])
     schedules = []
-    for week in range(weeks):
-        for day_offset in range(7):
-            current_date = today + timedelta(days=week*7 + day_offset)
-            weekday = current_date.weekday()
-            if weekday in class_data.get("days_of_week", []):
-                schedule = {
-                    "id": str(uuid.uuid4()), "class_id": class_data["id"],
-                    "gym_id": class_data["gym_id"], "date": current_date.isoformat(),
-                    "start_time": class_data["start_time"],
-                    "end_time": calculate_end_time(class_data["start_time"], class_data["duration_minutes"]),
-                    "trainer_id": class_data.get("trainer_id"),
-                    "max_capacity": class_data["max_capacity"], "current_bookings": 0,
-                    "status": "scheduled", "created_at": datetime.now(timezone.utc).isoformat()
-                }
-                schedules.append(schedule)
+    current_date = range_start
+    while current_date <= range_end:
+        if current_date.weekday() in class_data.get("days_of_week", []):
+            schedule = {
+                "id": str(uuid.uuid4()), "class_id": class_data["id"],
+                "gym_id": class_data["gym_id"], "date": current_date.isoformat(),
+                "start_time": class_data["start_time"],
+                "end_time": end_time,
+                "trainer_id": class_data.get("trainer_id"),
+                "max_capacity": class_data["max_capacity"], "current_bookings": 0,
+                "status": "scheduled", "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            schedules.append(schedule)
+        current_date += timedelta(days=1)
     if schedules:
         await db.class_schedules.insert_many(schedules)
 
@@ -226,17 +244,27 @@ async def get_class(class_id: str, admin: dict = Depends(get_current_admin)):
 @router.put("/classes/{class_id}")
 async def update_class(class_id: str, class_update: ClassUpdate, admin: dict = Depends(get_current_admin)):
     check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
-    update_data = {k: v for k, v in class_update.model_dump().items() if v is not None}
+    raw = class_update.model_dump()
+    update_data = {}
+    for k, v in raw.items():
+        if v is not None:
+            # Convert empty strings to None for date fields
+            if k in ("start_date", "end_date") and isinstance(v, str) and not v.strip():
+                update_data[k] = None
+            else:
+                update_data[k] = v
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     await db.classes.update_one({"id": class_id}, {"$set": update_data})
     # Regenerate schedules if recurring settings changed
-    if any(k in update_data for k in ["days_of_week", "start_time", "end_time", "start_date", "end_date", "recurring"]):
+    if any(k in update_data for k in ["days_of_week", "start_time", "end_time", "start_date", "end_date", "recurring", "duration_minutes"]):
         cls = await db.classes.find_one({"id": class_id}, {"_id": 0})
         if cls and cls.get("recurring") and cls.get("days_of_week") and cls.get("start_time"):
-            await db.class_schedules.delete_many({"class_id": class_id, "current_bookings": 0})
-            await generate_recurring_schedules(cls, weeks=4)
+            # Delete future unbooked schedules and regenerate
+            today_str = date.today().isoformat()
+            await db.class_schedules.delete_many({"class_id": class_id, "current_bookings": 0, "date": {"$gte": today_str}})
+            await generate_recurring_schedules(cls)
     updated = await db.classes.find_one({"id": class_id}, {"_id": 0})
     return updated
 
@@ -484,13 +512,16 @@ async def get_trainer_dashboard(admin: dict = Depends(get_current_admin)):
     ).sort("start_time", 1).to_list(50)
 
     for s in today_schedules:
-        class_data = await db.classes.find_one({"id": s["class_id"]}, {"_id": 0})
+        class_data = await db.classes.find_one({"id": s["class_id"], "active": {"$ne": False}}, {"_id": 0})
+        if not class_data:
+            continue
         s["class"] = class_data
         bookings = await db.bookings.find(
             {"schedule_id": s["id"], "status": "confirmed"}, {"_id": 0}
         ).to_list(200)
         s["bookings"] = bookings
         s["checked_in_count"] = sum(1 for b in bookings if b.get("checked_in"))
+    today_schedules = [s for s in today_schedules if s.get("class")]
 
     # This week stats
     week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
@@ -511,8 +542,9 @@ async def get_trainer_dashboard(admin: dict = Depends(get_current_admin)):
         {"_id": 0}
     ).sort([("date", 1), ("start_time", 1)]).to_list(20)
     for u in upcoming:
-        class_data = await db.classes.find_one({"id": u["class_id"]}, {"_id": 0})
+        class_data = await db.classes.find_one({"id": u["class_id"], "active": {"$ne": False}}, {"_id": 0})
         u["class"] = class_data
+    upcoming = [u for u in upcoming if u.get("class")]
 
     # Trainer's total classes
     total_classes = await db.classes.count_documents({"trainer_id": trainer_id, "active": True})

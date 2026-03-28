@@ -95,33 +95,6 @@ export default function AdminLogin() {
           <p className="text-center text-xs text-zinc-500 mt-6">
             Inicia sesion con tus credenciales de acceso
           </p>
-
-          <div className="mt-4 pt-4 border-t border-zinc-800">
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full border-zinc-700 text-zinc-400 hover:text-white hover:border-[var(--gym-primary)]"
-              data-testid="demo-login-btn"
-              onClick={async () => {
-                setLoading(true);
-                try {
-                  const API_URL = process.env.REACT_APP_BACKEND_URL;
-                  const res = await fetch(`${API_URL}/api/demo/login`, { method: 'POST' });
-                  const data = await res.json();
-                  if (data.token) {
-                    localStorage.setItem('token', data.token);
-                    localStorage.setItem('userType', 'admin');
-                    localStorage.setItem('admin', JSON.stringify(data.admin));
-                    localStorage.setItem('is_demo', 'true');
-                    window.location.href = '/admin';
-                  }
-                } catch { toast.error('Error al iniciar demo'); }
-                finally { setLoading(false); }
-              }}
-            >
-              Ver Demo del Sistema
-            </Button>
-          </div>
         </div>
       </div>
     </div>

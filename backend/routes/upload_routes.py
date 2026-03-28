@@ -126,6 +126,39 @@ async def serve_file(path: str, auth: Optional[str] = Query(None), authorization
         logger.error(f"File serve error: {e}")
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
 
+@router.post("/upload/gym-logo/{gym_id}")
+async def upload_gym_logo(
+    gym_id: str,
+    file: UploadFile = File(...),
+    admin: dict = Depends(get_current_admin)
+):
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    if file.content_type not in ALLOWED_IMAGE_TYPES:
+        raise HTTPException(status_code=400, detail="Solo se permiten imagenes (JPG, PNG, WEBP)")
+    data = await file.read()
+    if len(data) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="La imagen no puede superar 2MB")
+    ext = file.filename.split(".")[-1].lower() if "." in file.filename else "jpg"
+    if ext not in ("jpg", "jpeg", "png", "webp"):
+        ext = "jpg"
+    path = f"gymaccess/logos/{gym_id}/{uuid.uuid4()}.{ext}"
+    try:
+        result = put_object(path, data, file.content_type or "image/jpeg")
+        storage_path = result.get("path", path)
+        # Build the full URL for the logo
+        logo_url = f"/api/files/{storage_path}"
+        await db.gyms.update_one(
+            {"id": gym_id},
+            {"$set": {"logo_url": logo_url, "logo_path": storage_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+        return {"logo_url": logo_url, "storage_path": storage_path, "message": "Logo subido correctamente"}
+    except Exception as e:
+        logger.error(f"Gym logo upload error: {e}")
+        raise HTTPException(status_code=500, detail=f"Error al subir logo: {str(e)}")
+
+
 @router.post("/upload/product-image/{product_id}")
 async def upload_product_image(
     product_id: str,
