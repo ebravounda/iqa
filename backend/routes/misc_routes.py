@@ -365,28 +365,46 @@ async def sync_backend_files(admin: dict = Depends(get_current_admin)):
     from auth import check_role
     check_role(admin, ["super_admin"])
     import glob, shutil, os
-    # Find Plesk upload directory
-    plesk_patterns = [
-        "/var/www/vhosts/*/c.ingresoqr.com/routes/*.py",
-        "/var/www/vhosts/*/httpdocs/routes/*.py",
-    ]
-    source_files = []
-    for pattern in plesk_patterns:
-        source_files.extend(glob.glob(pattern))
-    if not source_files:
-        return {"success": False, "message": "No se encontraron archivos en el directorio de Plesk", "synced": 0}
-    dest_dir = "/opt/gymaccess/routes"
-    if not os.path.isdir(dest_dir):
-        return {"success": False, "message": f"Directorio destino {dest_dir} no existe", "synced": 0}
+    # Find Plesk upload directory base
+    plesk_bases = glob.glob("/var/www/vhosts/*/c.ingresoqr.com")
+    if not plesk_bases:
+        return {"success": False, "message": "No se encontro directorio de Plesk para c.ingresoqr.com", "synced": 0}
+    plesk_base = plesk_bases[0]
+    dest_base = "/opt/gymaccess"
     synced = []
-    for src in source_files:
+    # 1. Sync root .py files (server.py, models.py, auth.py, etc.)
+    for src in glob.glob(os.path.join(plesk_base, "*.py")):
         filename = os.path.basename(src)
-        dest = os.path.join(dest_dir, filename)
+        dest = os.path.join(dest_base, filename)
         try:
             shutil.copy2(src, dest)
             synced.append(filename)
         except Exception as e:
-            logger.error(f"Error copying {src} -> {dest}: {e}")
+            logger.error(f"Error copying {src}: {e}")
+    # 2. Sync routes/*.py
+    routes_dest = os.path.join(dest_base, "routes")
+    os.makedirs(routes_dest, exist_ok=True)
+    for src in glob.glob(os.path.join(plesk_base, "routes", "*.py")):
+        filename = os.path.basename(src)
+        dest = os.path.join(routes_dest, filename)
+        try:
+            shutil.copy2(src, dest)
+            synced.append(f"routes/{filename}")
+        except Exception as e:
+            logger.error(f"Error copying {src}: {e}")
+    # 3. Sync downloads/*.py
+    downloads_dest = os.path.join(dest_base, "downloads")
+    os.makedirs(downloads_dest, exist_ok=True)
+    for src in glob.glob(os.path.join(plesk_base, "downloads", "*")):
+        filename = os.path.basename(src)
+        dest = os.path.join(downloads_dest, filename)
+        try:
+            shutil.copy2(src, dest)
+            synced.append(f"downloads/{filename}")
+        except Exception as e:
+            logger.error(f"Error copying {src}: {e}")
+    if not synced:
+        return {"success": False, "message": "No se encontraron archivos para sincronizar", "synced": 0}
     return {"success": True, "message": f"{len(synced)} archivos sincronizados", "synced": len(synced), "files": synced}
 
 @router.post("/deploy/restart-backend")
