@@ -4,76 +4,74 @@
 Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinamico, dashboard admin, PWA para socios, control de torniquetes con Raspberry Pi, pagos con Stripe/MercadoPago, emails automaticos, roles multi-nivel.
 
 ## Arquitectura
-- **Backend**: FastAPI (Python) con MongoDB
+- **Backend**: FastAPI (Python) con MongoDB, rutas modulares en `/backend/routes/`
 - **Frontend**: React + Tailwind + Shadcn UI
-- **IoT**: Script Python para Raspberry Pi 3B+ (2 relays: entrada/salida)
+- **IoT**: Script Python para Raspberry Pi 3B+ (2 relays: entrada/salida, pin 12)
 - **Base de datos**: MongoDB
 - **Autenticacion**: JWT
-- **Deployment**: Plesk (gym.ticketpro.es / c.ingresoqr.com)
+- **Deployment**: Plesk (app.ingresoqr.com / c.ingresoqr.com)
 
 ## Roles
-1. **Super Admin** (gym_id=null): Gestion global, planes SaaS, todos los gimnasios
-2. **Gym Admin** (gym_id=UUID): Gestion de su propio gimnasio
-3. **Gym Manager**: Permisos configurables por admin
-4. **Trainer**: Gestion de clases y rutinas
-5. **Member**: Acceso via PWA/QR
+1. Super Admin (gym_id=null): Gestion global, planes SaaS
+2. Gym Admin (gym_id=UUID): Gestion de su gimnasio
+3. Gym Manager: Permisos configurables
+4. Trainer: Clases y rutinas
+5. Member: Acceso via PWA/QR
 
 ## Funcionalidades Implementadas
 
 ### Core
 - [x] Autenticacion JWT multi-rol
 - [x] Dashboard admin con estadisticas
-- [x] Gestion de gimnasios (CRUD, capacidad, suspender/eliminar)
-- [x] Gestion de socios (CRUD, suspender con razon, eliminar)
-- [x] QR dinamico con refresh configurable (5/10/15 seg)
-- [x] Control de acceso via Raspberry Pi (2 relays, pin 12 fix)
-- [x] Registro via Kiosk PWA
+- [x] CRUD gimnasios (capacidad, suspender, eliminar)
+- [x] CRUD socios (suspender con razon, eliminar)
+- [x] QR dinamico (refresh 5/10/15 seg)
+- [x] Control de acceso Raspberry Pi (2 relays, pin 12)
+- [x] Registro Kiosk PWA
 - [x] Dispositivos IoT (registro, token, copia ID)
 
 ### SaaS & Planes
-- [x] Planes SaaS (Crear, Editar, Asignar a gimnasios)
-- [x] "Mi Plan SaaS" visible para Gym Admin en Configuracion
-- [x] 12 features configurables por plan
-- [x] Barra de capacidad de socios
+- [x] CRUD Planes SaaS con 12 features booleanas
+- [x] Edicion de planes guarda True Y False correctamente
+- [x] "Mi Plan SaaS" para Gym Admin en Configuracion
 - [x] Suspension por impago (bloquea Admin, Socios, API)
 
 ### Clases & Horarios
 - [x] CRUD completo de clases (crear, editar, eliminar)
-- [x] Clases recurrentes con dias de semana
-- [x] Hora inicio/fin, fecha inicio/fin
-- [x] Asignacion de entrenadores
-- [x] Eliminacion en cascada (clase + horarios)
+- [x] Clases recurrentes con end_date respetada
+- [x] Edicion regenera horarios automaticamente
+- [x] Eliminacion borra clase y horarios en cascada
+- [x] Trainer Dashboard filtra clases eliminadas
 
 ### Personal & Staff
-- [x] Gestion de staff (Admin, Gestor, Entrenador)
-- [x] Selector de gimnasio para Super Admin
+- [x] CRUD staff con selector de gimnasio para Super Admin
 - [x] Permisos configurables por gestor
-- [x] Creacion de entrenadores con especialidades
 
 ### Pagos
-- [x] Stripe (configuracion por gimnasio)
-- [x] MercadoPago (configuracion por gimnasio)
-- [x] Planes de membresia (precio, duracion, modulos)
+- [x] Stripe y MercadoPago (configuracion por gimnasio)
+- [x] Planes de membresia
+
+### Uploads
+- [x] Subida de avatar por admin (funciona con storage local)
+- [x] Subida de logo de gimnasio (nuevo endpoint)
+- [x] Servicio de archivos via /api/files/{path}
 
 ### Emails
-- [x] Historial de emails por socio
-- [x] Boton de reenvio de emails
-- [x] Email de bienvenida con boton de pago
+- [x] Historial de emails por socio con reenvio
 
 ### UI/UX
-- [x] Dark/Light mode con variables CSS
+- [x] Dark/Light mode con variables CSS completas
 - [x] Error Boundary para prevenir pantallas negras
-- [x] Sidebar con scroll
-- [x] Modulos autorizados en Settings
+- [x] Boton "Ver" contacto siempre visible en Socios
+- [x] Modal de Asistencia con scroll
+- [x] Demo button removido de Admin Login
+- [x] Logo de gym mostrado correctamente en PWA (rutas relativas)
 
-### Seguridad
-- [x] Verificacion de membresia expirada
-- [x] Bloqueo de acceso para suspendidos
-- [x] Validacion de QR expirado corregida
-
-## Documentos
-- `/app/GUIA_PLESK_RASPBERRY.md` - Guia de despliegue
-- `/app/GUIA_GOOGLE_PLAY.md` - Guia para Google Play
+## Info Critica
+- **Produccion**: REACT_APP_BACKEND_URL=https://c.ingresoqr.com
+- **Frontend**: app.ingresoqr.com
+- **Super Admin**: admin@ingresoqr.com / admin123
+- **Idioma**: Responder siempre en espanol
 
 ## Tareas Pendientes
 
@@ -83,15 +81,9 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinamico, d
 
 ### P2 - Futuro
 - Push notifications reales (Firebase/PWA)
-- Dashboard especifico para Trainers
+- Dashboard especifico para Trainers mejorado
 - Reportes PDF exportables
 
 ### P3 - Backlog
 - Chat trainer-socio
 - Integraciones adicionales
-
-## Info Critica
-- **Produccion**: REACT_APP_BACKEND_URL=https://c.ingresoqr.com para yarn build
-- **Super Admin**: admin@ingresoqr.com / admin123
-- **Gym Admin Test**: admin@fitzone.com / admin123
-- **Idioma**: Responder siempre en espanol
