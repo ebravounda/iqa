@@ -250,7 +250,7 @@ export default function AdminPlans() {
               </div>
               <div className="space-y-3 text-sm">
                 <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><Clock size={16} /><span>{getDurationLabel(plan.duration_days)}</span></div>
-                <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><DollarSign size={16} /><span>{formatCurrency(plan.price / plan.duration_days)}/dia</span></div>
+                <div className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}><DollarSign size={16} /><span>{formatCurrency((plan.price || 0) / (plan.duration_days || 1))}/dia</span></div>
                 {plan.description && <p className="pt-2 border-t" style={{ borderColor: 'var(--border-primary)', color: 'var(--text-muted)' }}>{plan.description}</p>}
               </div>
             </div>
