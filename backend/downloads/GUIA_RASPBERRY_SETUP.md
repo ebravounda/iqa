@@ -80,7 +80,7 @@ wget -O access_control.py "https://stripe-gym-payments.preview.emergentagent.com
 ## Paso 5: Obtener credenciales del gym
 
 ### 5.1 Registrar el gym (si no existe)
-1. Entra como **Super Admin** en `gym.ticketpro.es/admin`
+1. Entra como **Super Admin** en `app.ingresoqr.com/admin`
 2. Ve a **Gimnasios** > **Nuevo Gimnasio**
 3. Crea el gym con nombre, email y contraseña del admin
 
@@ -104,7 +104,7 @@ nano /home/pi/gymaccess/.env
 
 Contenido:
 ```
-GYMACCESS_SERVER_URL=https://gymapi.ticketpro.es
+GYMACCESS_SERVER_URL=https://c.ingresoqr.com
 GYMACCESS_GYM_TOKEN=PEGA_EL_API_TOKEN_DEL_GYM_AQUI
 GYMACCESS_DEVICE_ID=PEGA_EL_DEVICE_ID_AQUI
 GYMACCESS_QR_MODE=usb
@@ -199,7 +199,7 @@ sudo journalctl -u gymaccess -f
 
 1. Registra un **socio** en el gym desde el panel admin
 2. Crea un **plan** y asignale una **membresia activa** al socio
-3. El socio abre `gym.ticketpro.es/app` en su celular
+3. El socio abre `app.ingresoqr.com/app` en su celular
 4. Ingresa su **codigo de socio** para ver el QR
 5. Escanea el QR en el lector de **ENTRADA** -> el torno debe abrir
 6. Escanea el QR en el lector de **SALIDA** -> el torno debe abrir
@@ -227,7 +227,7 @@ sudo python3 -c "import evdev; [print(f'{d.path}: {d.name}') for d in [evdev.Inp
 - El QR es valido por 5 minutos
 
 ### Error "Invalid signature"
-- Asegurate que el frontend del gym apunte a `gymapi.ticketpro.es`
+- Asegurate que el frontend del gym apunte a `c.ingresoqr.com`
 
 ### Los reles no abren
 1. Ejecuta el test de GPIO:

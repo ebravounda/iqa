@@ -368,7 +368,7 @@ export default function AdminDevices() {
               <div className="bg-zinc-800 p-3 rounded-lg text-xs font-mono">
                 <p className="text-zinc-500 mb-1"># Ejecuta en la Raspberry:</p>
                 <p className="text-emerald-400">cat &gt; ~/gymaccess/.env &lt;&lt; 'EOF'</p>
-                <p className="text-amber-400">GYMACCESS_SERVER_URL=https://gymapi.ticketpro.es</p>
+                <p className="text-amber-400">GYMACCESS_SERVER_URL=https://c.ingresoqr.com</p>
                 <p className="text-amber-400">GYMACCESS_GYM_TOKEN=<span className="text-white">PEGA_TU_TOKEN</span></p>
                 <p className="text-amber-400">GYMACCESS_DEVICE_ID=<span className="text-white">PEGA_TU_DEVICE_ID</span></p>
                 <p className="text-amber-400">GYMACCESS_QR_MODE=usb</p>

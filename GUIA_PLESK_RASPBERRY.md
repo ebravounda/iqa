@@ -2,7 +2,7 @@
 
 ## REQUISITOS PREVIOS
 - Docker instalado en Plesk (ya lo tienes)
-- Dominios creados: `gym.ticketpro.es` y `gymapi.ticketpro.es`
+- Dominios creados: `app.ingresoqr.com` y `c.ingresoqr.com`
 - Código descargado de Emergent (botón "Download Code")
 
 ---
@@ -21,14 +21,14 @@
 
 ---
 
-## PASO 2: FRONTEND → gym.ticketpro.es
+## PASO 2: FRONTEND → app.ingresoqr.com
 
 ### 2.1 Crear dominio (si no existe)
 1. Plesk → **Websites & Domains** → **Add Domain/Subdomain**
-2. Nombre: `gym.ticketpro.es`
+2. Nombre: `app.ingresoqr.com`
 
 ### 2.2 Subir archivos
-1. Click en **gym.ticketpro.es** → **File Manager**
+1. Click en **app.ingresoqr.com** → **File Manager**
 2. Entra a la carpeta **`httpdocs`**
 3. **BORRA** todo lo que haya dentro (index.html por defecto, etc.)
 4. Del ZIP descargado de Emergent, abre la carpeta: `frontend/build/`
@@ -54,7 +54,7 @@ httpdocs/
 ```
 
 ### 2.3 Configurar Apache para React Router
-1. Click en **gym.ticketpro.es** → **Apache & nginx Settings**
+1. Click en **app.ingresoqr.com** → **Apache & nginx Settings**
 2. En el campo **"Additional directives for HTTP"** Y **"Additional directives for HTTPS"**, pega:
 ```
 <IfModule mod_rewrite.c>
@@ -69,14 +69,14 @@ httpdocs/
 3. Click **OK** o **Apply**
 
 ### 2.4 SSL (HTTPS)
-1. Click en **gym.ticketpro.es** → **SSL/TLS Certificates**
+1. Click en **app.ingresoqr.com** → **SSL/TLS Certificates**
 2. Click **Let's Encrypt**
 3. Genera certificado gratuito
 4. Activa **"Redirect HTTP to HTTPS"**
 
 ---
 
-## PASO 3: BACKEND → gymapi.ticketpro.es
+## PASO 3: BACKEND → c.ingresoqr.com
 
 Como no usaremos SSH, montaremos el backend con Docker en Plesk.
 
@@ -110,7 +110,7 @@ MONGO_URL=mongodb://172.17.0.1:27017
 DB_NAME=gymaccess
 JWT_SECRET=CambiaEstoPorUnaClaveMuyLargaYSegura2024XYZ
 QR_SECRET=OtraClaveDiferenteParaElQR2024ABC
-CORS_ORIGINS=https://gym.ticketpro.es
+CORS_ORIGINS=https://app.ingresoqr.com
 ENDOFFILE
 ```
 
@@ -136,10 +136,10 @@ curl http://localhost:8001/api/health
 ```
 Debe responder: `{"status":"healthy"}`
 
-### 3.2 Configurar dominio gymapi.ticketpro.es
+### 3.2 Configurar dominio c.ingresoqr.com
 
-1. Plesk → **Websites & Domains** → Crea subdominio **`gymapi.ticketpro.es`**
-2. Click en **gymapi.ticketpro.es** → **Apache & nginx Settings**
+1. Plesk → **Websites & Domains** → Crea subdominio **`c.ingresoqr.com`**
+2. Click en **c.ingresoqr.com** → **Apache & nginx Settings**
 3. Busca la sección **nginx**
 4. En **"Additional nginx directives"**, pega:
 
@@ -161,13 +161,13 @@ location / {
 5. Click **OK**
 
 ### 3.3 SSL para la API
-1. Click en **gymapi.ticketpro.es** → **SSL/TLS Certificates**
+1. Click en **c.ingresoqr.com** → **SSL/TLS Certificates**
 2. Click **Let's Encrypt**
 3. Genera certificado
 4. Activa **"Redirect HTTP to HTTPS"**
 
 ### 3.4 Verificar
-Abre en el navegador: `https://gymapi.ticketpro.es/api/health`
+Abre en el navegador: `https://c.ingresoqr.com/api/health`
 Debe mostrar: `{"status":"healthy"}`
 
 ---
@@ -177,24 +177,24 @@ Debe mostrar: `{"status":"healthy"}`
 Desde el Terminal de Plesk (o desde tu navegador):
 
 ```bash
-curl -X POST "https://gymapi.ticketpro.es/api/auth/register" \
+curl -X POST "https://c.ingresoqr.com/api/auth/register" \
   -H "Content-Type: application/json" \
   -d '{"email":"TU_EMAIL","password":"TU_PASSWORD","name":"Tu Nombre","role":"super_admin"}'
 ```
 
-O simplemente abre: `https://gym.ticketpro.es`
+O simplemente abre: `https://app.ingresoqr.com`
 Ve a Panel de Administración y la primera vez puedes registrarte.
 
 ---
 
 ## PASO 5: PROBAR TODO
 
-1. Abre `https://gym.ticketpro.es` → debe verse la página principal
+1. Abre `https://app.ingresoqr.com` → debe verse la página principal
 2. Click "Panel de Administración" → login
 3. Crea un gimnasio
 4. Crea planes de membresía
 5. Crea socios
-6. Un socio entra en `https://gym.ticketpro.es/app/login` con su código
+6. Un socio entra en `https://app.ingresoqr.com/app/login` con su código
 
 ---
 
@@ -273,7 +273,7 @@ nano .env
 ```
 Pega esto (cambia los valores):
 ```
-GYMACCESS_SERVER_URL=https://gymapi.ticketpro.es
+GYMACCESS_SERVER_URL=https://c.ingresoqr.com
 GYMACCESS_GYM_TOKEN=PEGA_AQUI_EL_TOKEN
 GYMACCESS_DEVICE_ID=PEGA_AQUI_EL_DEVICE_ID
 GYMACCESS_QR_MODE=usb
@@ -288,7 +288,7 @@ Pega todo el contenido del archivo `raspberry_access_control.py` que descargaste
 Guarda: Ctrl+X → Y → Enter
 
 ### 6.7 Obtener Token y Device ID
-1. Abre `https://gym.ticketpro.es/admin`
+1. Abre `https://app.ingresoqr.com/admin`
 2. Login como admin
 3. Ve a **Dispositivos** → **Agregar Dispositivo**
 4. Nombre: "Entrada Principal"
@@ -324,7 +324,7 @@ Debe mostrar:
 ==================================================
    GYMACCESS - SISTEMA DE CONTROL DE ACCESO
 ==================================================
-   Servidor: https://gymapi.ticketpro.es
+   Servidor: https://c.ingresoqr.com
    Modo: usb
 ==================================================
    Esperando códigos QR...
@@ -391,7 +391,7 @@ sudo journalctl -u gymaccess -f
 
 ### El QR no valida en la Raspberry
 → Verifica el token del gym en `.env`
-→ Verifica que la API es accesible: `curl https://gymapi.ticketpro.es/api/health`
+→ Verifica que la API es accesible: `curl https://c.ingresoqr.com/api/health`
 → Ver logs: `sudo journalctl -u gymaccess -f`
 
 ### El relé no activa

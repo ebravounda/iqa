@@ -30,7 +30,7 @@ except ImportError:
 
 import requests
 
-SERVER_URL = os.environ.get('GYMACCESS_SERVER_URL', 'https://gymapi.ticketpro.es')
+SERVER_URL = os.environ.get('GYMACCESS_SERVER_URL', 'https://c.ingresoqr.com')
 GYM_TOKEN = os.environ.get('GYMACCESS_GYM_TOKEN', 'TU_TOKEN_AQUI')
 DEVICE_ID = os.environ.get('GYMACCESS_DEVICE_ID', 'TU_DEVICE_ID')
 RELAY_ENTRADA = int(os.environ.get('GYMACCESS_RELAY_ENTRADA', '12'))

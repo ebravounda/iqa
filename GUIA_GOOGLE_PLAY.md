@@ -10,7 +10,7 @@ Tu sistema GymAccess ya es una **PWA (Progressive Web App)** funcional. Para pub
 1. **Cuenta de desarrollador de Google Play** ($25 USD, pago unico)
    - Registrate en: https://play.google.com/console/signup
    
-2. **Tu PWA funcionando en HTTPS** (ya lo tienes: `https://gym.ticketpro.es`)
+2. **Tu PWA funcionando en HTTPS** (ya lo tienes: `https://app.ingresoqr.com`)
 
 3. **Archivo `assetlinks.json`** (se genera automaticamente con PWABuilder)
 
@@ -29,11 +29,11 @@ Tu PWA ya tiene:
 ## Paso 2: Generar el APK/AAB con PWABuilder
 
 1. Ve a **https://www.pwabuilder.com**
-2. Ingresa la URL de tu app: `https://gym.ticketpro.es/app/login`
+2. Ingresa la URL de tu app: `https://app.ingresoqr.com/app/login`
 3. PWABuilder analizara tu PWA y mostrara una puntuacion
 4. Haz clic en **"Package for stores"** → selecciona **"Android"**
 5. Configura las opciones:
-   - **Package ID**: `es.ticketpro.gymaccess` (ejemplo)
+   - **Package ID**: `com.ingresoqr.app` (ejemplo)
    - **App name**: `GymAccess`
    - **App version**: `1.0.0`
    - **Launcher name**: `GymAccess`
@@ -53,14 +53,14 @@ Tu PWA ya tiene:
 PWABuilder generara un archivo `assetlinks.json`. Debes subirlo a:
 
 ```
-https://gym.ticketpro.es/.well-known/assetlinks.json
+https://app.ingresoqr.com/.well-known/assetlinks.json
 ```
 
 ### En Plesk:
-1. Accede al **File Manager** de `gym.ticketpro.es`
+1. Accede al **File Manager** de `app.ingresoqr.com`
 2. Crea la carpeta `.well-known` en la raiz del dominio
 3. Sube el archivo `assetlinks.json` dentro de esa carpeta
-4. Verifica accediendo a `https://gym.ticketpro.es/.well-known/assetlinks.json`
+4. Verifica accediendo a `https://app.ingresoqr.com/.well-known/assetlinks.json`
 
 ---
 
@@ -112,11 +112,11 @@ npm install -g @nickersoft/nickerbot
 
 # Usando bubblewrap directamente
 npm i -g @nickersoft/nickerbot
-npx @nickersoft/nickerbot init --manifest https://gym.ticketpro.es/manifest.json
+npx @nickersoft/nickerbot init --manifest https://app.ingresoqr.com/manifest.json
 
 # O la forma oficial
 npm install -g @nickersoft/nickerbot
-npx bubblewrap init --manifest=https://gym.ticketpro.es/manifest.json
+npx bubblewrap init --manifest=https://app.ingresoqr.com/manifest.json
 npx bubblewrap build
 ```
 
@@ -126,7 +126,7 @@ npx bubblewrap build
 
 ## Importante
 
-- **Actualizaciones**: Al ser una TWA, cuando actualices tu web (`gym.ticketpro.es`), la app de Google Play se actualiza automaticamente. No necesitas subir nuevos APKs.
+- **Actualizaciones**: Al ser una TWA, cuando actualices tu web (`app.ingresoqr.com`), la app de Google Play se actualiza automaticamente. No necesitas subir nuevos APKs.
 - **No es necesario reescribir la app**: Tu PWA actual funciona perfectamente como app nativa.
 - **Chrome Custom Tabs**: La TWA usa Chrome internamente, asi que el usuario debe tener Chrome instalado.
 
