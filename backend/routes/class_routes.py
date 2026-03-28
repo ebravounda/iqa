@@ -560,3 +560,41 @@ async def get_trainer_dashboard(admin: dict = Depends(get_current_admin)):
         },
         "total_classes": total_classes
     }
+
+
+@router.post("/classes/cleanup-stale-schedules")
+async def cleanup_stale_schedules(admin: dict = Depends(get_current_admin)):
+    """Remove schedules for deleted/inactive classes and schedules past their class end_date."""
+    check_role(admin, ["super_admin", "gym_admin"])
+    # Remove schedules for inactive classes
+    inactive_classes = await db.classes.find({"active": False}, {"id": 1, "_id": 0}).to_list(1000)
+    inactive_ids = [c["id"] for c in inactive_classes]
+    removed_inactive = 0
+    if inactive_ids:
+        result = await db.class_schedules.delete_many({"class_id": {"$in": inactive_ids}})
+        removed_inactive = result.deleted_count
+    # Remove schedules past their class end_date
+    removed_expired = 0
+    classes_with_end = await db.classes.find({"end_date": {"$ne": None, "$exists": True}, "active": True}, {"_id": 0}).to_list(1000)
+    for cls in classes_with_end:
+        end_date = cls.get("end_date")
+        if end_date and isinstance(end_date, str) and end_date.strip():
+            result = await db.class_schedules.delete_many({
+                "class_id": cls["id"],
+                "date": {"$gt": end_date},
+                "current_bookings": 0
+            })
+            removed_expired += result.deleted_count
+    # Remove orphan schedules (class_id doesn't exist)
+    all_class_ids = [c["id"] async for c in db.classes.find({}, {"id": 1, "_id": 0})]
+    if all_class_ids:
+        orphan_result = await db.class_schedules.delete_many({"class_id": {"$nin": all_class_ids}})
+        removed_orphans = orphan_result.deleted_count
+    else:
+        removed_orphans = 0
+    return {
+        "removed_inactive": removed_inactive,
+        "removed_expired": removed_expired, 
+        "removed_orphans": removed_orphans,
+        "total_removed": removed_inactive + removed_expired + removed_orphans
+    }

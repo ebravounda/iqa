@@ -29,9 +29,9 @@ async def create_payment_link(request: Request, admin: dict = Depends(get_curren
     gym = await db.gyms.find_one({"id": member.get("gym_id")}, {"_id": 0})
     if not gym:
         raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
-    stripe_key = gym.get("stripe_secret_key")
+    stripe_key = gym.get("stripe_secret_key") or os.environ.get("STRIPE_API_KEY")
     if not stripe_key:
-        raise HTTPException(status_code=400, detail="Stripe no configurado para este gimnasio. Configura tu clave secreta en Ajustes.")
+        raise HTTPException(status_code=400, detail="Stripe no configurado para este gimnasio. Configura tu clave secreta en Ajustes o en el archivo .env")
     try:
         import stripe
         stripe.api_key = stripe_key
@@ -94,11 +94,11 @@ async def send_payment_email(request: Request, admin: dict = Depends(get_current
     gym = await db.gyms.find_one({"id": member.get("gym_id")}, {"_id": 0})
     if not gym:
         raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
-    if not gym.get("stripe_secret_key"):
+    if not gym.get("stripe_secret_key") and not os.environ.get("STRIPE_API_KEY"):
         raise HTTPException(status_code=400, detail="Stripe no configurado")
     try:
         import stripe
-        stripe.api_key = gym["stripe_secret_key"]
+        stripe.api_key = gym.get("stripe_secret_key") or os.environ.get("STRIPE_API_KEY")
         currency = gym.get("stripe_currency", gym.get("currency", "eur")).lower()
         amount = int(plan["price"] * 100)
         frontend_url = gym.get("frontend_url", "https://app.ingresoqr.com")

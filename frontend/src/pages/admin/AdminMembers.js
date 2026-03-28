@@ -414,7 +414,8 @@ export default function AdminMembers() {
         </Select>
       </div>
 
-      <div className="stat-card overflow-hidden">
+      <div className="stat-card overflow-visible">
+        <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-zinc-800">
@@ -558,6 +559,7 @@ export default function AdminMembers() {
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Membership Modal */}
