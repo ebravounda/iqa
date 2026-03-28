@@ -140,6 +140,16 @@ export default function AdminClasses() {
     }
   };
 
+  const handleCleanupSchedules = async () => {
+    try {
+      const res = await axios.post(`${API}/classes/cleanup-stale-schedules`);
+      const d = res.data;
+      toast.success(`Limpieza completada: ${d.total_removed} horarios eliminados`);
+    } catch (error) {
+      toast.error('Error al limpiar horarios');
+    }
+  };
+
   const toggleDay = (dayValue) => {
     setFormData(prev => {
       const days = prev.days_of_week.includes(dayValue)
@@ -161,10 +171,16 @@ export default function AdminClasses() {
           <p className="text-zinc-400 text-sm">{classes.length} clases activas</p>
         </div>
         
-        <Button onClick={openCreate} className="btn-gym-primary" data-testid="create-class-btn">
-          <Plus size={20} className="mr-2" />
-          Nueva Clase
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleCleanupSchedules} variant="outline" className="border-zinc-700 text-zinc-400 hover:text-white" data-testid="cleanup-schedules-btn">
+            <Trash2 size={16} className="mr-2" />
+            Limpiar Horarios
+          </Button>
+          <Button onClick={openCreate} className="btn-gym-primary" data-testid="create-class-btn">
+            <Plus size={20} className="mr-2" />
+            Nueva Clase
+          </Button>
+        </div>
       </div>
 
       {/* Create/Edit Modal */}
