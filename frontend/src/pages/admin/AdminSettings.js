@@ -4,7 +4,7 @@ import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoC
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe, Smartphone, UserCog, Crown, QrCode, Users, Calendar, ShoppingCart, BarChart3, Trophy, Dumbbell, Shield, Code, DollarSign, ExternalLink, Check, X as XIcon } from 'lucide-react';
+import { Save, Palette, Clock, CreditCard, Eye, EyeOff, CheckCircle, AlertTriangle, Link2, Copy, Mail, Send, Loader2, Globe, Smartphone, UserCog, Crown, QrCode, Users, Calendar, ShoppingCart, BarChart3, Trophy, Dumbbell, Shield, Code, DollarSign, ExternalLink, Check, X as XIcon, RefreshCw, Upload, Server } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -942,6 +942,11 @@ export default function AdminSettings() {
         </Button>
       </div>
       </>)}
+
+      {/* Deploy Tools - Super Admin Only */}
+      {isSuperAdmin && (
+        <DeploySection />
+      )}
     </div>
   );
 }
@@ -1079,6 +1084,82 @@ function MiPlanSection({ subscription, availablePlans, subscribing, showPlanSele
           <button onClick={() => setShowPlanSelector(false)} className="mt-3 text-sm" style={{ color: 'var(--text-muted)' }}>Cerrar</button>
         </div>
       )}
+    </div>
+  );
+}
+
+
+function DeploySection() {
+  const [syncing, setSyncing] = useState(false);
+  const [restarting, setRestarting] = useState(false);
+  const [lastResult, setLastResult] = useState(null);
+  const API_URL = process.env.REACT_APP_BACKEND_URL;
+
+  const handleSync = async () => {
+    setSyncing(true);
+    try {
+      const res = await axios.post(`${API_URL}/api/deploy/sync-backend`);
+      setLastResult(res.data);
+      if (res.data.success) {
+        toast.success(`${res.data.synced} archivos sincronizados`);
+      } else {
+        toast.error(res.data.message);
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al sincronizar');
+    } finally { setSyncing(false); }
+  };
+
+  const handleRestart = async () => {
+    if (!window.confirm('Reiniciar el backend? El servicio estara inactivo ~3 segundos.')) return;
+    setRestarting(true);
+    try {
+      await axios.post(`${API_URL}/api/deploy/restart-backend`);
+      toast.success('Backend reiniciando... espera 5 segundos y recarga la pagina');
+    } catch (err) {
+      toast.error('Error al reiniciar');
+    } finally {
+      setTimeout(() => setRestarting(false), 5000);
+    }
+  };
+
+  return (
+    <div className="mt-8 p-6 rounded-2xl" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)' }} data-testid="deploy-section">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(239,68,68,0.1)' }}>
+          <Server size={20} className="text-red-500" />
+        </div>
+        <div>
+          <h3 className="font-bold text-lg">Despliegue Backend</h3>
+          <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Sincronizar archivos de Plesk y reiniciar servidor</p>
+        </div>
+      </div>
+
+      <div className="flex gap-3">
+        <Button onClick={handleSync} disabled={syncing} variant="outline" className="border-zinc-700" data-testid="sync-backend-btn">
+          <Upload size={16} className="mr-2" />
+          {syncing ? 'Sincronizando...' : '1. Sincronizar Archivos'}
+        </Button>
+        <Button onClick={handleRestart} disabled={restarting} variant="outline" className="border-red-800 text-red-400 hover:bg-red-500/10" data-testid="restart-backend-btn">
+          <RefreshCw size={16} className={`mr-2 ${restarting ? 'animate-spin' : ''}`} />
+          {restarting ? 'Reiniciando...' : '2. Reiniciar Backend'}
+        </Button>
+      </div>
+
+      {lastResult && lastResult.files && (
+        <div className="mt-4 p-3 rounded-lg text-sm" style={{ background: 'var(--bg-tertiary)' }}>
+          <p className="font-medium mb-1">{lastResult.synced} archivos sincronizados:</p>
+          <div className="flex flex-wrap gap-1">
+            {lastResult.files.map(f => (
+              <span key={f} className="text-xs px-2 py-0.5 rounded" style={{ background: 'var(--bg-primary)', color: 'var(--text-secondary)' }}>{f}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="text-xs mt-4" style={{ color: 'var(--text-dim)' }}>
+        Proceso: Sube archivos .py por File Manager de c.ingresoqr.com → Clic "Sincronizar" → Clic "Reiniciar"
+      </p>
     </div>
   );
 }

@@ -356,3 +356,55 @@ async def download_google_play_guide():
     if not file_path.exists():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=str(file_path), filename="GUIA_GOOGLE_PLAY.md", media_type="text/markdown")
+
+
+# ==================== Deploy Tools (Super Admin Only) ====================
+
+@router.post("/deploy/sync-backend")
+async def sync_backend_files(admin: dict = Depends(get_current_admin)):
+    from auth import check_role
+    check_role(admin, ["super_admin"])
+    import glob, shutil, os
+    # Find Plesk upload directory
+    plesk_patterns = [
+        "/var/www/vhosts/*/c.ingresoqr.com/routes/*.py",
+        "/var/www/vhosts/*/httpdocs/routes/*.py",
+    ]
+    source_files = []
+    for pattern in plesk_patterns:
+        source_files.extend(glob.glob(pattern))
+    if not source_files:
+        return {"success": False, "message": "No se encontraron archivos en el directorio de Plesk", "synced": 0}
+    dest_dir = "/opt/gymaccess/routes"
+    if not os.path.isdir(dest_dir):
+        return {"success": False, "message": f"Directorio destino {dest_dir} no existe", "synced": 0}
+    synced = []
+    for src in source_files:
+        filename = os.path.basename(src)
+        dest = os.path.join(dest_dir, filename)
+        try:
+            shutil.copy2(src, dest)
+            synced.append(filename)
+        except Exception as e:
+            logger.error(f"Error copying {src} -> {dest}: {e}")
+    return {"success": True, "message": f"{len(synced)} archivos sincronizados", "synced": len(synced), "files": synced}
+
+@router.post("/deploy/restart-backend")
+async def restart_backend(admin: dict = Depends(get_current_admin)):
+    from auth import check_role
+    check_role(admin, ["super_admin"])
+    import subprocess, os, signal
+    pid = os.getpid()
+    # Launch restart script in background
+    script = f"""#!/bin/bash
+sleep 2
+fuser -k 8001/tcp 2>/dev/null
+sleep 1
+cd /opt/gymaccess && nohup /opt/gymaccess/venv/bin/uvicorn server:app --host 0.0.0.0 --port 8001 > /opt/gymaccess/nohup.out 2>&1 &
+"""
+    script_path = "/tmp/restart_backend.sh"
+    with open(script_path, "w") as f:
+        f.write(script)
+    os.chmod(script_path, 0o755)
+    subprocess.Popen(["/bin/bash", script_path], start_new_session=True)
+    return {"success": True, "message": "Backend reiniciando en 3 segundos..."}
