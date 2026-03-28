@@ -357,19 +357,7 @@ async def download_google_play_guide():
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(path=str(file_path), filename="GUIA_GOOGLE_PLAY.md", media_type="text/markdown")
 
-@router.get("/download/docs-en")
-async def download_docs_english():
-    file_path = ROOT_DIR / "downloads" / "IngresoQR_Documentation_EN.pdf"
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(path=str(file_path), filename="IngresoQR_Documentation_EN.pdf", media_type="application/pdf")
-
-@router.get("/download/docs-es")
-async def download_docs_spanish():
-    file_path = ROOT_DIR / "downloads" / "IngresoQR_Documentacion_ES.pdf"
-    if not file_path.exists():
-        raise HTTPException(status_code=404, detail="File not found")
-    return FileResponse(path=str(file_path), filename="IngresoQR_Documentacion_ES.pdf", media_type="application/pdf")
+# Documentation PDFs removed from public access
 
 
 
