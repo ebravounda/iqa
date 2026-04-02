@@ -57,7 +57,7 @@ async def send_gym_email(gym_id: str, to_email: str, subject: str, html_body: st
         await db.email_logs.insert_one(log)
         raise HTTPException(status_code=500, detail=f"Error al enviar email: {str(e)}")
 
-async def send_templated_email(gym_id: str, template_type: str, to_email: str, variables: dict):
+async def send_templated_email(gym_id: str, template_type: str, to_email: str, variables: dict, member_id: str = None):
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
         return False
@@ -83,7 +83,7 @@ async def send_templated_email(gym_id: str, template_type: str, to_email: str, v
     </div>
     """
     try:
-        await send_gym_email(gym_id, to_email, subject, html_body)
+        await send_gym_email(gym_id, to_email, subject, html_body, member_id=member_id, email_type=template_type)
         return True
     except Exception:
         return False
@@ -228,22 +228,94 @@ async def kiosk_register(member: MemberPublicRegister):
         member_dict["code"] = generate_member_code()
     await db.members.insert_one(member_dict)
     member_dict.pop("_id", None)
-    token = create_jwt_token({"sub": member_dict["id"], "type": "member", "gym_id": member.gym_id})
+
+    membership_data = None
+    plan_data = None
+    if member.plan_id:
+        plan = await db.plans.find_one({"id": member.plan_id}, {"_id": 0})
+        if plan:
+            plan_data = plan
+            membership = {
+                "id": str(uuid.uuid4()),
+                "member_id": member_dict["id"],
+                "plan_id": plan["id"],
+                "gym_id": member.gym_id,
+                "start_date": None, "end_date": None,
+                "status": "pending_payment",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.memberships.insert_one(membership)
+            membership.pop("_id", None)
+            membership_data = membership
+            transaction = {
+                "id": str(uuid.uuid4()),
+                "member_id": member_dict["id"],
+                "member_name": member_dict["name"],
+                "plan_id": plan["id"],
+                "plan_name": plan.get("name"),
+                "gym_id": member.gym_id,
+                "amount": plan.get("price", 0),
+                "currency": gym.get("currency", "eur"),
+                "payment_method": "pending",
+                "status": "pending",
+                "payment_status": "pending",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.payment_transactions.insert_one(transaction)
+
+    token = create_jwt_token({"sub": member_dict["id"], "role": "member", "gym_id": member.gym_id})
+
     email_sent = False
     if gym.get("smtp_host") and gym.get("smtp_user"):
         try:
-            plan = None
-            if member.plan_id:
-                plan = await db.plans.find_one({"id": member.plan_id}, {"_id": 0})
-            variables = {
-                "{gym_name}": gym.get("name", ""), "{member_name}": member.name,
-                "{member_code}": member_dict["code"], "{member_email}": member.email,
-                "{plan_name}": plan.get("name", "") if plan else ""
-            }
-            email_sent = await send_templated_email(member.gym_id, "welcome", member.email, variables)
+            gym_color = gym.get("primary_color", "#E1FF01")
+            gym_name = gym.get("name", "IngresoQR")
+            app_url = "https://app.ingresoqr.com"
+            payment_section = ""
+            if plan_data:
+                payment_section = f"""
+                <div style="background:#18181B;padding:20px;border-radius:12px;margin:20px 0;">
+                    <p style="color:#a1a1aa;margin:0 0 5px;font-size:14px;">Plan seleccionado</p>
+                    <p style="font-size:22px;font-weight:700;color:{gym_color};margin:0;">{plan_data.get('name','')}</p>
+                    <p style="color:#fff;font-size:18px;font-weight:700;margin:8px 0 0;">{plan_data.get('price',0)} {gym.get('currency','EUR').upper()}</p>
+                    <p style="color:#a1a1aa;margin:5px 0 0;">{plan_data.get('duration_days',30)} dias de acceso</p>
+                </div>
+                <div style="background:#F59E0B22;border:1px solid #F59E0B55;padding:15px;border-radius:12px;margin:15px 0;">
+                    <p style="color:#FBBF24;font-weight:700;margin:0 0 5px;font-size:16px;">Pago pendiente</p>
+                    <p style="color:#E5E5E5;margin:0;font-size:14px;">Para habilitar tu acceso, realiza el pago de tu membresia.</p>
+                </div>
+                <div style="text-align:center;margin:25px 0;">
+                    <a href="{app_url}/app/membership" style="display:inline-block;padding:16px 40px;background:#F59E0B;color:#000;font-weight:800;text-decoration:none;border-radius:12px;font-size:18px;">Pagar Ahora</a>
+                </div>
+                """
+            html = f"""
+            <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
+                <div style="text-align:center;margin-bottom:20px;">
+                    <h1 style="color:{gym_color};margin:0;">{gym_name}</h1>
+                </div>
+                <h2 style="margin:0 0 10px;">Bienvenido/a, {member_dict.get('name','')}</h2>
+                <p style="color:#a1a1aa;">Tu registro en <strong style="color:#fff;">{gym_name}</strong> ha sido completado.</p>
+                <div style="background:#18181B;padding:20px;border-radius:12px;text-align:center;margin:20px 0;">
+                    <p style="color:#a1a1aa;margin:0 0 8px;">Tu codigo de acceso</p>
+                    <p style="font-size:32px;font-weight:900;color:{gym_color};font-family:monospace;letter-spacing:4px;margin:0;">{member_dict.get('code','------')}</p>
+                </div>
+                {payment_section}
+                <p style="color:#71717A;font-size:12px;text-align:center;margin-top:30px;">Guarda este codigo para acceder.</p>
+            </div>
+            """
+            email_type = "welcome_payment" if plan_data else "welcome"
+            await send_gym_email(
+                member.gym_id, member_dict["email"],
+                f"Bienvenido/a a {gym_name}" + (" - Completa tu pago" if plan_data else ""),
+                html, member_id=member_dict["id"], email_type=email_type
+            )
+            email_sent = True
         except Exception as e:
             logger.error(f"Kiosk email error: {e}")
+
     return {"member": member_dict, "token": token, "email_sent": email_sent,
+            "membership": membership_data, "plan": plan_data,
+            "requires_payment": bool(member.plan_id),
             "message": f"Registro exitoso. Codigo: {member_dict['code']}"}
 
 # ==================== DASHBOARD ====================
@@ -367,7 +439,9 @@ async def download_google_play_guide():
 async def sync_backend_files(admin: dict = Depends(get_current_admin)):
     from auth import check_role
     check_role(admin, ["super_admin"])
-    import glob, shutil, os
+    import glob
+    import shutil
+    import os
     # Search multiple possible Plesk paths
     search_patterns = [
         "/var/www/vhosts/*/c.ingresoqr.com",
@@ -431,7 +505,8 @@ async def sync_backend_files(admin: dict = Depends(get_current_admin)):
 async def restart_backend(admin: dict = Depends(get_current_admin)):
     from auth import check_role
     check_role(admin, ["super_admin"])
-    import subprocess, os
+    import subprocess
+    import os
     script = """#!/bin/bash
 sleep 2
 kill $(pgrep -f 'uvicorn server:app') 2>/dev/null
