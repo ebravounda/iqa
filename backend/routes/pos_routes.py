@@ -170,11 +170,22 @@ async def get_pos_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_
         stock_query["gym_id"] = gym_id
     low_stock = await db.pos_products.find(stock_query, {"_id": 0}).to_list(50)
     
+    # Count total products
+    product_count_query = {"active": True}
+    if admin["role"] != "super_admin":
+        product_count_query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        product_count_query["gym_id"] = gym_id
+    total_products = await db.pos_products.count_documents(product_count_query)
+    
     return {
         "today_sales": len(today_sales),
+        "today_total": today_total,
         "today_revenue": today_total,
         "month_sales": len(month_sales),
+        "month_total": month_total,
         "month_revenue": month_total,
+        "total_products": total_products,
         "low_stock_products": low_stock
     }
 
