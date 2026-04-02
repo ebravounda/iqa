@@ -41,20 +41,21 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinamico, p
 - Endpoint /api/accounting/transactions con resumen pagado/pendiente
 - Boton reenviar email para todos los tipos
 
+### Features Implementadas y Verificadas (Abril 2026 - Session actual)
+- Colores corporativos por gimnasio (primary, bg, menu, text, secondary) con pickers y vista previa en AdminSettings
+- TPV/POS profesional con categorias (Bebidas, Suplementos, Ropa, etc.), 4 tabs (TPV, Productos, Ventas, Estadisticas), carrito con metodo de pago, busqueda por nombre/barcode
+- Modulo RFID para tarjetas/llaveros fisicos: asignacion por miembro, validacion automatica en turnstile (deteccion QR vs RFID), anti-passback, logs de acceso con access_type
+
 ## P1 - Pendiente
-1. Colores corporativos por gimnasio (Super Admin configura fondo, menu, texto por gym)
-2. TPV mas profesional con categorias de productos
-3. Modulo RFID para tarjetas fisicas
+1. Multi-vertical (condominios, hoteles, coworking) - campo business_type + labels dinamicos
+2. Portal de registro publico mejorado (landing page)
+3. Check-in de asistencia a clases (trainers marcan asistencia)
 
 ## P2 - Futuro
 - Push Notifications reales (Firebase/PWA Push API)
 - Dashboard mejorado para Trainers
-- Multi-vertical (condominios, hoteles, coworking)
-
-## P3 - Backlog
 - Chat trainer-socio
 - Reportes PDF exportables adicionales
-- Integraciones adicionales
 
 ## Notas de Despliegue
 - git clone SOLO actualiza backend .py files
