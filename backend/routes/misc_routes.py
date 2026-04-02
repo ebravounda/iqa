@@ -368,14 +368,31 @@ async def sync_backend_files(admin: dict = Depends(get_current_admin)):
     from auth import check_role
     check_role(admin, ["super_admin"])
     import glob, shutil, os
-    # Find Plesk upload directory base
-    plesk_bases = glob.glob("/var/www/vhosts/*/c.ingresoqr.com")
-    if not plesk_bases:
-        return {"success": False, "message": "No se encontro directorio de Plesk para c.ingresoqr.com", "synced": 0}
-    plesk_base = plesk_bases[0]
+    # Search multiple possible Plesk paths
+    search_patterns = [
+        "/var/www/vhosts/*/c.ingresoqr.com",
+        "/var/www/vhosts/*/c.ingresoqr.com/httpdocs",
+        "/var/www/vhosts/c.ingresoqr.com",
+        "/var/www/vhosts/ingresoqr.com/c.ingresoqr.com",
+    ]
+    plesk_base = None
+    searched_paths = []
+    for pattern in search_patterns:
+        matches = glob.glob(pattern)
+        for m in matches:
+            searched_paths.append(m)
+            py_files = glob.glob(os.path.join(m, "*.py"))
+            if py_files:
+                plesk_base = m
+                break
+        if plesk_base:
+            break
+    if not plesk_base:
+        return {"success": False, "message": f"No se encontraron archivos .py. Se busco en: {searched_paths or search_patterns}", "synced": 0}
     dest_base = "/opt/gymaccess"
+    os.makedirs(dest_base, exist_ok=True)
     synced = []
-    # 1. Sync root .py files (server.py, models.py, auth.py, etc.)
+    # 1. Sync root .py files
     for src in glob.glob(os.path.join(plesk_base, "*.py")):
         filename = os.path.basename(src)
         dest = os.path.join(dest_base, filename)
@@ -395,7 +412,7 @@ async def sync_backend_files(admin: dict = Depends(get_current_admin)):
             synced.append(f"routes/{filename}")
         except Exception as e:
             logger.error(f"Error copying {src}: {e}")
-    # 3. Sync downloads/*.py
+    # 3. Sync downloads/*
     downloads_dest = os.path.join(dest_base, "downloads")
     os.makedirs(downloads_dest, exist_ok=True)
     for src in glob.glob(os.path.join(plesk_base, "downloads", "*")):
@@ -407,8 +424,8 @@ async def sync_backend_files(admin: dict = Depends(get_current_admin)):
         except Exception as e:
             logger.error(f"Error copying {src}: {e}")
     if not synced:
-        return {"success": False, "message": "No se encontraron archivos para sincronizar", "synced": 0}
-    return {"success": True, "message": f"{len(synced)} archivos sincronizados", "synced": len(synced), "files": synced}
+        return {"success": False, "message": f"Directorio encontrado ({plesk_base}) pero sin archivos .py", "synced": 0}
+    return {"success": True, "message": f"{len(synced)} archivos sincronizados desde {plesk_base}", "synced": len(synced), "files": synced}
 
 @router.post("/deploy/restart-backend")
 async def restart_backend(admin: dict = Depends(get_current_admin)):
