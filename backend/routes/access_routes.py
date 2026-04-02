@@ -117,6 +117,52 @@ async def validate_access(validation: AccessValidation):
         return {"valid": False, "reason": "Gimnasio suspendido por falta de pago"}
     if gym.get("status") == "suspended":
         return {"valid": False, "reason": "Gimnasio suspendido"}
+    
+    raw_input = validation.qr_code.strip()
+    
+    # Detect if this is RFID (short hex/numeric string) vs QR code (base64 encoded)
+    is_rfid = len(raw_input) <= 20 and all(c in '0123456789ABCDEFabcdef:' for c in raw_input) and '|' not in raw_input
+    
+    if is_rfid:
+        # RFID lookup
+        rfid_uid = raw_input.upper().replace(':', '')
+        member = await db.members.find_one({"rfid_uid": rfid_uid, "gym_id": gym["id"]}, {"_id": 0})
+        if not member:
+            return {"valid": False, "reason": "Tarjeta/llavero RFID no registrado", "access_type": "rfid"}
+        if member["status"] != "active":
+            return {"valid": False, "reason": f"Socio {member.get('status','inactivo')}", "access_type": "rfid"}
+        membership = await db.memberships.find_one({"member_id": member["id"], "status": "active"}, {"_id": 0})
+        if not membership:
+            return {"valid": False, "reason": "Sin membresia activa", "access_type": "rfid"}
+        end_date = datetime.fromisoformat(membership["end_date"].replace('Z', '+00:00'))
+        if end_date < datetime.now(timezone.utc):
+            await db.memberships.update_one({"id": membership["id"]}, {"$set": {"status": "expired"}})
+            return {"valid": False, "reason": "Membresia vencida", "access_type": "rfid"}
+        # Anti-passback for RFID
+        last_log = await db.access_logs.find_one(
+            {"member_id": member["id"], "gym_id": gym["id"], "is_guest": {"$ne": True}},
+            {"_id": 0}, sort=[("timestamp", -1)]
+        )
+        direction = validation.direction
+        if not direction or direction == "auto":
+            if last_log and last_log.get("direction") == "entrada":
+                direction = "salida"
+            else:
+                direction = "entrada"
+        access_log = {
+            "id": str(uuid.uuid4()), "member_id": member["id"], "member_name": member["name"],
+            "member_code": member.get("code"), "gym_id": gym["id"], "direction": direction,
+            "access_type": "rfid", "is_guest": False,
+            "timestamp": datetime.now(timezone.utc).isoformat()
+        }
+        await db.access_logs.insert_one(access_log)
+        return {
+            "valid": True, "member_name": member["name"], "member_code": member.get("code"),
+            "direction": direction, "access_type": "rfid",
+            "membership_end": membership.get("end_date")
+        }
+    
+    # QR code validation (existing logic)
     qr_refresh = gym.get("qr_refresh_seconds", 10)
     max_age = qr_refresh + 5
     result = validate_qr_data(validation.qr_code, max_age)

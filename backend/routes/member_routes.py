@@ -292,6 +292,22 @@ async def cleanup_inactive_members(body: dict = {}, admin: dict = Depends(get_cu
     }
 
 
+@router.put("/members/{member_id}/rfid")
+async def assign_rfid(member_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    """Assign or remove an RFID UID to a member"""
+    rfid_uid = body.get("rfid_uid", "").strip().upper().replace(":", "")
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+    if rfid_uid:
+        # Check if RFID is already assigned to another member
+        existing = await db.members.find_one({"rfid_uid": rfid_uid, "id": {"$ne": member_id}}, {"_id": 0})
+        if existing:
+            raise HTTPException(status_code=400, detail=f"Esta tarjeta RFID ya esta asignada a {existing.get('name','otro socio')}")
+    await db.members.update_one({"id": member_id}, {"$set": {"rfid_uid": rfid_uid if rfid_uid else None}})
+    return {"message": "RFID actualizado" if rfid_uid else "RFID eliminado", "rfid_uid": rfid_uid or None}
+
+
 @router.get("/members/export/excel")
 async def export_members_excel(
     gym_id: Optional[str] = None,

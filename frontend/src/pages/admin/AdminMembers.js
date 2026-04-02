@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -464,6 +464,7 @@ export default function AdminMembers() {
                     <div className="flex items-center gap-1.5 flex-wrap">
                       <code className="text-xs px-2 py-0.5 rounded font-mono" style={{ background: 'var(--bg-tertiary)', color: 'var(--gym-primary)' }}>{member.code}</code>
                       {member.qr_mode === 'static' && <span className="text-[10px] bg-cyan-900/30 text-cyan-400 px-1.5 py-0.5 rounded leading-none">QR Fijo</span>}
+                      {member.rfid_uid && <span className="text-[10px] bg-orange-900/30 text-orange-400 px-1.5 py-0.5 rounded leading-none" title={`RFID: ${member.rfid_uid}`}>RFID</span>}
                     </div>
                   </td>
                   {isSuperAdmin && (
@@ -562,6 +563,14 @@ export default function AdminMembers() {
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenEmails(member)} className="cursor-pointer text-blue-400" data-testid={`member-emails-${member.code}`}>
                           <Mail size={16} className="mr-2" /> Emails
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={async () => {
+                          const uid = prompt(`RFID para ${member.name}:\n\nActual: ${member.rfid_uid || 'Sin asignar'}\n\nIngresa el UID de la tarjeta/llavero RFID (o vacio para eliminar):`, member.rfid_uid || '');
+                          if (uid === null) return;
+                          try { await assignRFID(member.id, uid); toast.success(uid ? 'RFID asignado' : 'RFID eliminado'); fetchMembers(); }
+                          catch (err) { toast.error(err.response?.data?.detail || 'Error al asignar RFID'); }
+                        }} className="cursor-pointer text-orange-400" data-testid={`member-rfid-${member.code}`}>
+                          <CreditCard size={16} className="mr-2" /> {member.rfid_uid ? 'Cambiar RFID' : 'Asignar RFID'}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>

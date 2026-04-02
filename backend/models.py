@@ -21,6 +21,10 @@ class GymUpdate(BaseModel):
     email: Optional[EmailStr] = None
     logo_url: Optional[str] = None
     primary_color: Optional[str] = None
+    secondary_color: Optional[str] = None
+    bg_color: Optional[str] = None
+    menu_color: Optional[str] = None
+    text_color: Optional[str] = None
     qr_refresh_seconds: Optional[int] = None
     qr_mode: Optional[str] = None
     max_members: Optional[int] = None

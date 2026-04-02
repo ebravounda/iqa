@@ -20,6 +20,10 @@ export default function AdminSettings() {
     email: '',
     logo_url: '',
     primary_color: '#E1FF01',
+    secondary_color: '',
+    bg_color: '',
+    menu_color: '',
+    text_color: '',
     qr_refresh_seconds: 10,
     qr_mode: 'dynamic'
   });
@@ -123,6 +127,10 @@ export default function AdminSettings() {
         email: response.data.email || '',
         logo_url: response.data.logo_url || '',
         primary_color: response.data.primary_color || '#E1FF01',
+        secondary_color: response.data.secondary_color || '',
+        bg_color: response.data.bg_color || '',
+        menu_color: response.data.menu_color || '',
+        text_color: response.data.text_color || '',
         qr_refresh_seconds: response.data.qr_refresh_seconds || 10,
         qr_mode: response.data.qr_mode || 'dynamic'
       });
@@ -229,8 +237,12 @@ export default function AdminSettings() {
         }
       }
       await updateGym(admin.gym_id, cleanData);
-      toast.success('Configuración guardada');
+      toast.success('Configuracion guardada');
       document.documentElement.style.setProperty('--gym-primary', formData.primary_color);
+      if (formData.bg_color) document.documentElement.style.setProperty('--admin-bg', formData.bg_color);
+      if (formData.menu_color) document.documentElement.style.setProperty('--admin-menu', formData.menu_color);
+      if (formData.text_color) document.documentElement.style.setProperty('--admin-text', formData.text_color);
+      if (formData.secondary_color) document.documentElement.style.setProperty('--gym-secondary', formData.secondary_color);
     } catch (error) {
       toast.error('Error al guardar');
     } finally {
@@ -663,6 +675,54 @@ export default function AdminSettings() {
             <div>
               <p className="font-bold">{formData.name || 'Mi Gimnasio'}</p>
               <p className="text-sm" style={{ color: formData.primary_color }}>Color de acento</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Corporate Colors */}
+        <div className="mt-6 pt-6 border-t border-zinc-700">
+          <h4 className="font-bold text-sm text-zinc-300 mb-4 flex items-center gap-2"><Palette size={16} /> Colores Corporativos del Panel</h4>
+          <p className="text-xs text-zinc-500 mb-4">Personaliza los colores del panel admin para tu marca. Dejar vacio usa los colores por defecto.</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Fondo del panel</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={formData.bg_color || '#09090B'} onChange={(e) => setFormData({ ...formData, bg_color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+                <Input value={formData.bg_color} onChange={(e) => setFormData({ ...formData, bg_color: e.target.value })} className="input-dark flex-1 font-mono text-xs" placeholder="#09090B" data-testid="bg-color-input" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Color del menu lateral</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={formData.menu_color || '#111113'} onChange={(e) => setFormData({ ...formData, menu_color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+                <Input value={formData.menu_color} onChange={(e) => setFormData({ ...formData, menu_color: e.target.value })} className="input-dark flex-1 font-mono text-xs" placeholder="#111113" data-testid="menu-color-input" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Color del texto</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={formData.text_color || '#FAFAFA'} onChange={(e) => setFormData({ ...formData, text_color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+                <Input value={formData.text_color} onChange={(e) => setFormData({ ...formData, text_color: e.target.value })} className="input-dark flex-1 font-mono text-xs" placeholder="#FAFAFA" data-testid="text-color-input" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-zinc-400 mb-1 block">Color secundario</label>
+              <div className="flex items-center gap-2">
+                <input type="color" value={formData.secondary_color || '#3B82F6'} onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })} className="w-8 h-8 rounded cursor-pointer border-0" />
+                <Input value={formData.secondary_color} onChange={(e) => setFormData({ ...formData, secondary_color: e.target.value })} className="input-dark flex-1 font-mono text-xs" placeholder="#3B82F6" data-testid="secondary-color-input" />
+              </div>
+            </div>
+          </div>
+          {/* Live Preview */}
+          <div className="mt-4 p-3 rounded-xl border border-zinc-700 flex items-center gap-3" style={{ backgroundColor: formData.bg_color || '#09090B' }}>
+            <div className="w-10 rounded-lg p-2" style={{ backgroundColor: formData.menu_color || '#111113' }}>
+              <div className="w-full h-1.5 rounded mb-1" style={{ backgroundColor: formData.primary_color }} />
+              <div className="w-3/4 h-1 rounded mb-1" style={{ backgroundColor: formData.text_color || '#FAFAFA', opacity: 0.3 }} />
+              <div className="w-1/2 h-1 rounded" style={{ backgroundColor: formData.text_color || '#FAFAFA', opacity: 0.3 }} />
+            </div>
+            <div className="flex-1">
+              <p className="text-xs font-bold" style={{ color: formData.text_color || '#FAFAFA' }}>Vista previa del panel</p>
+              <p className="text-[10px]" style={{ color: formData.secondary_color || '#3B82F6' }}>Texto secundario</p>
             </div>
           </div>
         </div>

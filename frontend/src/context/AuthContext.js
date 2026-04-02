@@ -66,6 +66,18 @@ export const AuthProvider = ({ children }) => {
       if (response.data.gym?.primary_color) {
         document.documentElement.style.setProperty('--gym-primary', response.data.gym.primary_color);
       }
+      if (response.data.gym?.bg_color) {
+        document.documentElement.style.setProperty('--admin-bg', response.data.gym.bg_color);
+      }
+      if (response.data.gym?.menu_color) {
+        document.documentElement.style.setProperty('--admin-menu', response.data.gym.menu_color);
+      }
+      if (response.data.gym?.text_color) {
+        document.documentElement.style.setProperty('--admin-text', response.data.gym.text_color);
+      }
+      if (response.data.gym?.secondary_color) {
+        document.documentElement.style.setProperty('--gym-secondary', response.data.gym.secondary_color);
+      }
     } catch (error) {
       console.error('Error fetching member data:', error);
       logout();

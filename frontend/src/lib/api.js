@@ -218,6 +218,7 @@ export const resendEmail = (emailId) => axios.post(`${API}/emails/resend/${email
 export const updatePlan = (id, data) => axios.put(`${API}/plans/${id}`, data);
 export const updateClass = (id, data) => axios.put(`${API}/classes/${id}`, data);
 export const cleanupInactiveMembers = (days = 60) => axios.post(`${API}/members/cleanup-inactive`, { days });
+export const assignRFID = (memberId, rfidUid) => axios.put(`${API}/members/${memberId}/rfid`, { rfid_uid: rfidUid });
 
 // All Transactions (paid + pending)
 export const getAllTransactions = (params = {}) => {

@@ -18,6 +18,10 @@
   --pwa-nav-bg: rgba(9, 9, 11, 0.9);
   --shadow-color: rgba(0,0,0,0.3);
   --gym-primary: #E1FF01;
+  --gym-secondary: #3B82F6;
+  --admin-bg: var(--bg-primary);
+  --admin-menu: var(--sidebar-bg);
+  --admin-text: var(--text-primary);
   --gym-primary-foreground: #0F172A;
 }
 
@@ -47,7 +51,7 @@
 .admin-sidebar {
   width: 260px;
   height: 100vh;
-  background: var(--sidebar-bg);
+  background: var(--admin-menu);
   border-right: 1px solid var(--border-primary);
   position: fixed;
   left: 0;
@@ -61,7 +65,8 @@
 .admin-content {
   margin-left: 260px;
   min-height: 100vh;
-  background: var(--bg-primary);
+  background: var(--admin-bg);
+  color: var(--admin-text);
   color: var(--text-primary);
 }
 

@@ -67,6 +67,22 @@ export const AdminLayout = ({ children }) => {
     localStorage.setItem('ingresoqr-theme', theme);
   }, [theme]);
 
+  // Apply corporate colors from gym
+  useEffect(() => {
+    if (admin?.gym_id) {
+      const API = process.env.REACT_APP_BACKEND_URL + '/api';
+      fetch(`${API}/gyms/${admin.gym_id}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+      }).then(r => r.json()).then(gym => {
+        if (gym?.primary_color) document.documentElement.style.setProperty('--gym-primary', gym.primary_color);
+        if (gym?.bg_color) document.documentElement.style.setProperty('--admin-bg', gym.bg_color);
+        if (gym?.menu_color) document.documentElement.style.setProperty('--admin-menu', gym.menu_color);
+        if (gym?.text_color) document.documentElement.style.setProperty('--admin-text', gym.text_color);
+        if (gym?.secondary_color) document.documentElement.style.setProperty('--gym-secondary', gym.secondary_color);
+      }).catch(() => {});
+    }
+  }, [admin?.gym_id]);
+
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
   
   const navItems = getNavItems(admin?.role, isImpersonating, admin?.permissions);

@@ -177,3 +177,19 @@ async def get_pos_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_
         "month_revenue": month_total,
         "low_stock_products": low_stock
     }
+
+
+@router.get("/pos/categories")
+async def get_pos_categories(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    """Get distinct product categories for a gym"""
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    categories = await db.pos_products.distinct("category", query)
+    # Filter out None/empty and add default
+    cats = [c for c in categories if c]
+    if not cats:
+        cats = ["general"]
+    return sorted(cats)
