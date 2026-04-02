@@ -10,6 +10,7 @@ import "./App.css";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { BusinessProvider } from "./context/BusinessContext";
 
 // Layouts
 import { AdminLayout } from "./layouts/AdminLayout";
@@ -224,6 +225,7 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <BusinessProvider>
         <AppRoutes />
         <Toaster 
           position="top-center" 
@@ -235,6 +237,7 @@ function App() {
             },
           }}
         />
+      </BusinessProvider>
       </AuthProvider>
     </BrowserRouter>
   );

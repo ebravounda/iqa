@@ -1,0 +1,120 @@
+{
+  "summary": "Iteration 26 - Multi-vertical Business Type Feature Testing Complete. All 14 backend tests passed (100%). Frontend UI verified: AdminGyms page shows 'Negocios' title, gym cards display business type badges, create/edit modals have 4-button business type selector (Gimnasio, Condominio, Hotel, Coworking), submit button text changes dynamically. Gym admin sidebar and dashboard show dynamic labels based on business_type (Socios, Planes, Clases, etc. for gym type).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "Create/Edit Gym Modals",
+        "issues": ["Console warning: Missing `Description` or `aria-describedby={undefined}` for {DialogContent} - accessibility improvement recommended (existing issue from previous iterations)"]
+      }
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration26_business_type.py",
+    "/app/test_reports/pytest/pytest_results_iteration26.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/backend/tests/test_iteration26_business_type.py"
+  ],
+  "success_rate": {
+    "backend": "100% (14/14 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@gymaccess.com / admin123",
+    "gym_admin": "admin@fitzone.com / admin123",
+    "gym_id": "efe99507-15d5-4e54-9f07-30d2507894e0"
+  },
+  "seed_data_creation": "Test gyms created and cleaned up during backend testing (TEST_Condominio_Residencial, TEST_Hotel_Paradise, TEST_Coworking_Hub, TEST_Default_Gym, TEST_Validation_* gyms)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 26 tested the multi-vertical business_type feature. Backend: POST /api/gyms accepts business_type (gym, condominium, hotel, coworking), default is 'gym'. PUT /api/gyms/{id} can update business_type. GET /api/gyms and GET /api/gyms/{id} return business_type field. GET /api/gyms/{id}/public-info returns business_type. Frontend: AdminGyms.js shows 'Negocios' title, gym cards have business type badges, create/edit modals have BUSINESS_TYPES 4-button selector. BusinessContext.js fetches gym data and provides labels via useBusiness() hook. AdminLayout.js sidebar uses dynamic labels. AdminDashboard.js, AdminMembers.js, AdminPlans.js, AdminClasses.js all use labels from useBusiness() for page headers and stats.",
+  "features_verified": {
+    "backend_create_gym_with_business_type": {
+      "status": "PASS",
+      "endpoint": "POST /api/gyms",
+      "details": "Creates gym with business_type field. Tested all 4 types: gym, condominium, hotel, coworking. Default is 'gym' when not specified."
+    },
+    "backend_update_gym_business_type": {
+      "status": "PASS",
+      "endpoint": "PUT /api/gyms/{id}",
+      "details": "Updates gym's business_type. Verified with GET after update."
+    },
+    "backend_get_gyms_returns_business_type": {
+      "status": "PASS",
+      "endpoint": "GET /api/gyms",
+      "details": "Returns business_type field for each gym in the list."
+    },
+    "backend_get_single_gym_returns_business_type": {
+      "status": "PASS",
+      "endpoint": "GET /api/gyms/{id}",
+      "details": "Returns business_type field for single gym."
+    },
+    "backend_public_info_returns_business_type": {
+      "status": "PASS",
+      "endpoint": "GET /api/gyms/{id}/public-info",
+      "details": "Public gym info includes business_type field."
+    },
+    "frontend_admin_gyms_page_title": {
+      "status": "PASS",
+      "component": "AdminGyms.js",
+      "details": "Page title shows 'Negocios' not 'Gimnasios'."
+    },
+    "frontend_gym_card_business_type_badge": {
+      "status": "PASS",
+      "component": "AdminGyms.js",
+      "details": "Each gym card displays a badge showing the business type (Gimnasio, Condominio, Hotel, Coworking)."
+    },
+    "frontend_create_modal_business_type_selector": {
+      "status": "PASS",
+      "component": "AdminGyms.js",
+      "details": "Create modal shows 4-button 'Tipo de Negocio' selector with icons for each type."
+    },
+    "frontend_create_modal_dynamic_submit_button": {
+      "status": "PASS",
+      "component": "AdminGyms.js",
+      "details": "Submit button text changes based on selected type (e.g., 'Crear Condominio')."
+    },
+    "frontend_edit_modal_business_type_selector": {
+      "status": "PASS",
+      "component": "AdminGyms.js",
+      "details": "Edit modal shows business type selector with current type pre-selected."
+    },
+    "frontend_sidebar_dynamic_labels": {
+      "status": "PASS",
+      "component": "AdminLayout.js",
+      "details": "Sidebar labels use dynamic labels from useBusiness() hook. For gym type: Socios, Planes, Clases, Asistencia, Accesos, Rutinas, Gamificacion."
+    },
+    "frontend_dashboard_dynamic_labels": {
+      "status": "PASS",
+      "component": "AdminDashboard.js",
+      "details": "Dashboard stats show dynamic labels: 'Socios Activos', 'Accesos Hoy', 'Membresias Activas', 'Capacidad de socios'."
+    },
+    "frontend_members_page_dynamic_header": {
+      "status": "PASS",
+      "component": "AdminMembers.js",
+      "details": "Members page header shows 'Socios' with count '15 socios registrados'."
+    },
+    "frontend_plans_page_dynamic_header": {
+      "status": "PASS",
+      "component": "AdminPlans.js",
+      "details": "Plans page uses labels.plans and labels.membership for header."
+    },
+    "frontend_classes_page_dynamic_header": {
+      "status": "PASS",
+      "component": "AdminClasses.js",
+      "details": "Classes page uses labels.classes for header."
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

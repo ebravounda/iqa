@@ -10,6 +10,7 @@ class GymCreate(BaseModel):
     primary_color: str = "#E1FF01"
     qr_refresh_seconds: int = 10
     max_members: Optional[int] = None
+    business_type: str = "gym"
     admin_email: Optional[EmailStr] = None
     admin_password: Optional[str] = None
     admin_name: Optional[str] = None
@@ -28,6 +29,7 @@ class GymUpdate(BaseModel):
     qr_refresh_seconds: Optional[int] = None
     qr_mode: Optional[str] = None
     max_members: Optional[int] = None
+    business_type: Optional[str] = None
     stripe_secret_key: Optional[str] = None
     stripe_currency: Optional[str] = None
     smtp_host: Optional[str] = None

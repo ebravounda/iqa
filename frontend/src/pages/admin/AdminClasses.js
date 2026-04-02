@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useBusiness } from '../../context/BusinessContext';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
@@ -32,6 +33,7 @@ const defaultClass = {
 
 export default function AdminClasses() {
   const { admin, isSuperAdmin } = useAuth();
+  const { labels } = useBusiness();
   const [classes, setClasses] = useState([]);
   const [trainers, setTrainers] = useState([]);
   const [gyms, setGyms] = useState([]);
@@ -167,8 +169,8 @@ export default function AdminClasses() {
     <div className="space-y-6" data-testid="admin-classes">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Clases</h1>
-          <p className="text-zinc-400 text-sm">{classes.length} clases activas</p>
+          <h1 className="text-2xl font-black tracking-tight">{labels.classes}</h1>
+          <p className="text-zinc-400 text-sm">{classes.length} {labels.classes.toLowerCase()} activas</p>
         </div>
         
         <div className="flex gap-2">

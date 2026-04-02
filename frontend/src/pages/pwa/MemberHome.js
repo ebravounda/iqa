@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { generateQR } from '../../lib/api';
 import { getMembershipStatus, getDaysRemaining } from '../../lib/utils';
+import { getLabels } from '../../lib/businessLabels';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard, BarChart3, Calendar, Clock, Trophy, Dumbbell } from 'lucide-react';
@@ -10,6 +11,7 @@ import { Button } from '../../components/ui/button';
 
 export default function MemberHome() {
   const { member, gym, membership } = useAuth();
+  const labels = getLabels(gym?.business_type || 'gym');
   const navigate = useNavigate();
   const [qrCode, setQrCode] = useState('');
   const [expiresAt, setExpiresAt] = useState(0);
@@ -113,7 +115,7 @@ export default function MemberHome() {
           <CreditCard size={40} className="mx-auto mb-3 text-amber-400" />
           <p className="text-amber-300 font-bold text-lg mb-2">Pago Pendiente</p>
           <p className="text-zinc-400 text-sm mb-4">
-            Para habilitar tu acceso al gimnasio, realiza el pago de tu membresia.
+            Para habilitar tu acceso, realiza el pago de tu {labels.membership.toLowerCase()}.
           </p>
           <Button
             onClick={() => navigate('/app/membership')}
@@ -121,7 +123,7 @@ export default function MemberHome() {
             data-testid="pay-membership-btn"
           >
             <CreditCard size={16} className="mr-2" />
-            Pagar Membresia
+            Pagar {labels.membership}
           </Button>
         </motion.div>
       )}
@@ -153,7 +155,7 @@ export default function MemberHome() {
               </p>
               <p className="text-xs text-zinc-400 mt-1">
                 {membershipStatus.status === 'expired'
-                  ? 'Renueva tu membresía para seguir accediendo al gimnasio.'
+                  ? `Renueva tu ${labels.membership.toLowerCase()} para seguir accediendo.`
                   : 'Renueva ahora para no perder acceso.'}
               </p>
               <Button
@@ -298,7 +300,7 @@ export default function MemberHome() {
           </button>
           <button onClick={() => navigate('/app/membership')} className="stat-card flex flex-col items-center gap-2 py-4 hover:border-[var(--gym-primary)]/30 transition-colors" data-testid="nav-membership">
             <CreditCard size={22} className="text-blue-400" />
-            <span className="text-xs text-zinc-400">Membresia</span>
+            <span className="text-xs text-zinc-400">{labels.membership}</span>
           </button>
         </div>
       </motion.div>

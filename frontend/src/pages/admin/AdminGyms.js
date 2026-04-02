@@ -9,10 +9,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { 
   Plus, Building2, Search, MoreVertical, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle, LogIn, Users, Mail, Shield, CreditCard
+  AlertTriangle, LogIn, Users, Mail, Shield, CreditCard, Dumbbell, Building, Hotel, Laptop
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
+import { BUSINESS_TYPES } from '../../lib/businessLabels';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -29,10 +30,10 @@ export default function AdminGyms() {
   const [impersonating, setImpersonating] = useState(null);
   const [newGym, setNewGym] = useState({
     name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null,
-    admin_email: '', admin_password: '', admin_name: ''
+    business_type: 'gym', admin_email: '', admin_password: '', admin_name: ''
   });
   const [editGym, setEditGym] = useState({
-    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null
+    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, business_type: 'gym'
   });
 
   useEffect(() => { fetchGyms(); }, []);
@@ -57,7 +58,7 @@ export default function AdminGyms() {
         ? 'Gimnasio creado con administrador' 
         : 'Gimnasio creado exitosamente');
       setShowCreateModal(false);
-      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, admin_email: '', admin_password: '', admin_name: '' });
+      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, business_type: 'gym', admin_email: '', admin_password: '', admin_name: '' });
       fetchGyms();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al crear gimnasio');
@@ -72,7 +73,8 @@ export default function AdminGyms() {
       phone: gym.phone || '',
       email: gym.email || '',
       primary_color: gym.primary_color || '#E1FF01',
-      max_members: gym.max_members || null
+      max_members: gym.max_members || null,
+      business_type: gym.business_type || 'gym'
     });
     setShowEditModal(true);
   };
@@ -158,27 +160,27 @@ export default function AdminGyms() {
     <div className="space-y-6" data-testid="admin-gyms">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Gimnasios</h1>
-          <p className="text-zinc-400 text-sm">{gyms.length} gimnasios registrados</p>
+          <h1 className="text-2xl font-black tracking-tight">Negocios</h1>
+          <p className="text-zinc-400 text-sm">{gyms.length} negocios registrados</p>
         </div>
         
         <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
           <DialogTrigger asChild>
             <Button className="btn-gym-primary" data-testid="create-gym-btn">
-              <Plus size={20} className="mr-2" /> Nuevo Gimnasio
+              <Plus size={20} className="mr-2" /> Nuevo Negocio
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-zinc-900 border-zinc-800 max-h-[90vh] overflow-y-auto">
-            <DialogHeader><DialogTitle>Crear Nuevo Gimnasio</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Crear Nuevo Negocio</DialogTitle></DialogHeader>
             <div className="mt-4">
               <div className="space-y-4">
                 <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Nombre del Gimnasio *</label>
+                  <label className="text-sm text-zinc-400 mb-1 block">Nombre del Negocio *</label>
                   <Input value={newGym.name} onChange={(e) => setNewGym({ ...newGym, name: e.target.value })}
                     placeholder="Ej: PowerFit Gym" className="input-dark" data-testid="gym-name-input" />
                 </div>
                 <div>
-                  <label className="text-sm text-zinc-400 mb-1 block">Email del Gimnasio</label>
+                  <label className="text-sm text-zinc-400 mb-1 block">Email del Negocio</label>
                   <Input type="email" value={newGym.email} onChange={(e) => setNewGym({ ...newGym, email: e.target.value })}
                     placeholder="contacto@gimnasio.com" className="input-dark" />
                 </div>
@@ -209,6 +211,27 @@ export default function AdminGyms() {
                   </div>
                 </div>
 
+                {/* Business Type Selector */}
+                <div>
+                  <label className="text-sm text-zinc-400 mb-2 block">Tipo de Negocio</label>
+                  <div className="grid grid-cols-2 gap-2" data-testid="business-type-selector">
+                    {BUSINESS_TYPES.map(bt => {
+                      const Icon = bt.value === 'gym' ? Dumbbell : bt.value === 'condominium' ? Building : bt.value === 'hotel' ? Hotel : Laptop;
+                      const selected = newGym.business_type === bt.value;
+                      return (
+                        <button key={bt.value} type="button" onClick={() => setNewGym({ ...newGym, business_type: bt.value })}
+                          className={`flex items-center gap-2 p-3 rounded-xl text-sm font-medium transition-all border ${selected ? 'border-[var(--gym-primary)] text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'}`}
+                          style={selected ? { background: 'rgba(225,255,1,0.1)' } : {}}
+                          data-testid={`business-type-${bt.value}`}
+                        >
+                          <Icon size={18} style={selected ? { color: 'var(--gym-primary)' } : {}} />
+                          {bt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Admin Credentials Section */}
                 <div className="pt-4 border-t border-zinc-800">
                   <div className="flex items-center gap-2 mb-3">
@@ -216,7 +239,7 @@ export default function AdminGyms() {
                     <label className="text-sm font-bold text-zinc-300">Credenciales del Administrador</label>
                   </div>
                   <p className="text-xs text-zinc-500 mb-3">
-                    Se creará un usuario administrador para este gimnasio
+                    Se creara un usuario administrador para este negocio
                   </p>
                   <div className="space-y-3">
                     <div>
@@ -238,7 +261,7 @@ export default function AdminGyms() {
                 </div>
               </div>
               <Button onClick={handleCreateGym} className="w-full btn-gym-primary mt-6" data-testid="save-gym-btn">
-                <Building2 size={20} className="mr-2" /> Crear Gimnasio
+                <Building2 size={20} className="mr-2" /> {BUSINESS_TYPES.find(bt => bt.value === newGym.business_type)?.label ? `Crear ${BUSINESS_TYPES.find(bt => bt.value === newGym.business_type).label}` : 'Crear Negocio'}
               </Button>
             </div>
           </DialogContent>
@@ -262,7 +285,7 @@ export default function AdminGyms() {
         ) : filteredGyms.length === 0 ? (
           <div className="col-span-full text-center py-12">
             <Building2 size={48} className="mx-auto text-zinc-600 mb-4" />
-            <p className="text-zinc-500">No hay gimnasios registrados</p>
+            <p className="text-zinc-500">No hay negocios registrados</p>
           </div>
         ) : (
           filteredGyms.map((gym) => (
@@ -290,7 +313,12 @@ export default function AdminGyms() {
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-bold truncate">{gym.name}</h3>
-                    <p className="text-xs text-zinc-500 truncate">{gym.email || 'Sin email'}</p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: 'var(--bg-tertiary)', color: 'var(--gym-primary)' }} data-testid={`gym-type-badge-${gym.id}`}>
+                        {BUSINESS_TYPES.find(bt => bt.value === (gym.business_type || 'gym'))?.label || 'Gimnasio'}
+                      </span>
+                      <p className="text-xs text-zinc-500 truncate">{gym.email || 'Sin email'}</p>
+                    </div>
                   </div>
                 </div>
 
@@ -365,7 +393,7 @@ export default function AdminGyms() {
       {/* Edit Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
         <DialogContent className="bg-zinc-900 border-zinc-800">
-          <DialogHeader><DialogTitle>Editar Gimnasio</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Editar Negocio</DialogTitle></DialogHeader>
           <div className="mt-4">
             <div className="space-y-4">
               <div>
@@ -400,6 +428,25 @@ export default function AdminGyms() {
                   <Input value={editGym.primary_color} onChange={(e) => setEditGym({ ...editGym, primary_color: e.target.value })} className="input-dark font-mono" />
                 </div>
               </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-2 block">Tipo de Negocio</label>
+                <div className="grid grid-cols-2 gap-2" data-testid="edit-business-type-selector">
+                  {BUSINESS_TYPES.map(bt => {
+                    const Icon = bt.value === 'gym' ? Dumbbell : bt.value === 'condominium' ? Building : bt.value === 'hotel' ? Hotel : Laptop;
+                    const selected = editGym.business_type === bt.value;
+                    return (
+                      <button key={bt.value} type="button" onClick={() => setEditGym({ ...editGym, business_type: bt.value })}
+                        className={`flex items-center gap-2 p-3 rounded-xl text-sm font-medium transition-all border ${selected ? 'border-[var(--gym-primary)] text-white' : 'border-zinc-700 text-zinc-400 hover:border-zinc-500'}`}
+                        style={selected ? { background: 'rgba(225,255,1,0.1)' } : {}}
+                        data-testid={`edit-business-type-${bt.value}`}
+                      >
+                        <Icon size={18} style={selected ? { color: 'var(--gym-primary)' } : {}} />
+                        {bt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
             <Button onClick={handleUpdateGym} className="w-full btn-gym-primary mt-4" data-testid="update-gym-btn">
               <Pencil size={20} className="mr-2" /> Guardar Cambios
@@ -415,9 +462,9 @@ export default function AdminGyms() {
             <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-4">
               <AlertTriangle size={32} className="text-red-500" />
             </div>
-            <h2 className="text-xl font-bold mb-2">Eliminar Gimnasio</h2>
+            <h2 className="text-xl font-bold mb-2">Eliminar Negocio</h2>
             <p className="text-zinc-400 mb-2">
-              ¿Desea confirmar la eliminación del gimnasio?
+              Desea confirmar la eliminacion del negocio?
             </p>
             <p className="text-lg font-bold mb-4" style={{ color: selectedGym?.primary_color }}>
               {selectedGym?.name}

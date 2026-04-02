@@ -174,6 +174,7 @@ async def get_gym_public_info(gym_id: str):
         "address": gym.get("address"),
         "phone": gym.get("phone"),
         "email": gym.get("email"),
+        "business_type": gym.get("business_type", "gym"),
         "has_payments": has_stripe or has_mercadopago,
         "has_stripe": has_stripe,
         "has_mercadopago": has_mercadopago,

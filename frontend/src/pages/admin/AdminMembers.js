@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useBusiness } from '../../context/BusinessContext';
 import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
@@ -78,6 +79,7 @@ function MemberContactPopover({ member, onClose }) {
 
 export default function AdminMembers() {
   const { admin, isSuperAdmin, hasPermission } = useAuth();
+  const { labels } = useBusiness();
   const [members, setMembers] = useState([]);
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -323,8 +325,8 @@ export default function AdminMembers() {
     <div className="space-y-6" data-testid="admin-members">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Socios</h1>
-          <p style={{ color: 'var(--text-secondary)' }} className="text-sm">{filteredMembers.length} socios registrados</p>
+          <h1 className="text-2xl font-black tracking-tight">{labels.members}</h1>
+          <p style={{ color: 'var(--text-secondary)' }} className="text-sm">{filteredMembers.length} {labels.members.toLowerCase()} registrados</p>
         </div>
         <div className="flex gap-2 flex-wrap">
           {isSuperAdmin && gyms.length > 0 && (

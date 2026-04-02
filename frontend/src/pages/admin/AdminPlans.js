@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useBusiness } from '../../context/BusinessContext';
 import { getPlans, createPlan, deletePlan, updatePlan, getGyms } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
@@ -11,6 +12,7 @@ import { toast } from 'sonner';
 
 export default function AdminPlans() {
   const { admin, isSuperAdmin } = useAuth();
+  const { labels } = useBusiness();
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -119,8 +121,8 @@ export default function AdminPlans() {
     <div className="space-y-6" data-testid="admin-plans">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight">Planes de Membresia</h1>
-          <p style={{ color: 'var(--text-secondary)' }} className="text-sm">{plans.length} planes en {Object.keys(plansByGym).length} gimnasio(s)</p>
+          <h1 className="text-2xl font-black tracking-tight">{labels.plans} de {labels.membership}</h1>
+          <p style={{ color: 'var(--text-secondary)' }} className="text-sm">{plans.length} {labels.plans.toLowerCase()} en {Object.keys(plansByGym).length} negocio(s)</p>
         </div>
         <Dialog open={showCreateModal} onOpenChange={(v) => { setShowCreateModal(v); if (!v) setEditPlan(null); }}>
           <DialogTrigger asChild>

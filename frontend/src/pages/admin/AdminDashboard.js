@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useBusiness } from '../../context/BusinessContext';
 import { getDashboardStats, getAccessLogs, getExpiringMemberships, getDailyAccessStats } from '../../lib/api';
 import { formatDateTime, formatCurrency } from '../../lib/utils';
 import { 
@@ -10,6 +11,7 @@ import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContai
 
 export default function AdminDashboard() {
   const { admin, isSuperAdmin } = useAuth();
+  const { labels } = useBusiness();
   const [stats, setStats] = useState(null);
   const [recentAccess, setRecentAccess] = useState([]);
   const [expiringMemberships, setExpiringMemberships] = useState([]);
@@ -65,7 +67,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="stat-card" data-testid="stat-active-members">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-zinc-400 text-sm font-medium">Socios Activos</span>
+            <span className="text-zinc-400 text-sm font-medium">{labels.members} Activos</span>
             <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center">
               <Users size={20} className="text-emerald-500" />
             </div>
@@ -79,7 +81,7 @@ export default function AdminDashboard() {
 
         <div className="stat-card" data-testid="stat-today-accesses">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-zinc-400 text-sm font-medium">Accesos Hoy</span>
+            <span className="text-zinc-400 text-sm font-medium">{labels.accesses} Hoy</span>
             <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
               <TrendingUp size={20} className="text-blue-500" />
             </div>
@@ -92,7 +94,7 @@ export default function AdminDashboard() {
 
         <div className="stat-card" data-testid="stat-active-memberships">
           <div className="flex items-center justify-between mb-4">
-            <span className="text-zinc-400 text-sm font-medium">Membresías Activas</span>
+            <span className="text-zinc-400 text-sm font-medium">{labels.memberships} Activas</span>
             <div className="w-10 h-10 rounded-xl bg-purple-500/10 flex items-center justify-center">
               <Calendar size={20} className="text-purple-500" />
             </div>
@@ -113,7 +115,7 @@ export default function AdminDashboard() {
           <p className="text-3xl font-black">{formatCurrency(stats?.month_revenue || 0)}</p>
           {isSuperAdmin && (
             <p className="text-xs text-zinc-500 mt-1">
-              {stats?.gyms_count || 0} gimnasios
+              {stats?.gyms_count || 0} negocios
             </p>
           )}
         </div>
@@ -124,7 +126,7 @@ export default function AdminDashboard() {
         <div className="p-4 rounded-xl bg-amber-500/5 border border-amber-500/20 flex items-center gap-3" data-testid="suspended-alert">
           <AlertTriangle size={20} className="text-amber-500 shrink-0" />
           <p className="text-sm text-amber-400">
-            <span className="font-bold">{stats.suspended_members}</span> socios suspendidos
+            <span className="font-bold">{stats.suspended_members}</span> {labels.members.toLowerCase()} suspendidos
           </p>
         </div>
       )}
@@ -134,9 +136,9 @@ export default function AdminDashboard() {
         <div className="stat-card" data-testid="capacity-bar">
           <div className="flex items-center justify-between mb-3">
             <div>
-              <h3 className="font-bold text-lg">Capacidad de Socios</h3>
+              <h3 className="font-bold text-lg">{labels.memberCapacity}</h3>
               <p className="text-zinc-400 text-sm">
-                {stats.capacity.active_members} de {stats.capacity.max_members} socios
+                {stats.capacity.active_members} de {stats.capacity.max_members} {labels.members.toLowerCase()}
               </p>
             </div>
             <span className={`text-2xl font-black ${
@@ -167,7 +169,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart - Real Data */}
         <div className="lg:col-span-2 chart-container" data-testid="access-chart">
-          <h3 className="font-bold mb-6">Accesos de la Semana</h3>
+          <h3 className="font-bold mb-6">{labels.accesses} de la Semana</h3>
           <ResponsiveContainer width="100%" height={250}>
             {chartData.length > 0 ? (
               <BarChart data={chartData}>
@@ -214,7 +216,7 @@ export default function AdminDashboard() {
           </div>
           <div className="space-y-3">
             {expiringMemberships.length === 0 ? (
-              <p className="text-zinc-500 text-sm">No hay membresías por vencer</p>
+              <p className="text-zinc-500 text-sm">No hay {labels.memberships.toLowerCase()} por vencer</p>
             ) : (
               expiringMemberships.slice(0, 5).map((m) => (
                 <div key={m.id} className="flex items-center justify-between py-2 border-b border-zinc-800 last:border-0">
@@ -237,14 +239,14 @@ export default function AdminDashboard() {
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
             <Clock size={18} className="text-zinc-400" />
-            <h3 className="font-bold">Accesos Recientes</h3>
+            <h3 className="font-bold">{labels.accesses} Recientes</h3>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="data-table">
             <thead>
               <tr>
-                <th>Socio</th>
+                <th>{labels.member}</th>
                 <th>Código</th>
                 {isSuperAdmin && <th>Gimnasio</th>}
                 <th>Dirección</th>
