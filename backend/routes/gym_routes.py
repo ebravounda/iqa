@@ -184,3 +184,25 @@ async def get_gym_public_info(gym_id: str):
         "has_mercadopago": has_mercadopago,
         "currency": gym.get("currency", gym.get("stripe_currency", "eur"))
     }
+
+
+
+@router.get("/gyms/resolve-domain/{domain}")
+async def resolve_gym_domain(domain: str):
+    """Public endpoint - resolve a custom domain to a gym's public info"""
+    domain = domain.lower().strip()
+    gym = await db.gyms.find_one({"custom_domain": domain, "status": {"$ne": "suspended"}}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Dominio no configurado")
+    return {
+        "id": gym["id"],
+        "name": gym.get("name", ""),
+        "logo_url": gym.get("logo_url"),
+        "primary_color": gym.get("primary_color", "#E1FF01"),
+        "secondary_color": gym.get("secondary_color"),
+        "bg_color": gym.get("bg_color"),
+        "menu_color": gym.get("menu_color"),
+        "text_color": gym.get("text_color"),
+        "business_type": gym.get("business_type", "gym"),
+        "custom_domain": gym.get("custom_domain"),
+    }

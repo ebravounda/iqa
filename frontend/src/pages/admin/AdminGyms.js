@@ -30,10 +30,10 @@ export default function AdminGyms() {
   const [impersonating, setImpersonating] = useState(null);
   const [newGym, setNewGym] = useState({
     name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null,
-    business_type: 'gym', admin_email: '', admin_password: '', admin_name: ''
+    business_type: 'gym', custom_domain: '', admin_email: '', admin_password: '', admin_name: ''
   });
   const [editGym, setEditGym] = useState({
-    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, business_type: 'gym'
+    name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, business_type: 'gym', custom_domain: ''
   });
 
   useEffect(() => { fetchGyms(); }, []);
@@ -58,7 +58,7 @@ export default function AdminGyms() {
         ? 'Gimnasio creado con administrador' 
         : 'Gimnasio creado exitosamente');
       setShowCreateModal(false);
-      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, business_type: 'gym', admin_email: '', admin_password: '', admin_name: '' });
+      setNewGym({ name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null, business_type: 'gym', custom_domain: '', admin_email: '', admin_password: '', admin_name: '' });
       fetchGyms();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al crear gimnasio');
@@ -74,7 +74,8 @@ export default function AdminGyms() {
       email: gym.email || '',
       primary_color: gym.primary_color || '#E1FF01',
       max_members: gym.max_members || null,
-      business_type: gym.business_type || 'gym'
+      business_type: gym.business_type || 'gym',
+      custom_domain: gym.custom_domain || ''
     });
     setShowEditModal(true);
   };
@@ -232,6 +233,13 @@ export default function AdminGyms() {
                   </div>
                 </div>
 
+                {/* Custom Domain */}
+                <div>
+                  <label className="text-sm text-zinc-400 mb-1 block">Dominio Personalizado</label>
+                  <Input value={newGym.custom_domain} onChange={(e) => setNewGym({ ...newGym, custom_domain: e.target.value.toLowerCase() })} className="input-dark" placeholder="panel.sunegocio.com" data-testid="gym-custom-domain" />
+                  <p className="text-[10px] text-zinc-500 mt-1">El negocio debe apuntar un CNAME a app.ingresoqr.com</p>
+                </div>
+
                 {/* Admin Credentials Section */}
                 <div className="pt-4 border-t border-zinc-800">
                   <div className="flex items-center gap-2 mb-3">
@@ -313,10 +321,15 @@ export default function AdminGyms() {
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-bold truncate">{gym.name}</h3>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: 'var(--bg-tertiary)', color: 'var(--gym-primary)' }} data-testid={`gym-type-badge-${gym.id}`}>
                         {BUSINESS_TYPES.find(bt => bt.value === (gym.business_type || 'gym'))?.label || 'Gimnasio'}
                       </span>
+                      {gym.custom_domain && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded-full font-medium bg-blue-500/10 text-blue-400" data-testid={`gym-domain-badge-${gym.id}`}>
+                          {gym.custom_domain}
+                        </span>
+                      )}
                       <p className="text-xs text-zinc-500 truncate">{gym.email || 'Sin email'}</p>
                     </div>
                   </div>
@@ -446,6 +459,11 @@ export default function AdminGyms() {
                     );
                   })}
                 </div>
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Dominio Personalizado</label>
+                <Input value={editGym.custom_domain} onChange={(e) => setEditGym({ ...editGym, custom_domain: e.target.value.toLowerCase() })} className="input-dark" placeholder="panel.sunegocio.com" data-testid="edit-gym-custom-domain" />
+                <p className="text-[10px] text-zinc-500 mt-1">CNAME apuntando a app.ingresoqr.com</p>
               </div>
             </div>
             <Button onClick={handleUpdateGym} className="w-full btn-gym-primary mt-4" data-testid="update-gym-btn">

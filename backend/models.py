@@ -30,6 +30,7 @@ class GymUpdate(BaseModel):
     qr_mode: Optional[str] = None
     max_members: Optional[int] = None
     business_type: Optional[str] = None
+    custom_domain: Optional[str] = None
     stripe_secret_key: Optional[str] = None
     stripe_currency: Optional[str] = None
     smtp_host: Optional[str] = None

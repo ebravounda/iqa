@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useCustomDomain } from '../../hooks/useCustomDomain';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Loader2, LogIn } from 'lucide-react';
@@ -12,6 +13,7 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const { loginAdmin } = useAuth();
   const navigate = useNavigate();
+  const { domainGym, isCustomDomain, loading: domainLoading } = useCustomDomain();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -26,11 +28,24 @@ export default function AdminLogin() {
       toast.success('Bienvenido!');
       navigate('/admin');
     } catch (error) {
-      toast.error(error.response?.data?.detail || 'Credenciales inválidas');
+      toast.error(error.response?.data?.detail || 'Credenciales invalidas');
     } finally {
       setLoading(false);
     }
   };
+
+  if (domainLoading) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex items-center justify-center">
+        <Loader2 className="animate-spin text-zinc-500" size={32} />
+      </div>
+    );
+  }
+
+  const gymColor = domainGym?.primary_color || 'var(--gym-primary)';
+  const gymName = domainGym?.name;
+  const gymLogo = domainGym?.logo_url;
+  const API = process.env.REACT_APP_BACKEND_URL;
 
   return (
     <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-4 noise-overlay">
@@ -41,13 +56,27 @@ export default function AdminLogin() {
       
       <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
+          {gymLogo ? (
+            <img 
+              src={gymLogo.startsWith('/') ? `${API}${gymLogo}` : gymLogo} 
+              alt={gymName} 
+              className="w-20 h-20 object-contain mx-auto mb-4 rounded-xl"
+            />
+          ) : null}
           <h1 className="text-4xl font-black tracking-tight mb-2">
-            <span style={{ color: 'var(--gym-primary)' }}>Ingreso</span>QR
+            {gymName ? (
+              <span style={{ color: gymColor }}>{gymName}</span>
+            ) : (
+              <><span style={{ color: gymColor }}>Ingreso</span>QR</>
+            )}
           </h1>
-          <p className="text-zinc-400">Panel de Administración</p>
+          <p className="text-zinc-400">
+            {isCustomDomain && domainGym ? 'Panel de Administracion' : 'Panel de Administracion'}
+          </p>
         </div>
 
-        <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8">
+        <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-8"
+          style={domainGym ? { borderColor: `${gymColor}22` } : {}}>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
@@ -57,7 +86,7 @@ export default function AdminLogin() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@tugimnasio.com"
+                placeholder="admin@tunegocio.com"
                 className="input-dark"
                 data-testid="admin-email-input"
               />
@@ -65,7 +94,7 @@ export default function AdminLogin() {
 
             <div>
               <label className="block text-sm font-medium text-zinc-400 mb-2">
-                Contraseña
+                Contrasena
               </label>
               <Input
                 type="password"
@@ -80,7 +109,8 @@ export default function AdminLogin() {
             <Button
               type="submit"
               disabled={loading}
-              className="w-full btn-gym-primary"
+              className="w-full"
+              style={{ background: gymColor, color: '#000' }}
               data-testid="admin-login-btn"
             >
               {loading ? (
@@ -88,12 +118,18 @@ export default function AdminLogin() {
               ) : (
                 <LogIn className="mr-2" size={20} />
               )}
-              Iniciar Sesión
+              Iniciar Sesion
             </Button>
           </form>
 
+          {isCustomDomain && !domainGym && (
+            <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+              <p className="text-red-400 text-sm text-center">Dominio no configurado</p>
+            </div>
+          )}
+
           <p className="text-center text-xs text-zinc-500 mt-6">
-            Inicia sesion con tus credenciales de acceso
+            {gymName ? `Acceso exclusivo para personal de ${gymName}` : 'Inicia sesion con tus credenciales de acceso'}
           </p>
         </div>
       </div>
