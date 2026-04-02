@@ -397,7 +397,7 @@ export default function AdminPOS() {
 
       {/* Product Form Dialog */}
       <Dialog open={showForm} onOpenChange={setShowForm}>
-        <DialogContent className="dialog-content max-w-md">
+        <DialogContent className="dialog-content max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{editingProduct ? 'Editar Producto' : 'Nuevo Producto'}</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
