@@ -29,7 +29,7 @@ export default function AdminPOS() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [activeTab, setActiveTab] = useState('pos');
   const [productForm, setProductForm] = useState({
-    name: '', description: '', cost_price: 0, sale_price: 0, stock: 0, category: 'General', barcode: ''
+    name: '', description: '', cost_price: 0, sale_price: 0, stock: 0, category: 'General', barcode: '', image_url: ''
   });
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [processing, setProcessing] = useState(false);
@@ -97,10 +97,12 @@ export default function AdminPOS() {
 
   const processSale = async () => {
     if (cart.length === 0) return;
+    const saleGymId = gymId || cart[0]?.gym_id;
+    if (!saleGymId) { toast.error('No se pudo determinar el negocio'); return; }
     setProcessing(true);
     try {
       await axios.post(`${API}/pos/sales`, {
-        gym_id: gymId,
+        gym_id: saleGymId,
         items: cart.map(i => ({ product_id: i.id, quantity: i.qty, unit_price: i.sale_price })),
         total: cartTotal,
         currency: 'EUR',
