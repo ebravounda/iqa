@@ -217,6 +217,7 @@ export const getMemberEmails = (memberId) => axios.get(`${API}/emails/member/${m
 export const resendEmail = (emailId) => axios.post(`${API}/emails/resend/${emailId}`);
 export const updatePlan = (id, data) => axios.put(`${API}/plans/${id}`, data);
 export const updateClass = (id, data) => axios.put(`${API}/classes/${id}`, data);
+export const cleanupInactiveMembers = (days = 60) => axios.post(`${API}/members/cleanup-inactive`, { days });
 
 // All Transactions (paid + pending)
 export const getAllTransactions = (params = {}) => {

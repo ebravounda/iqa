@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -335,8 +335,20 @@ export default function AdminMembers() {
             </select>
           )}
           <Button variant="outline" className="border-zinc-700 text-zinc-300" onClick={handleCheckExpired}
-            data-testid="check-expired-btn" title="Suspender socios con membresía vencida">
+            data-testid="check-expired-btn" title="Suspender socios con membresia vencida">
             <RefreshCw size={16} className="mr-2" /> Verificar Vencidos
+          </Button>
+          <Button variant="outline" className="border-red-800 text-red-400 hover:bg-red-900/30" 
+            onClick={async () => {
+              if (!window.confirm('Esto eliminara socios inactivos 60+ dias sin pagos ni accesos. Continuar?')) return;
+              try {
+                const res = await cleanupInactiveMembers(60);
+                toast.success(res.data.message);
+                fetchMembers();
+              } catch (err) { toast.error('Error al limpiar socios'); }
+            }}
+            data-testid="cleanup-inactive-btn" title="Eliminar socios inactivos 60+ dias">
+            <Trash2 size={16} className="mr-2" /> Limpiar Inactivos
           </Button>
           <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
             <DialogTrigger asChild>

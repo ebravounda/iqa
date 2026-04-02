@@ -102,6 +102,53 @@ async def register_member_public(member: MemberPublicRegister):
             await db.payment_transactions.insert_one(transaction)
     
     token = create_jwt_token({"sub": member_dict["id"], "role": "member", "gym_id": member.gym_id})
+    
+    # Send welcome email with payment button if plan selected
+    if member.plan_id and plan_data:
+        try:
+            from routes.misc_routes import send_gym_email
+            gym_color = gym.get("primary_color", "#E1FF01")
+            gym_name = gym.get("name", "IngresoQR")
+            # Build payment URL
+            app_url = "https://app.ingresoqr.com"
+            payment_section = f"""
+            <div style="background:#18181B;padding:20px;border-radius:12px;margin:20px 0;">
+                <p style="color:#a1a1aa;margin:0 0 5px;font-size:14px;">Plan seleccionado</p>
+                <p style="font-size:22px;font-weight:700;color:{gym_color};margin:0;">{plan_data.get('name','')}</p>
+                <p style="color:#fff;font-size:18px;font-weight:700;margin:8px 0 0;">{plan_data.get('price',0)} {gym.get('currency','EUR').upper()}</p>
+                <p style="color:#a1a1aa;margin:5px 0 0;">{plan_data.get('duration_days',30)} dias de acceso</p>
+            </div>
+            <div style="background:#F59E0B22;border:1px solid #F59E0B55;padding:15px;border-radius:12px;margin:15px 0;">
+                <p style="color:#FBBF24;font-weight:700;margin:0 0 5px;font-size:16px;">Pago pendiente</p>
+                <p style="color:#E5E5E5;margin:0;font-size:14px;">Para habilitar tu acceso al gimnasio, realiza el pago de tu membresia.</p>
+            </div>
+            <div style="text-align:center;margin:25px 0;">
+                <a href="{app_url}/app/membership" style="display:inline-block;padding:16px 40px;background:#F59E0B;color:#000;font-weight:800;text-decoration:none;border-radius:12px;font-size:18px;">Pagar Ahora</a>
+            </div>
+            """
+            html = f"""
+            <div style="font-family:Arial,sans-serif;max-width:500px;margin:0 auto;padding:30px;background:#09090B;color:#fff;border-radius:16px;">
+                <div style="text-align:center;margin-bottom:20px;">
+                    <h1 style="color:{gym_color};margin:0;">{gym_name}</h1>
+                </div>
+                <h2 style="margin:0 0 10px;">Bienvenido/a, {member_dict.get('name','Socio')}</h2>
+                <p style="color:#a1a1aa;">Tu registro en <strong style="color:#fff;">{gym_name}</strong> ha sido completado.</p>
+                <div style="background:#18181B;padding:20px;border-radius:12px;text-align:center;margin:20px 0;">
+                    <p style="color:#a1a1aa;margin:0 0 8px;">Tu codigo de acceso</p>
+                    <p style="font-size:32px;font-weight:900;color:{gym_color};font-family:monospace;letter-spacing:4px;margin:0;">{member_dict.get('code','------')}</p>
+                </div>
+                {payment_section}
+                <p style="color:#71717A;font-size:12px;text-align:center;margin-top:30px;">Guarda este codigo para acceder al gimnasio una vez realizado el pago.</p>
+            </div>
+            """
+            await send_gym_email(
+                member.gym_id, member_dict["email"],
+                f"Bienvenido/a a {gym_name} - Completa tu pago",
+                html, member_id=member_dict["id"], email_type="welcome_payment"
+            )
+        except Exception as e:
+            logger.warning(f"Could not send welcome payment email: {e}")
+    
     return {
         "member": member_dict,
         "membership": membership_data,
@@ -194,6 +241,56 @@ async def check_expired_memberships(admin: dict = Depends(get_current_admin)):
                 }})
                 suspended_count += 1
     return {"message": f"{suspended_count} members suspended due to expired memberships"}
+
+@router.post("/members/cleanup-inactive")
+async def cleanup_inactive_members(body: dict = {}, admin: dict = Depends(get_current_admin)):
+    """Delete members inactive for 60+ days with no payments and no access"""
+    days = body.get("days", 60) if isinstance(body, dict) else 60
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    
+    query = {"status": {"$in": ["suspended", "pending", "blocked"]}}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    
+    candidates = await db.members.find(query, {"_id": 0}).to_list(10000)
+    deleted_count = 0
+    deleted_names = []
+    
+    for member in candidates:
+        member_id = member["id"]
+        # Check if created more than X days ago
+        created = member.get("created_at", "")
+        if created > cutoff:
+            continue
+        # Check if any recent access
+        recent_access = await db.access_logs.find_one({
+            "member_id": member_id, "timestamp": {"$gte": cutoff}
+        })
+        if recent_access:
+            continue
+        # Check if any paid transaction ever
+        paid_tx = await db.payment_transactions.find_one({
+            "member_id": member_id, "payment_status": "paid"
+        })
+        if paid_tx:
+            continue
+        # Safe to delete
+        await db.members.delete_one({"id": member_id})
+        await db.memberships.delete_many({"member_id": member_id})
+        await db.bookings.delete_many({"member_id": member_id})
+        await db.access_logs.delete_many({"member_id": member_id})
+        await db.payment_transactions.delete_many({"member_id": member_id})
+        await db.email_logs.delete_many({"member_id": member_id})
+        deleted_count += 1
+        deleted_names.append(member.get("name", member_id))
+    
+    return {
+        "message": f"{deleted_count} socios inactivos eliminados",
+        "deleted_count": deleted_count,
+        "deleted_members": deleted_names[:50],
+        "criteria": f"Inactivos {days}+ dias, sin pagos, sin accesos"
+    }
+
 
 @router.get("/members/export/excel")
 async def export_members_excel(

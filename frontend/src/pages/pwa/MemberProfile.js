@@ -1,15 +1,18 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { formatDate } from '../../lib/utils';
 import { motion } from 'framer-motion';
-import { User, Mail, Phone, Calendar, QrCode, Share2, Download } from 'lucide-react';
+import { User, Mail, Phone, Calendar, QrCode, Share2, Download, Camera, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 import { toast } from 'sonner';
+import { uploadAvatar } from '../../lib/api';
 
 export default function MemberProfile() {
-  const { member, gym, logout } = useAuth();
+  const { member, gym, logout, refreshMemberData } = useAuth();
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [canInstall, setCanInstall] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     const handler = (e) => {
@@ -49,15 +52,34 @@ export default function MemberProfile() {
       try {
         await navigator.share({
           title: `${gym?.name} - Mi QR de Acceso`,
-          text: `Accede a ${gym?.name} con mi código: ${member?.code}`,
+          text: `Accede a ${gym?.name} con mi codigo: ${member?.code}`,
           url: window.location.origin + '/app'
         });
       } catch (error) {
         console.log('Share cancelled');
       }
     } else {
-      navigator.clipboard.writeText(`${gym?.name} - Código: ${member?.code}`);
-      toast.success('Información copiada al portapapeles');
+      navigator.clipboard.writeText(`${gym?.name} - Codigo: ${member?.code}`);
+      toast.success('Informacion copiada al portapapeles');
+    }
+  };
+
+  const handleAvatarUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('La imagen no puede superar 2MB');
+      return;
+    }
+    setUploading(true);
+    try {
+      await uploadAvatar(file);
+      toast.success('Foto actualizada');
+      if (refreshMemberData) refreshMemberData();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al subir foto');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -75,20 +97,38 @@ export default function MemberProfile() {
         className="stat-card"
       >
         <div className="flex items-center gap-4 mb-6">
-          {member?.avatar_url ? (
-            <img 
-              src={member.avatar_url} 
-              alt={member.name}
-              className="w-20 h-20 rounded-2xl object-cover"
-            />
-          ) : (
-            <div 
-              className="w-20 h-20 rounded-2xl flex items-center justify-center font-black text-3xl"
-              style={{ backgroundColor: 'var(--gym-primary)', color: 'var(--gym-primary-foreground)' }}
+          <div className="relative">
+            {member?.avatar_url ? (
+              <img 
+                src={member.avatar_url} 
+                alt={member.name}
+                className="w-20 h-20 rounded-2xl object-cover"
+              />
+            ) : (
+              <div 
+                className="w-20 h-20 rounded-2xl flex items-center justify-center font-black text-3xl"
+                style={{ backgroundColor: 'var(--gym-primary)', color: 'var(--gym-primary-foreground)' }}
+              >
+                {member?.name?.charAt(0)}
+              </div>
+            )}
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full flex items-center justify-center border-2 border-zinc-900 transition-colors"
+              style={{ backgroundColor: 'var(--gym-primary)', color: '#000' }}
+              data-testid="upload-avatar-btn"
             >
-              {member?.name?.charAt(0)}
-            </div>
-          )}
+              {uploading ? <Loader2 size={14} className="animate-spin" /> : <Camera size={14} />}
+            </button>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
+          </div>
           <div>
             <h2 className="text-xl font-bold">{member?.name}</h2>
             <p className="font-mono text-lg" style={{ color: 'var(--gym-primary)' }}>
