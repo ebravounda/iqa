@@ -431,13 +431,11 @@ async def sync_backend_files(admin: dict = Depends(get_current_admin)):
 async def restart_backend(admin: dict = Depends(get_current_admin)):
     from auth import check_role
     check_role(admin, ["super_admin"])
-    import subprocess, os, signal
-    pid = os.getpid()
-    # Launch restart script in background
-    script = f"""#!/bin/bash
+    import subprocess, os
+    script = """#!/bin/bash
 sleep 2
-fuser -k 8001/tcp 2>/dev/null
-sleep 1
+kill $(pgrep -f 'uvicorn server:app') 2>/dev/null
+sleep 2
 cd /opt/gymaccess && nohup /opt/gymaccess/venv/bin/uvicorn server:app --host 0.0.0.0 --port 8001 > /opt/gymaccess/nohup.out 2>&1 &
 """
     script_path = "/tmp/restart_backend.sh"
