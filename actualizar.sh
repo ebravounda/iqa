@@ -1,69 +1,94 @@
 #!/bin/bash
 # ============================================
 # IngresoQR - Script de Actualizacion
-# Ejecutar desde SSH en el servidor Plesk
+# Ejecutar desde SSH/Terminal de Plesk
 # ============================================
 
-# Configuracion - AJUSTA ESTAS RUTAS SI ES NECESARIO
-REPO_DIR="/var/www/vhosts/ingresoqr.com/c.ingresoqr.com"
+BACKEND_DOCKER="/opt/gymaccess/backend"
 FRONTEND_HTTPDOCS="/var/www/vhosts/ingresoqr.com/app.ingresoqr.com/httpdocs"
-BACKEND_SERVICE="gymapi"
+REPO_DIR="/opt/gymaccess/repo"
 
 echo "==========================================="
 echo "  IngresoQR - Actualizacion de Produccion"
 echo "==========================================="
 echo ""
 
-# 1. Ir al repositorio y hacer pull
-echo "[1/4] Descargando cambios de GitHub..."
-cd "$REPO_DIR" || { echo "ERROR: No se encontro $REPO_DIR"; exit 1; }
-git pull origin main
-if [ $? -ne 0 ]; then
-    echo "ERROR: git pull fallo. Revisa credenciales o conflictos."
+# 1. Clonar o actualizar repositorio
+if [ -d "$REPO_DIR/.git" ]; then
+    echo "[1/4] Actualizando repositorio..."
+    cd "$REPO_DIR"
+    git pull origin main
+else
+    echo "[1/4] Clonando repositorio por primera vez..."
+    mkdir -p "$REPO_DIR"
+    echo "INTRODUCE tu URL de GitHub:"
+    echo "  git clone https://github.com/TU_USUARIO/TU_REPO.git $REPO_DIR"
+    echo "  Luego vuelve a ejecutar este script."
     exit 1
 fi
-echo "OK - Codigo actualizado"
+
+if [ $? -ne 0 ]; then
+    echo "ERROR: git pull fallo."
+    exit 1
+fi
+echo "OK - Codigo descargado"
 echo ""
 
-# 2. Instalar dependencias backend si hay cambios
-echo "[2/4] Verificando dependencias backend..."
-cd "$REPO_DIR/backend"
-pip install -r requirements.txt --quiet 2>/dev/null
-pip install -r requirements-prod.txt --quiet 2>/dev/null
-echo "OK - Dependencias verificadas"
+# 2. Actualizar archivos del backend
+echo "[2/4] Actualizando backend..."
+mkdir -p "$BACKEND_DOCKER"
+# Copiar todos los archivos Python del backend
+cp -r "$REPO_DIR/backend/"*.py "$BACKEND_DOCKER/" 2>/dev/null
+cp -r "$REPO_DIR/backend/routes/" "$BACKEND_DOCKER/routes/" 2>/dev/null
+cp -r "$REPO_DIR/backend/models.py" "$BACKEND_DOCKER/" 2>/dev/null
+cp "$REPO_DIR/backend/requirements-prod.txt" "$BACKEND_DOCKER/requirements.txt" 2>/dev/null
+echo "OK - Archivos backend copiados"
 echo ""
 
-# 3. Sincronizar frontend build a httpdocs
-echo "[3/4] Sincronizando frontend a app.ingresoqr.com..."
+# 3. Reiniciar backend Docker
+echo "[3/4] Reiniciando backend Docker..."
+docker restart gymaccess-api 2>/dev/null
+if [ $? -ne 0 ]; then
+    echo "Reconstruyendo imagen Docker..."
+    cd "$BACKEND_DOCKER"
+    docker stop gymaccess-api 2>/dev/null
+    docker rm gymaccess-api 2>/dev/null
+    docker build -t gymaccess-api .
+    docker run -d \
+        --name gymaccess-api \
+        --restart always \
+        -p 8001:8001 \
+        --env-file .env \
+        gymaccess-api
+fi
+echo "OK - Backend reiniciado"
+echo ""
+
+# 4. Actualizar frontend
+echo "[4/4] Sincronizando frontend..."
 if [ -d "$REPO_DIR/frontend/build" ]; then
-    # Limpiar httpdocs (excepto .htaccess si existe)
+    # Limpiar httpdocs (preservar .htaccess)
     find "$FRONTEND_HTTPDOCS" -mindepth 1 ! -name '.htaccess' -delete 2>/dev/null
-    # Copiar build
     cp -r "$REPO_DIR/frontend/build/"* "$FRONTEND_HTTPDOCS/"
-    echo "OK - Frontend sincronizado ($FRONTEND_HTTPDOCS)"
+    echo "OK - Frontend copiado a $FRONTEND_HTTPDOCS"
 else
-    echo "AVISO: No se encontro frontend/build/. Sube el build manualmente."
+    echo "AVISO: No se encontro frontend/build/ en el repo."
+    echo "  El build ya debe estar incluido en el repositorio."
 fi
 echo ""
 
-# 4. Reiniciar backend
-echo "[4/4] Reiniciando backend..."
-if systemctl is-active --quiet "$BACKEND_SERVICE" 2>/dev/null; then
-    sudo systemctl restart "$BACKEND_SERVICE"
-    echo "OK - Servicio $BACKEND_SERVICE reiniciado"
-elif command -v pm2 &>/dev/null; then
-    pm2 restart all
-    echo "OK - PM2 reiniciado"
+# Verificar
+echo "==========================================="
+echo "  Verificando..."
+echo "==========================================="
+sleep 3
+HEALTH=$(curl -s https://c.ingresoqr.com/api/health 2>/dev/null)
+if echo "$HEALTH" | grep -q "healthy"; then
+    echo "  Backend: OK"
 else
-    echo "AVISO: No se encontro servicio '$BACKEND_SERVICE'. Reinicia manualmente."
-    echo "  Opciones: sudo systemctl restart gymapi"
-    echo "            pm2 restart all"
-    echo "            kill + reiniciar uvicorn"
+    echo "  Backend: REVISAR (docker logs gymaccess-api)"
 fi
-echo ""
-
+echo "  Frontend: https://app.ingresoqr.com"
 echo "==========================================="
 echo "  Actualizacion completada!"
-echo "  Backend: https://c.ingresoqr.com"
-echo "  Frontend: https://app.ingresoqr.com"
 echo "==========================================="
