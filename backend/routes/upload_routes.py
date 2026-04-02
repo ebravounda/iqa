@@ -201,7 +201,7 @@ async def upload_product_image(
         
         await db.pos_products.update_one(
             {"id": product_id},
-            {"$set": {"image_path": storage_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            {"$set": {"image_path": storage_path, "image_url": f"/api/files/{storage_path}", "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
         
         return {"storage_path": storage_path, "message": "Imagen de producto subida correctamente"}

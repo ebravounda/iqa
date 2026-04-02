@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import axios from 'axios';
 import { toast } from 'sonner';
@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../componen
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package, Plus, ShoppingCart, Search, Tags, Edit, Trash2, Minus,
-  DollarSign, BarChart3, Archive, AlertTriangle, X, Check, Save, Loader2
+  DollarSign, BarChart3, Archive, AlertTriangle, X, Check, Save, Loader2,
+  Camera, ImageIcon
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
@@ -33,6 +34,8 @@ export default function AdminPOS() {
   });
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [processing, setProcessing] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const fileInputRef = useRef(null);
 
   const gymId = admin?.gym_id;
 
@@ -117,18 +120,48 @@ export default function AdminPOS() {
 
   const handleSaveProduct = async () => {
     try {
+      const { imageFile, ...formData } = productForm;
+      if (imageFile) delete formData.image_url;
+      let productId;
       if (editingProduct) {
-        await axios.put(`${API}/pos/products/${editingProduct.id}`, productForm);
+        await axios.put(`${API}/pos/products/${editingProduct.id}`, formData);
+        productId = editingProduct.id;
         toast.success('Producto actualizado');
       } else {
-        await axios.post(`${API}/pos/products`, { ...productForm, gym_id: gymId });
+        const res = await axios.post(`${API}/pos/products`, { ...formData, gym_id: gymId });
+        productId = res.data?.id;
         toast.success('Producto creado');
+      }
+      if (imageFile && productId) {
+        await uploadProductImage(productId, imageFile);
       }
       setShowForm(false);
       setEditingProduct(null);
       setProductForm({ name: '', description: '', cost_price: 0, sale_price: 0, stock: 0, category: 'General', barcode: '', image_url: '' });
       fetchData();
     } catch (err) { toast.error(err.response?.data?.detail || 'Error'); }
+  };
+
+  const uploadProductImage = async (productId, file) => {
+    setUploadingImage(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      await axios.post(`${API}/upload/product-image/${productId}`, fd, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    } catch (err) {
+      toast.error('Error al subir imagen');
+    } finally { setUploadingImage(false); }
+  };
+
+  const handleImageSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { toast.error('La imagen no puede superar 2MB'); return; }
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) { toast.error('Solo JPG, PNG o WEBP'); return; }
+    const previewUrl = URL.createObjectURL(file);
+    setProductForm(prev => ({ ...prev, imageFile: file, image_url: previewUrl }));
   };
 
   const handleDeleteProduct = async (id) => {
@@ -190,26 +223,32 @@ export default function AdminPOS() {
                 </button>
               ))}
             </div>
-            {/* Products grid */}
+            {/* Products grid - Touch friendly */}
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3" data-testid="pos-product-grid">
               {filteredProducts.map(p => (
                 <motion.button key={p.id} whileTap={{ scale: 0.95 }} onClick={() => addToCart(p)}
-                  className="p-3 rounded-xl text-left transition-all hover:ring-2 hover:ring-zinc-600"
+                  className="rounded-xl text-left transition-all hover:ring-2 hover:ring-zinc-600 overflow-hidden"
                   style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)' }}
                   data-testid={`pos-product-${p.id}`}
                 >
-                  {p.image_url && (
-                    <div className="w-full h-20 rounded-lg mb-2 overflow-hidden bg-zinc-800">
+                  {p.image_url ? (
+                    <div className="w-full aspect-square bg-zinc-800">
                       <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
                     </div>
+                  ) : (
+                    <div className="w-full aspect-square bg-zinc-800/50 flex items-center justify-center">
+                      <Package size={40} className="text-zinc-600" />
+                    </div>
                   )}
-                  <div className="flex items-start justify-between mb-2">
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-700/50 text-zinc-400">{p.category || 'General'}</span>
-                    {p.stock <= 5 && <AlertTriangle size={12} className="text-amber-400" />}
+                  <div className="p-3">
+                    <div className="flex items-start justify-between mb-1">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-700/50 text-zinc-400">{p.category || 'General'}</span>
+                      {p.stock <= 5 && <AlertTriangle size={12} className="text-amber-400" />}
+                    </div>
+                    <p className="font-bold text-sm truncate mt-1">{p.name}</p>
+                    <p className="text-lg font-black mt-1" style={{ color: 'var(--gym-primary)' }}>${p.sale_price?.toFixed(2)}</p>
+                    <p className="text-[10px] text-zinc-500">Stock: {p.stock}</p>
                   </div>
-                  <p className="font-bold text-sm truncate">{p.name}</p>
-                  <p className="text-lg font-black mt-1" style={{ color: 'var(--gym-primary)' }}>${p.sale_price?.toFixed(2)}</p>
-                  <p className="text-[10px] text-zinc-500 mt-1">Stock: {p.stock}</p>
                 </motion.button>
               ))}
               {filteredProducts.length === 0 && (
@@ -434,13 +473,28 @@ export default function AdminPOS() {
                 <Input value={productForm.barcode} onChange={e => setProductForm({...productForm, barcode: e.target.value})} className="input-dark" placeholder="Opcional" /></div>
             </div>
             <div>
-              <label className="text-sm text-zinc-400">Imagen del Producto (URL)</label>
-              <Input value={productForm.image_url} onChange={e => setProductForm({...productForm, image_url: e.target.value})} className="input-dark" placeholder="https://..." data-testid="product-image-input" />
-              {productForm.image_url && (
-                <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden bg-zinc-800">
-                  <img src={productForm.image_url} alt="Preview" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
-                </div>
-              )}
+              <label className="text-sm text-zinc-400">Imagen del Producto</label>
+              <input type="file" ref={fileInputRef} accept="image/jpeg,image/png,image/webp" onChange={handleImageSelect} className="hidden" />
+              <div className="mt-2 flex items-center gap-3">
+                {productForm.image_url ? (
+                  <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-zinc-800 group">
+                    <img src={productForm.image_url} alt="Preview" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => { setProductForm(prev => ({ ...prev, image_url: '', imageFile: null })); }}
+                      className="absolute top-1 right-1 p-1 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-xl bg-zinc-800 flex items-center justify-center border-2 border-dashed border-zinc-600">
+                    <ImageIcon size={24} className="text-zinc-600" />
+                  </div>
+                )}
+                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800" data-testid="product-upload-image-btn">
+                  <Camera size={16} className="mr-2" /> {productForm.image_url ? 'Cambiar' : 'Subir Foto'}
+                </Button>
+              </div>
+              <p className="text-[10px] text-zinc-500 mt-1">JPG, PNG o WEBP. Maximo 2MB</p>
             </div>
             {productForm.cost_price > 0 && productForm.sale_price > 0 && (
               <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
