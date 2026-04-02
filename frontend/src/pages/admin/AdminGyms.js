@@ -405,7 +405,7 @@ export default function AdminGyms() {
 
       {/* Edit Modal */}
       <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
-        <DialogContent className="bg-zinc-900 border-zinc-800">
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-h-[90vh] overflow-y-auto">
           <DialogHeader><DialogTitle>Editar Negocio</DialogTitle></DialogHeader>
           <div className="mt-4">
             <div className="space-y-4">

@@ -33,6 +33,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - QR y reservas sin restriccion -> 403 para miembros pending sin membresia activa
 - JWT de registro publico usaba "type" -> corregido a "role"
 - Division por cero AdminPlans.js -> (duration_days || 1)
+- Modal "Editar Negocio" no permitia scroll -> agregado max-h-[90vh] overflow-y-auto (2 Abr 2026)
 
 ### Features P1 Implementadas
 - Email de bienvenida con boton de pago al registrarse con plan
@@ -44,16 +45,18 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - TPV/POS profesional con categorias, 4 tabs (TPV, Productos, Ventas, Estadisticas), carrito
 - Modulo RFID para tarjetas/llaveros fisicos: asignacion, validacion, anti-passback
 
-### Multi-Vertical (Abril 2026 - Ultima implementacion)
+### Multi-Vertical (Abril 2026)
 - Campo `business_type` en modelo Gym (gym, condominium, hotel, coworking)
 - Selector visual de 4 tipos de negocio al crear/editar en AdminGyms
 - Badge de tipo de negocio en tarjetas de gym
-- Labels dinamicos en sidebar (Socios/Residentes/Huespedes/Miembros)
-- Labels dinamicos en Dashboard, Members, Plans, Classes
-- Labels dinamicos en PWA del miembro (Membresia/Cuota/Reserva/Suscripcion)
+- Labels dinamicos en sidebar, Dashboard, Members, Plans, Classes, PWA
 - BusinessContext React context para propagar labels a toda la app
-- Pagina "Gimnasios" renombrada a "Negocios" (terminologia generica)
-- Testing: Backend 14/14, Frontend 100% (iteration_26)
+- Pagina "Gimnasios" renombrada a "Negocios"
+
+### Custom Domain (Abril 2026)
+- Campo custom_domain por tenant con login branded
+- Resolucion de dominio via /api/gyms/resolve-domain/{domain}
+- Hook useCustomDomain para deteccion automatica
 
 ## P1 - Pendiente
 1. Portal de registro publico mejorado (landing page independiente)
