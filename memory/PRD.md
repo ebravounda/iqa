@@ -57,6 +57,9 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Campo custom_domain por tenant con login branded
 - Resolucion de dominio via /api/gyms/resolve-domain/{domain}
 - Hook useCustomDomain para deteccion automatica
+- Dominio personalizado botwtsp.com funcionando en produccion
+- Guia completa de configuracion de dominios personalizados (GUIA_DOMINIOS_PERSONALIZADOS.md)
+- Script de actualizacion masiva para multiples dominios
 
 ## P1 - Pendiente
 1. Portal de registro publico mejorado (landing page independiente)
@@ -73,3 +76,5 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Frontend requiere yarn build + subir build/ a Plesk manualmente
 - Backend: c.ingresoqr.com (proxy a :8001)
 - Frontend: app.ingresoqr.com (static build en httpdocs/)
+- Dominios personalizados: copiar build a httpdocs/ del dominio + .htaccess + SSL Let's Encrypt
+- Script masivo disponible para actualizar todos los dominios a la vez
