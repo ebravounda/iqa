@@ -36,9 +36,10 @@ export default function AdminPOS() {
 
   const gymId = admin?.gym_id;
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(true); }, []);
 
-  const fetchData = async () => {
+  const fetchData = async (initial = false) => {
+    if (initial) setLoading(true);
     try {
       const params = gymId ? { gym_id: gymId } : {};
       const [prodRes, catRes, salesRes, statsRes] = await Promise.all([
@@ -52,7 +53,7 @@ export default function AdminPOS() {
       setSales(salesRes.data);
       setStats(statsRes.data);
     } catch { toast.error('Error al cargar datos'); }
-    finally { setLoading(false); }
+    finally { if (initial) setLoading(false); }
   };
 
   const filteredProducts = useMemo(() => {
@@ -123,7 +124,7 @@ export default function AdminPOS() {
       }
       setShowForm(false);
       setEditingProduct(null);
-      setProductForm({ name: '', description: '', cost_price: 0, sale_price: 0, stock: 0, category: 'General', barcode: '' });
+      setProductForm({ name: '', description: '', cost_price: 0, sale_price: 0, stock: 0, category: 'General', barcode: '', image_url: '' });
       fetchData();
     } catch (err) { toast.error(err.response?.data?.detail || 'Error'); }
   };
@@ -195,6 +196,11 @@ export default function AdminPOS() {
                   style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)' }}
                   data-testid={`pos-product-${p.id}`}
                 >
+                  {p.image_url && (
+                    <div className="w-full h-20 rounded-lg mb-2 overflow-hidden bg-zinc-800">
+                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                    </div>
+                  )}
                   <div className="flex items-start justify-between mb-2">
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-zinc-700/50 text-zinc-400">{p.category || 'General'}</span>
                     {p.stock <= 5 && <AlertTriangle size={12} className="text-amber-400" />}
@@ -322,7 +328,7 @@ export default function AdminPOS() {
                     <td className="text-xs font-mono text-zinc-500">{p.barcode || '-'}</td>
                     <td>
                       <div className="flex gap-1">
-                        <button onClick={() => { setEditingProduct(p); setProductForm({ name: p.name, description: p.description || '', cost_price: p.cost_price || 0, sale_price: p.sale_price, stock: p.stock, category: p.category || 'General', barcode: p.barcode || '' }); setShowForm(true); }}
+                        <button onClick={() => { setEditingProduct(p); setProductForm({ name: p.name, description: p.description || '', cost_price: p.cost_price || 0, sale_price: p.sale_price, stock: p.stock, category: p.category || 'General', barcode: p.barcode || '', image_url: p.image_url || '' }); setShowForm(true); }}
                           className="p-1.5 rounded hover:bg-zinc-700" data-testid={`edit-product-${p.id}`}><Edit size={14} /></button>
                         <button onClick={() => handleDeleteProduct(p.id)} className="p-1.5 rounded hover:bg-red-900/30 text-red-400" data-testid={`delete-product-${p.id}`}><Trash2 size={14} /></button>
                       </div>
@@ -424,6 +430,15 @@ export default function AdminPOS() {
                 <Input type="number" value={productForm.stock} onChange={e => setProductForm({...productForm, stock: parseInt(e.target.value) || 0})} className="input-dark" data-testid="product-stock-input" /></div>
               <div><label className="text-sm text-zinc-400">Codigo de Barras</label>
                 <Input value={productForm.barcode} onChange={e => setProductForm({...productForm, barcode: e.target.value})} className="input-dark" placeholder="Opcional" /></div>
+            </div>
+            <div>
+              <label className="text-sm text-zinc-400">Imagen del Producto (URL)</label>
+              <Input value={productForm.image_url} onChange={e => setProductForm({...productForm, image_url: e.target.value})} className="input-dark" placeholder="https://..." data-testid="product-image-input" />
+              {productForm.image_url && (
+                <div className="mt-2 w-20 h-20 rounded-lg overflow-hidden bg-zinc-800">
+                  <img src={productForm.image_url} alt="Preview" className="w-full h-full object-cover" onError={e => e.target.style.display = 'none'} />
+                </div>
+              )}
             </div>
             {productForm.cost_price > 0 && productForm.sale_price > 0 && (
               <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
