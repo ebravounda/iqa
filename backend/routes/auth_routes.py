@@ -112,6 +112,8 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
     )
     await record_successful_login(ip, code.upper(), "member")
     token = create_jwt_token({"sub": member["id"], "role": "member", "gym_id": member["gym_id"]})
+    if gym:
+        gym.setdefault("business_type", "gym")
     return {"member": member, "gym": gym, "membership": membership, "token": token}
 
 @router.get("/auth/member/me")
@@ -131,6 +133,8 @@ async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(secu
     plan = None
     if membership:
         plan = await db.plans.find_one({"id": membership["plan_id"]}, {"_id": 0})
+    if gym:
+        gym.setdefault("business_type", "gym")
     return {"member": member, "gym": gym, "membership": membership, "plan": plan}
 
 

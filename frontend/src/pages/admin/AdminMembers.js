@@ -355,11 +355,11 @@ export default function AdminMembers() {
           <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
             <DialogTrigger asChild>
               <Button className="btn-gym-primary" data-testid="create-member-btn">
-                <Plus size={20} className="mr-2" /> Nuevo Socio
+                <Plus size={20} className="mr-2" /> Nuevo {labels.member}
               </Button>
             </DialogTrigger>
             <DialogContent className="bg-zinc-900 border-zinc-800">
-              <DialogHeader><DialogTitle>Crear Nuevo Socio</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle>Crear Nuevo {labels.member}</DialogTitle></DialogHeader>
               <div className="space-y-4 mt-4">
                 {isSuperAdmin && (
                   <div>

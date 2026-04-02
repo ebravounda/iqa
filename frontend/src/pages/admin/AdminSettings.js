@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useBusiness } from '../../context/BusinessContext';
 import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices, getMySubscription, getAvailableSaaSPlans, subscribeSaaSPlan } from '../../lib/api';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
@@ -10,6 +11,7 @@ import axios from 'axios';
 
 export default function AdminSettings() {
   const { admin, isSuperAdmin } = useAuth();
+  const { labels } = useBusiness();
   const [gym, setGym] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -301,7 +303,7 @@ export default function AdminSettings() {
     <div className="space-y-6" data-testid="admin-settings">
       <div>
         <h1 className="text-2xl font-black tracking-tight">Configuracion</h1>
-        <p className="text-zinc-400 text-sm">{admin?.gym_id ? 'Personaliza tu gimnasio y configura opciones' : 'Administra tu cuenta'}</p>
+        <p className="text-zinc-400 text-sm">{admin?.gym_id ? `Personaliza tu ${labels.businessName.toLowerCase()} y configura opciones` : 'Administra tu cuenta'}</p>
       </div>
 
       {/* My Account Section */}

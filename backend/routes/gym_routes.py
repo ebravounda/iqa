@@ -61,6 +61,7 @@ async def get_gyms(admin: dict = Depends(get_current_admin)):
     if admin["role"] == "super_admin":
         gyms = await db.gyms.find({}, {"_id": 0}).to_list(100)
         for gym in gyms:
+            gym.setdefault("business_type", "gym")
             gym_admin = await db.admins.find_one(
                 {"gym_id": gym["id"], "role": "gym_admin"}, 
                 {"_id": 0, "email": 1, "name": 1}
@@ -69,6 +70,8 @@ async def get_gyms(admin: dict = Depends(get_current_admin)):
             gym["gym_admin_name"] = gym_admin["name"] if gym_admin else None
     else:
         gyms = await db.gyms.find({"id": admin.get("gym_id")}, {"_id": 0}).to_list(1)
+        for gym in gyms:
+            gym.setdefault("business_type", "gym")
     return gyms
 
 @router.get("/gyms/{gym_id}")
@@ -76,6 +79,7 @@ async def get_gym(gym_id: str, admin: dict = Depends(get_current_admin)):
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
         raise HTTPException(status_code=404, detail="Gym not found")
+    gym.setdefault("business_type", "gym")
     return gym
 
 @router.put("/gyms/{gym_id}")
