@@ -34,6 +34,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - JWT de registro publico usaba "type" -> corregido a "role"
 - Division por cero AdminPlans.js -> (duration_days || 1)
 - Modal "Editar Negocio" no permitia scroll -> agregado max-h-[90vh] overflow-y-auto (2 Abr 2026)
+- PWA Estadisticas del socio mostraba 0 -> endpoint usaba auth de admin, creado nuevo endpoint /api/access/stats/member con auth de miembro (2 Abr 2026)
 
 ### Features P1 Implementadas
 - Email de bienvenida con boton de pago al registrarse con plan
@@ -72,9 +73,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Reportes PDF exportables adicionales
 
 ## Notas de Despliegue
-- git clone SOLO actualiza backend .py files
-- Frontend requiere yarn build + subir build/ a Plesk manualmente
-- Backend: c.ingresoqr.com (proxy a :8001)
-- Frontend: app.ingresoqr.com (static build en httpdocs/)
-- Dominios personalizados: copiar build a httpdocs/ del dominio + .htaccess + SSL Let's Encrypt
+- Backend: `cd /opt/gymaccess && git pull origin main && sudo systemctl restart gymaccess-api`
+- Frontend: yarn build con REACT_APP_BACKEND_URL=https://c.ingresoqr.com + subir build/ a app.ingresoqr.com via Plesk File Manager
+- Dominios personalizados: copiar build + .htaccess (ver GUIA_DOMINIOS_PERSONALIZADOS.md)
 - Script masivo disponible para actualizar todos los dominios a la vez
