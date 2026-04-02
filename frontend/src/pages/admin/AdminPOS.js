@@ -59,6 +59,12 @@ export default function AdminPOS() {
     finally { if (initial) setLoading(false); }
   };
 
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith('/')) return `${process.env.REACT_APP_BACKEND_URL}${url}`;
+    return url;
+  };
+
   const filteredProducts = useMemo(() => {
     return products.filter(p => {
       const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || (p.barcode || '').includes(search);
@@ -233,7 +239,7 @@ export default function AdminPOS() {
                 >
                   {p.image_url ? (
                     <div className="w-full aspect-square bg-zinc-800">
-                      <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                      <img src={getImageUrl(p.image_url)} alt={p.name} className="w-full h-full object-cover" />
                     </div>
                   ) : (
                     <div className="w-full aspect-square bg-zinc-800/50 flex items-center justify-center">
@@ -476,7 +482,15 @@ export default function AdminPOS() {
               <label className="text-sm text-zinc-400">Imagen del Producto</label>
               <input type="file" ref={fileInputRef} accept="image/jpeg,image/png,image/webp" onChange={handleImageSelect} className="hidden" />
               <div className="mt-2 flex items-center gap-3">
-                {productForm.image_url ? (
+                {(productForm.image_url && !productForm.imageFile) ? (
+                  <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-zinc-800 group">
+                    <img src={getImageUrl(productForm.image_url)} alt="Preview" className="w-full h-full object-cover" />
+                    <button type="button" onClick={() => { setProductForm(prev => ({ ...prev, image_url: '', imageFile: null })); }}
+                      className="absolute top-1 right-1 p-1 bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                      <X size={12} className="text-white" />
+                    </button>
+                  </div>
+                ) : productForm.imageFile ? (
                   <div className="relative w-24 h-24 rounded-xl overflow-hidden bg-zinc-800 group">
                     <img src={productForm.image_url} alt="Preview" className="w-full h-full object-cover" />
                     <button type="button" onClick={() => { setProductForm(prev => ({ ...prev, image_url: '', imageFile: null })); }}
