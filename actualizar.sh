@@ -21,10 +21,7 @@ if [ -d "$REPO_DIR/.git" ]; then
 else
     echo "[1/4] Clonando repositorio por primera vez..."
     mkdir -p "$REPO_DIR"
-    echo "INTRODUCE tu URL de GitHub:"
-    echo "  git clone https://github.com/TU_USUARIO/TU_REPO.git $REPO_DIR"
-    echo "  Luego vuelve a ejecutar este script."
-    exit 1
+    git clone https://github.com/ebravounda/iqa.git "$REPO_DIR"
 fi
 
 if [ $? -ne 0 ]; then
