@@ -533,7 +533,7 @@ export default function AdminMembers() {
                           </>
                         )}
                         <DropdownMenuSeparator className="bg-zinc-700" />
-                        <DropdownMenuItem className="cursor-pointer text-violet-400 p-0" data-testid={`member-photo-${member.code}`}>
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="cursor-pointer text-violet-400 p-0" data-testid={`member-photo-${member.code}`}>
                           <label className="flex items-center gap-2 cursor-pointer w-full px-2 py-1.5">
                             <Camera size={16} /> Subir Foto
                             <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={async (e) => {
@@ -816,7 +816,7 @@ export default function AdminMembers() {
                     <span className="px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>{email.email_type}</span>
                   </div>
                 </div>
-                {email.status === 'sent' && email.email_type === 'welcome' && (
+                {email.status === 'sent' && (
                   <button
                     onClick={() => handleResendEmail(email.id)}
                     disabled={resendingId === email.id}

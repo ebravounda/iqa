@@ -25,6 +25,14 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
     
     # Check if this specific member has static QR override
     member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member or member.get("status") == "pending":
+        raise HTTPException(status_code=403, detail="Necesitas una membresia activa para generar tu QR")
+    
+    # Check active membership
+    active_membership = await db.memberships.find_one({"member_id": member_id, "status": "active"}, {"_id": 0})
+    if not active_membership:
+        raise HTTPException(status_code=403, detail="Necesitas una membresia activa para generar tu QR")
+    
     member_qr_mode = (member or {}).get("qr_mode")
     
     gym_qr_mode = gym.get("qr_mode", "dynamic") if gym else "dynamic"
@@ -40,7 +48,9 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
 
 @router.post("/access/debug-qr")
 async def debug_qr_validation(validation: AccessValidation):
-    import base64, hmac, hashlib
+    import base64
+    import hmac
+    import hashlib
     debug_info = {
         "step_1_raw_input": {
             "qr_code_length": len(validation.qr_code),

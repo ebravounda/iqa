@@ -58,6 +58,8 @@ export default function MemberHome() {
 
   const membershipStatus = getMembershipStatus(membership);
   const daysRemaining = membership ? getDaysRemaining(membership.end_date) : 0;
+  const isPending = member?.status === 'pending' || (!membership && member?.status !== 'active');
+  const hasActiveMembership = membership && membership.status === 'active' && membershipStatus.status !== 'expired';
 
   // Calculate countdown ring
   const circumference = 2 * Math.PI * 45;
@@ -100,6 +102,30 @@ export default function MemberHome() {
 
   return (
     <div className="space-y-6" data-testid="member-home">
+      {/* Pending Payment Block - No active membership */}
+      {isPending && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 rounded-xl bg-amber-500/10 border border-amber-500/30 text-center"
+          data-testid="pending-payment-block"
+        >
+          <CreditCard size={40} className="mx-auto mb-3 text-amber-400" />
+          <p className="text-amber-300 font-bold text-lg mb-2">Pago Pendiente</p>
+          <p className="text-zinc-400 text-sm mb-4">
+            Para habilitar tu acceso al gimnasio, realiza el pago de tu membresia.
+          </p>
+          <Button
+            onClick={() => navigate('/app/membership')}
+            className="bg-amber-500 hover:bg-amber-600 text-black font-bold"
+            data-testid="pay-membership-btn"
+          >
+            <CreditCard size={16} className="mr-2" />
+            Pagar Membresia
+          </Button>
+        </motion.div>
+      )}
+
       {/* Payment Alert - Membership expiring or expired */}
       {showPaymentAlert && (
         <motion.div 
@@ -143,7 +169,8 @@ export default function MemberHome() {
         </motion.div>
       )}
 
-      {/* Main QR Card */}
+      {/* Main QR Card - Only show if member has active access */}
+      {!isPending ? (
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -197,6 +224,7 @@ export default function MemberHome() {
           Pantalla completa
         </button>
       </motion.div>
+      ) : null}
 
       {/* Membership Info Card */}
       {membership && (

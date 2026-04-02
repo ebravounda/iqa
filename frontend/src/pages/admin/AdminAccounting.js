@@ -16,6 +16,7 @@ const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 export default function AdminAccounting() {
   const { admin, isSuperAdmin } = useAuth();
   const [report, setReport] = useState(null);
+  const [allTransactions, setAllTransactions] = useState(null);
   const [loading, setLoading] = useState(true);
   const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -44,8 +45,12 @@ export default function AdminAccounting() {
       const params = {};
       if (dateFrom) params.date_from = dateFrom;
       if (dateTo) params.date_to = dateTo;
-      const response = await axios.get(`${API}/accounting/report`, { params });
-      setReport(response.data);
+      const [reportRes, txRes] = await Promise.all([
+        axios.get(`${API}/accounting/report`, { params }),
+        axios.get(`${API}/accounting/transactions`, { params })
+      ]);
+      setReport(reportRes.data);
+      setAllTransactions(txRes.data);
     } catch (error) {
       toast.error('Error al cargar informe');
     } finally {
@@ -221,8 +226,9 @@ export default function AdminAccounting() {
           <p className="text-xl font-black">${s.membership_revenue?.toLocaleString() || '0'}</p>
         </div>
         <div className="stat-card">
-          <p className="text-xs text-zinc-500">Ventas POS</p>
-          <p className="text-xl font-black">${s.pos_revenue?.toLocaleString() || '0'}</p>
+          <p className="text-xs text-zinc-500">Pendiente de Cobro</p>
+          <p className="text-xl font-black text-amber-400" data-testid="total-pending">${allTransactions?.summary?.total_pending?.toLocaleString() || '0'}</p>
+          <p className="text-xs text-zinc-500">{allTransactions?.summary?.pending_count || 0} pagos</p>
         </div>
         <div className="stat-card">
           <p className="text-xs text-zinc-500">Efectivo</p>
@@ -290,12 +296,13 @@ export default function AdminAccounting() {
                 <th>Socio</th>
                 <th>Plan</th>
                 <th>Metodo</th>
+                <th>Estado</th>
                 <th className="text-right">Monto</th>
               </tr>
             </thead>
             <tbody>
               {(report?.transactions || []).length === 0 ? (
-                <tr><td colSpan={5} className="text-center text-zinc-500">No hay transacciones</td></tr>
+                <tr><td colSpan={6} className="text-center text-zinc-500">No hay transacciones</td></tr>
               ) : (
                 report.transactions.map((t) => (
                   <tr key={t.id}>
@@ -305,6 +312,15 @@ export default function AdminAccounting() {
                     <td>
                       <span className={`badge ${t.payment_method === 'cash' ? 'badge-success' : t.payment_method === 'card_reception' ? 'badge-primary' : t.payment_method === 'mercadopago' ? 'bg-sky-500/10 text-sky-400' : 'bg-yellow-500/10 text-yellow-400'}`}>
                         {methodLabel(t.payment_method)}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`px-2 py-1 rounded-full text-xs font-bold ${
+                        t.payment_status === 'paid' 
+                          ? 'bg-emerald-500/20 text-emerald-400' 
+                          : 'bg-amber-500/20 text-amber-400'
+                      }`} data-testid={`tx-status-${t.id}`}>
+                        {t.payment_status === 'paid' ? 'Pagado' : 'Pendiente'}
                       </span>
                     </td>
                     <td className="text-right font-mono font-bold">${t.amount?.toFixed(2)}</td>

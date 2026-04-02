@@ -42,6 +42,10 @@ async def register_member_public(member: MemberPublicRegister):
         raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
     if gym.get("status") == "suspended":
         raise HTTPException(status_code=403, detail="Este gimnasio esta suspendido")
+    
+    # If a plan is selected, member starts as "pending" until payment
+    initial_status = "pending" if member.plan_id else "active"
+    
     member_dict = {
         "id": str(uuid.uuid4()),
         "email": member.email,
@@ -49,7 +53,7 @@ async def register_member_public(member: MemberPublicRegister):
         "phone": member.phone,
         "gym_id": member.gym_id,
         "code": generate_member_code(),
-        "status": "active",
+        "status": initial_status,
         "gender": member.gender or "prefer_not_to_say",
         "form_responses": member.form_responses,
         "created_at": datetime.now(timezone.utc).isoformat()
@@ -58,31 +62,53 @@ async def register_member_public(member: MemberPublicRegister):
         member_dict["code"] = generate_member_code()
     await db.members.insert_one(member_dict)
     member_dict.pop("_id", None)
+    
     membership_data = None
+    plan_data = None
     if member.plan_id:
         plan = await db.plans.find_one({"id": member.plan_id}, {"_id": 0})
         if plan:
-            start_date = datetime.now(timezone.utc)
-            end_date = start_date + timedelta(days=plan["duration_days"])
+            plan_data = plan
+            # Create membership as pending_payment (NOT active)
             membership = {
                 "id": str(uuid.uuid4()),
                 "member_id": member_dict["id"],
                 "plan_id": plan["id"],
                 "gym_id": member.gym_id,
-                "start_date": start_date.isoformat(),
-                "end_date": end_date.isoformat(),
-                "status": "active",
+                "start_date": None,
+                "end_date": None,
+                "status": "pending_payment",
                 "created_at": datetime.now(timezone.utc).isoformat()
             }
             await db.memberships.insert_one(membership)
             membership.pop("_id", None)
             membership_data = membership
-    token = create_jwt_token({"sub": member_dict["id"], "type": "member", "gym_id": member.gym_id})
+            
+            # Create a pending payment transaction for tracking
+            transaction = {
+                "id": str(uuid.uuid4()),
+                "member_id": member_dict["id"],
+                "member_name": member_dict["name"],
+                "plan_id": plan["id"],
+                "plan_name": plan.get("name"),
+                "gym_id": member.gym_id,
+                "amount": plan.get("price", 0),
+                "currency": gym.get("currency", "eur"),
+                "payment_method": "pending",
+                "status": "pending",
+                "payment_status": "pending",
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+            await db.payment_transactions.insert_one(transaction)
+    
+    token = create_jwt_token({"sub": member_dict["id"], "role": "member", "gym_id": member.gym_id})
     return {
         "member": member_dict,
         "membership": membership_data,
+        "plan": plan_data,
         "token": token,
-        "message": f"Registro exitoso. Tu codigo de acceso es: {member_dict['code']}"
+        "message": f"Registro exitoso. Tu codigo de acceso es: {member_dict['code']}",
+        "requires_payment": bool(member.plan_id)
     }
 
 @router.get("/members")

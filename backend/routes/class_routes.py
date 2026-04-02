@@ -362,6 +362,13 @@ async def create_booking(booking: BookingCreate, credentials: HTTPAuthorizationC
     member_id = payload.get("sub")
     if payload.get("role") != "member":
         raise HTTPException(status_code=403, detail="Only members can book classes")
+    # Check active membership
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member or member.get("status") not in ("active",):
+        raise HTTPException(status_code=403, detail="Necesitas una membresia activa para reservar clases")
+    active_membership = await db.memberships.find_one({"member_id": member_id, "status": "active"}, {"_id": 0})
+    if not active_membership:
+        raise HTTPException(status_code=403, detail="Necesitas una membresia activa para reservar clases")
     schedule = await db.class_schedules.find_one({"id": booking.schedule_id}, {"_id": 0})
     if not schedule:
         raise HTTPException(status_code=404, detail="Schedule not found")

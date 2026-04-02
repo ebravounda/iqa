@@ -79,7 +79,7 @@ async def get_payment_status(session_id: str, credentials = Depends(security)):
             plan = await db.plans.find_one({"id": transaction["plan_id"]})
             if plan:
                 await db.memberships.update_many(
-                    {"member_id": transaction["member_id"], "status": "active"},
+                    {"member_id": transaction["member_id"], "status": {"$in": ["active", "pending_payment"]}},
                     {"$set": {"status": "expired"}}
                 )
                 start_date = datetime.now(timezone.utc)
@@ -93,7 +93,7 @@ async def get_payment_status(session_id: str, credentials = Depends(security)):
                 }
                 await db.memberships.insert_one(membership)
                 await db.members.update_one(
-                    {"id": transaction["member_id"], "status": "suspended"},
+                    {"id": transaction["member_id"], "status": {"$in": ["suspended", "pending"]}},
                     {"$set": {"status": "active", "suspension_reason": None}}
                 )
             await db.payment_transactions.update_one(
@@ -135,8 +135,13 @@ async def stripe_webhook(request: Request):
                         "payment_method": "stripe", "created_at": start_date.isoformat()
                     }
                     await db.memberships.insert_one(membership)
+                    # Also expire any pending_payment memberships for this plan
+                    await db.memberships.update_many(
+                        {"member_id": member_id, "status": "pending_payment"},
+                        {"$set": {"status": "expired"}}
+                    )
                     await db.members.update_one(
-                        {"id": member_id, "status": "suspended"},
+                        {"id": member_id, "status": {"$in": ["suspended", "pending"]}},
                         {"$set": {"status": "active", "suspension_reason": None}}
                     )
                     await db.payment_transactions.update_one(

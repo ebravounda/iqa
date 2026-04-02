@@ -132,6 +132,55 @@ async def get_cash_withdrawals(gym_id: Optional[str] = None, admin: dict = Depen
     withdrawals = await db.cash_withdrawals.find(query, {"_id": 0}).sort("created_at", -1).to_list(500)
     return withdrawals
 
+@router.get("/accounting/transactions")
+async def get_all_transactions(
+    gym_id: Optional[str] = None, status: Optional[str] = None,
+    date_from: Optional[str] = None, date_to: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """Get all transactions with paid/pending status for detailed view"""
+    query = {}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    if status:
+        query["payment_status"] = status
+    if date_from:
+        query["created_at"] = {"$gte": date_from}
+    if date_to:
+        if "created_at" in query:
+            query["created_at"]["$lte"] = date_to + "T23:59:59"
+        else:
+            query["created_at"] = {"$lte": date_to + "T23:59:59"}
+    transactions = await db.payment_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    # Enrich with member data
+    for t in transactions:
+        if t.get("member_id") and not t.get("member_name"):
+            member = await db.members.find_one({"id": t["member_id"]}, {"_id": 0, "name": 1, "code": 1})
+            if member:
+                t["member_name"] = member.get("name")
+                t["member_code"] = member.get("code")
+        if t.get("plan_id") and not t.get("plan_name"):
+            plan = await db.plans.find_one({"id": t["plan_id"]}, {"_id": 0, "name": 1})
+            if plan:
+                t["plan_name"] = plan.get("name")
+    paid_count = len([t for t in transactions if t.get("payment_status") == "paid"])
+    pending_count = len([t for t in transactions if t.get("payment_status") == "pending"])
+    total_paid = sum(t.get("amount", 0) for t in transactions if t.get("payment_status") == "paid")
+    total_pending = sum(t.get("amount", 0) for t in transactions if t.get("payment_status") == "pending")
+    return {
+        "transactions": transactions,
+        "summary": {
+            "paid_count": paid_count,
+            "pending_count": pending_count,
+            "total_paid": total_paid,
+            "total_pending": total_pending,
+            "total_count": len(transactions)
+        }
+    }
+
+
 @router.delete("/accounting/prune")
 async def prune_old_records(months: int = 6, admin: dict = Depends(get_current_admin)):
     from auth import check_role

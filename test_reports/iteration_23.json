@@ -1,0 +1,90 @@
+{
+  "summary": "Iteration 23 - Bug Fixes Testing Complete. All 9 backend tests passed (100%). Frontend UI verified: Accounting page shows Estado column with Pagado/Pendiente badges, Public registration shows payment required block when plan selected, Member PWA home shows pending payment block for pending members. Fixed JWT token bug in public registration (type->role).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration23_bug_fixes.py",
+    "/app/test_reports/pytest/pytest_results_iteration23.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "Fixed JWT token bug in member_routes.py line 104: changed 'type' to 'role' in create_jwt_token() call for public registration. This was causing class bookings to fail with 'Only members can book classes' error because the booking endpoint checks for role='member' not type='member'."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration23_bug_fixes.py",
+    "/app/backend/routes/member_routes.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@ingresoqr.com / admin123",
+    "gym_id": "efe99507-15d5-4e54-9f07-30d2507894e0 (FitPro Gym)",
+    "plan_id": "54fd50c6-d475-4e1e-98f6-9340992c069f (Plan Mensual)"
+  },
+  "seed_data_creation": "Multiple test pending members created during testing (test_pending_*, test_qr_pending_*, test_booking_pending_*, etc.)",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 23 tested all bug fixes: 1) Public registration with plan creates pending member with requires_payment=true, 2) Public registration without plan creates active member, 3) QR generation blocked for pending members (403), 4) QR generation works for active members with active membership, 5) Class bookings blocked for pending members (403), 6) Accounting transactions endpoint returns payment_status field, 7) Accounting report only includes paid transactions in revenue totals, 8) Admin accounting page shows Estado column with Pagado/Pendiente badges, 9) Public registration shows payment required block, 10) Member PWA home shows pending payment block. Fixed JWT token bug in member_routes.py (type->role).",
+  "features_verified": {
+    "public_registration_with_plan": {
+      "status": "PASS",
+      "details": "POST /api/members/register with plan_id returns member with status='pending', requires_payment=true, membership status='pending_payment'"
+    },
+    "public_registration_without_plan": {
+      "status": "PASS",
+      "details": "POST /api/members/register without plan_id returns member with status='active', requires_payment=false"
+    },
+    "qr_generation_blocked_pending": {
+      "status": "PASS",
+      "details": "GET /api/qr/generate returns 403 for pending members with message about active membership requirement"
+    },
+    "qr_generation_active_member": {
+      "status": "PASS",
+      "details": "GET /api/qr/generate returns 200 with qr_code for active members with active membership"
+    },
+    "class_booking_blocked_pending": {
+      "status": "PASS",
+      "details": "POST /api/bookings returns 403 for pending members with message about active membership requirement"
+    },
+    "accounting_transactions_endpoint": {
+      "status": "PASS",
+      "details": "GET /api/accounting/transactions returns transactions with payment_status field and summary with paid_count, pending_count, total_paid, total_pending"
+    },
+    "accounting_report_paid_only": {
+      "status": "PASS",
+      "details": "GET /api/accounting/report only includes paid transactions in revenue totals"
+    },
+    "admin_accounting_estado_column": {
+      "status": "PASS",
+      "details": "Admin accounting page shows Estado column with Pagado (green) and Pendiente (amber) badges"
+    },
+    "public_register_payment_required": {
+      "status": "PASS",
+      "details": "Public registration success screen shows 'Pago pendiente' block with plan details and 'Pagar Ahora' button when plan is selected"
+    },
+    "member_pwa_pending_block": {
+      "status": "PASS",
+      "details": "Member PWA home shows 'Pago Pendiente' block with 'Pagar Membresia' button for pending members, QR container is hidden"
+    },
+    "admin_members_photo_upload": {
+      "status": "PASS",
+      "details": "AdminMembers dropdown shows 'Subir Foto' option with onSelect={(e) => e.preventDefault()} to prevent dropdown closing"
+    }
+  },
+  "bug_fix_applied": {
+    "file": "/app/backend/routes/member_routes.py",
+    "line": 104,
+    "issue": "JWT token created with 'type': 'member' instead of 'role': 'member'",
+    "fix": "Changed create_jwt_token({'sub': member_dict['id'], 'type': 'member', ...}) to create_jwt_token({'sub': member_dict['id'], 'role': 'member', ...})",
+    "impact": "Class bookings were failing for members registered via public registration because the booking endpoint checks for role='member'"
+  }
+}

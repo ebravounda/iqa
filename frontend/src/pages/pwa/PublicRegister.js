@@ -87,7 +87,7 @@ export default function PublicRegister() {
         }
       }
 
-      // Auto-login the member
+      // Auto-login the member (token needed for payment)
       localStorage.setItem('token', response.data.token);
       localStorage.setItem('userType', 'member');
       axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
@@ -100,6 +100,18 @@ export default function PublicRegister() {
 
   const goToApp = () => {
     window.location.href = '/app';
+  };
+
+  const goToPayment = async () => {
+    if (!success?.plan?.id) return;
+    try {
+      const res = await axios.post(`${API}/payments/checkout?plan_id=${success.plan.id}`);
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al iniciar pago. Contacta al administrador.');
+    }
   };
 
   const selectedPlan = plans.find(p => p.id === formData.plan_id);
@@ -124,30 +136,53 @@ export default function PublicRegister() {
   }
 
   if (success) {
+    const requiresPayment = success.requires_payment && success.plan;
     return (
       <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-4">
         <div className="w-full max-w-md text-center">
-          <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: 'var(--gym-primary)', color: '#000' }}>
-            <CheckCircle size={40} />
+          <div className="w-20 h-20 rounded-full mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: requiresPayment ? '#F59E0B' : 'var(--gym-primary)', color: '#000' }}>
+            {requiresPayment ? <CreditCard size={40} /> : <CheckCircle size={40} />}
           </div>
-          <h1 className="text-3xl font-black mb-2">Registro Exitoso</h1>
+          <h1 className="text-3xl font-black mb-2">{requiresPayment ? 'Registro Exitoso' : 'Registro Exitoso'}</h1>
           <p className="text-zinc-400 mb-6">Ya eres miembro de <strong className="text-white">{gym.name}</strong></p>
 
           <div className="bg-zinc-900/80 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 mb-6" data-testid="registration-success">
             <div className="flex items-center justify-center gap-3 mb-4">
               <QrCode size={24} style={{ color: 'var(--gym-primary)' }} />
-              <span className="text-lg font-bold">Tu código de acceso</span>
+              <span className="text-lg font-bold">Tu codigo de acceso</span>
             </div>
             <p className="text-4xl font-black font-mono tracking-widest mb-2" style={{ color: 'var(--gym-primary)' }} data-testid="member-code">
               {success.member.code}
             </p>
-            <p className="text-xs text-zinc-500">Guarda este código para acceder al gimnasio</p>
+            <p className="text-xs text-zinc-500">Guarda este codigo para acceder al gimnasio</p>
           </div>
 
-          <Button onClick={goToApp} className="w-full btn-gym-primary text-lg py-3" data-testid="go-to-app-btn">
-            <QrCode size={20} className="mr-2" />
-            Ir a Mi QR de Acceso
-          </Button>
+          {requiresPayment && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 mb-6" data-testid="payment-required-box">
+              <CreditCard size={24} className="mx-auto mb-3 text-amber-400" />
+              <p className="text-amber-300 font-bold text-lg mb-2">Pago pendiente</p>
+              <p className="text-zinc-400 text-sm mb-1">
+                Para habilitar tu acceso al gimnasio, realiza el pago de tu membresia:
+              </p>
+              <p className="text-white font-bold text-xl mb-1">{success.plan.name}</p>
+              <p className="text-2xl font-black" style={{ color: 'var(--gym-primary)' }}>
+                {success.plan.price?.toFixed(2)} {(success.plan.currency || gym.currency || 'EUR').toUpperCase()}
+              </p>
+              <p className="text-zinc-500 text-xs mt-1">{success.plan.duration_days} dias de acceso</p>
+            </div>
+          )}
+
+          {requiresPayment ? (
+            <Button onClick={goToPayment} className="w-full text-lg py-3 bg-amber-500 hover:bg-amber-600 text-black font-bold" data-testid="pay-now-btn">
+              <CreditCard size={20} className="mr-2" />
+              Pagar Ahora
+            </Button>
+          ) : (
+            <Button onClick={goToApp} className="w-full btn-gym-primary text-lg py-3" data-testid="go-to-app-btn">
+              <QrCode size={20} className="mr-2" />
+              Ir a Mi QR de Acceso
+            </Button>
+          )}
         </div>
       </div>
     );

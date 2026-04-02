@@ -218,6 +218,16 @@ export const resendEmail = (emailId) => axios.post(`${API}/emails/resend/${email
 export const updatePlan = (id, data) => axios.put(`${API}/plans/${id}`, data);
 export const updateClass = (id, data) => axios.put(`${API}/classes/${id}`, data);
 
+// All Transactions (paid + pending)
+export const getAllTransactions = (params = {}) => {
+  const searchParams = new URLSearchParams();
+  if (params.gym_id) searchParams.append('gym_id', params.gym_id);
+  if (params.status) searchParams.append('status', params.status);
+  if (params.date_from) searchParams.append('date_from', params.date_from);
+  if (params.date_to) searchParams.append('date_to', params.date_to);
+  return axios.get(`${API}/accounting/transactions?${searchParams.toString()}`);
+};
+
 // Broadcasts
 export const createBroadcast = (data) => axios.post(`${API}/broadcast`, data);
 export const getActiveBroadcasts = () => axios.get(`${API}/broadcast/active`);
