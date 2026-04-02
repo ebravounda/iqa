@@ -349,7 +349,8 @@ export const getMemberDevices = (memberId) => axios.get(`${API}/member-devices/$
 export const deactivateDevice = (deviceId) => axios.put(`${API}/member-devices/${deviceId}/deactivate`);
 export const deactivateAllDevices = (memberId) => axios.put(`${API}/member-devices/member/${memberId}/deactivate-all`);
 export const updateMaxDevices = (gymId, maxDevices) => axios.put(`${API}/gyms/${gymId}/max-devices`, { max_devices_per_member: maxDevices });
-export const getMemberVisitStats = (memberId) => axios.get(`${API}/stats/member-visits/${memberId}`);
+export const getMemberVisitStats = (memberId) => axios.get(`${API}/access/stats/member`);
+export const getMemberVisitStatsAdmin = (memberId) => axios.get(`${API}/stats/member-visits/${memberId}`);
 
 // Product Image Upload
 export const uploadProductImage = (productId, file) => {

@@ -255,6 +255,48 @@ async def get_member_access_logs(credentials: HTTPAuthorizationCredentials = Dep
     logs = await db.access_logs.find({"member_id": member_id}, {"_id": 0}).sort("timestamp", -1).to_list(50)
     return logs
 
+@router.get("/access/stats/member")
+async def get_member_visit_stats_pwa(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Visit statistics for the logged-in member (PWA)"""
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    now = datetime.now(timezone.utc)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0).isoformat()
+    week_start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0).isoformat()
+
+    total = await db.access_logs.count_documents({"member_id": member_id, "direction": "entrada"})
+    this_month = await db.access_logs.count_documents({"member_id": member_id, "direction": "entrada", "timestamp": {"$gte": month_start}})
+    this_week = await db.access_logs.count_documents({"member_id": member_id, "direction": "entrada", "timestamp": {"$gte": week_start}})
+
+    monthly = []
+    for i in range(5, -1, -1):
+        m = now.month - i
+        y = now.year
+        while m <= 0:
+            m += 12
+            y -= 1
+        m_start = datetime(y, m, 1, tzinfo=timezone.utc).isoformat()
+        next_m = m + 1
+        next_y = y
+        if next_m > 12:
+            next_m = 1
+            next_y += 1
+        m_end = datetime(next_y, next_m, 1, tzinfo=timezone.utc).isoformat()
+        count = await db.access_logs.count_documents({
+            "member_id": member_id, "direction": "entrada",
+            "timestamp": {"$gte": m_start, "$lt": m_end}
+        })
+        month_names = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"]
+        monthly.append({"month": month_names[m - 1], "visits": count})
+
+    return {
+        "total_visits": total,
+        "this_month": this_month,
+        "this_week": this_week,
+        "monthly": monthly
+    }
+
+
 @router.get("/access/stats")
 async def get_access_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
     query = {}
