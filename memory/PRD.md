@@ -1,7 +1,7 @@
 # IngresoQR - PRD (Product Requirements Document)
 
 ## Vision
-Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinamico, pagos Stripe/MercadoPago, control fisico via Raspberry Pi, y app PWA para socios.
+Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hoteles y coworkings con QR dinamico, pagos Stripe/MercadoPago, control fisico via Raspberry Pi, y app PWA para socios/residentes/huespedes/miembros.
 
 ## Stack Tecnologico
 - Backend: FastAPI + MongoDB (Motor) + JWT
@@ -34,22 +34,30 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios con QR dinamico, p
 - JWT de registro publico usaba "type" -> corregido a "role"
 - Division por cero AdminPlans.js -> (duration_days || 1)
 
-### Features P1 Implementadas (Abril 2026)
+### Features P1 Implementadas
 - Email de bienvenida con boton de pago al registrarse con plan
 - Limpieza de socios inactivos 60+ dias (boton "Limpiar Inactivos" en Admin)
 - Socio sube/cambia su foto desde PWA (icono camara en perfil)
 - Endpoint /api/accounting/transactions con resumen pagado/pendiente
 - Boton reenviar email para todos los tipos
+- Colores corporativos por gimnasio (primary, bg, menu, text, secondary) con pickers y vista previa
+- TPV/POS profesional con categorias, 4 tabs (TPV, Productos, Ventas, Estadisticas), carrito
+- Modulo RFID para tarjetas/llaveros fisicos: asignacion, validacion, anti-passback
 
-### Features Implementadas y Verificadas (Abril 2026 - Session actual)
-- Colores corporativos por gimnasio (primary, bg, menu, text, secondary) con pickers y vista previa en AdminSettings
-- TPV/POS profesional con categorias (Bebidas, Suplementos, Ropa, etc.), 4 tabs (TPV, Productos, Ventas, Estadisticas), carrito con metodo de pago, busqueda por nombre/barcode
-- Modulo RFID para tarjetas/llaveros fisicos: asignacion por miembro, validacion automatica en turnstile (deteccion QR vs RFID), anti-passback, logs de acceso con access_type
+### Multi-Vertical (Abril 2026 - Ultima implementacion)
+- Campo `business_type` en modelo Gym (gym, condominium, hotel, coworking)
+- Selector visual de 4 tipos de negocio al crear/editar en AdminGyms
+- Badge de tipo de negocio en tarjetas de gym
+- Labels dinamicos en sidebar (Socios/Residentes/Huespedes/Miembros)
+- Labels dinamicos en Dashboard, Members, Plans, Classes
+- Labels dinamicos en PWA del miembro (Membresia/Cuota/Reserva/Suscripcion)
+- BusinessContext React context para propagar labels a toda la app
+- Pagina "Gimnasios" renombrada a "Negocios" (terminologia generica)
+- Testing: Backend 14/14, Frontend 100% (iteration_26)
 
 ## P1 - Pendiente
-1. Multi-vertical (condominios, hoteles, coworking) - campo business_type + labels dinamicos
-2. Portal de registro publico mejorado (landing page)
-3. Check-in de asistencia a clases (trainers marcan asistencia)
+1. Portal de registro publico mejorado (landing page independiente)
+2. Check-in de asistencia a clases (trainers marcan asistencia)
 
 ## P2 - Futuro
 - Push Notifications reales (Firebase/PWA Push API)
