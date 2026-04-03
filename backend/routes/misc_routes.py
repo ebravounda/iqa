@@ -369,6 +369,22 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
             capacity_info = {"max_members": max_members, "active_members": active_members,
                             "usage_percent": round((active_members / max_members * 100), 1)}
     
+    # Real-time occupancy: entries - exits today
+    occupancy_query = {**access_query, "timestamp": {"$gte": today_start.isoformat()}}
+    today_entries = await db.access_logs.count_documents({**occupancy_query, "direction": "entrada"})
+    today_exits = await db.access_logs.count_documents({**occupancy_query, "direction": "salida"})
+    current_occupancy = max(0, today_entries - today_exits)
+    max_capacity = None
+    if gym_id and capacity_info:
+        max_capacity = capacity_info["max_members"]
+    occupancy_info = {
+        "current": current_occupancy,
+        "entries_today": today_entries,
+        "exits_today": today_exits,
+        "max_capacity": max_capacity,
+        "occupancy_percent": round((current_occupancy / max_capacity * 100), 1) if max_capacity and max_capacity > 0 else None
+    }
+    
     recent_accesses_enriched = []
     if admin["role"] == "super_admin":
         recent_logs = await db.access_logs.find({}, {"_id": 0}).sort("timestamp", -1).to_list(15)
@@ -387,6 +403,7 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
         "gyms_count": gyms_count, "month_revenue": month_revenue,
         "classes_count": classes_count, "today_schedules": today_schedules,
         "today_bookings": today_bookings, "capacity": capacity_info,
+        "occupancy": occupancy_info,
         "recent_accesses_by_gym": recent_accesses_enriched if admin["role"] == "super_admin" else [],
         "today_accesses": today_count, "week_accesses": week_count,
         "month_accesses": month_count, "active_memberships": active_memberships

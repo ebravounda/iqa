@@ -1,11 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
 import { getDashboardStats, getAccessLogs, getExpiringMemberships, getDailyAccessStats } from '../../lib/api';
 import { formatDateTime, formatCurrency } from '../../lib/utils';
 import { 
   Users, TrendingUp, Calendar, DollarSign, 
-  ArrowUpRight, Clock, AlertTriangle
+  ArrowUpRight, Clock, AlertTriangle, Activity, LogIn, LogOut
 } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -18,11 +18,7 @@ export default function AdminDashboard() {
   const [chartData, setChartData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [statsRes, accessRes, expiringRes, dailyRes] = await Promise.all([
         getDashboardStats(),
@@ -39,7 +35,13 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchData]);
 
   if (loading) {
     return (
@@ -120,6 +122,69 @@ export default function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Real-time Occupancy Widget */}
+      {stats?.occupancy && (
+        <div className="stat-card relative overflow-hidden" data-testid="occupancy-widget">
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-5" style={{ background: 'var(--gym-primary)', filter: 'blur(40px)' }} />
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-xl flex items-center justify-center relative" style={{ backgroundColor: 'rgba(225, 255, 1, 0.1)' }}>
+                <Activity size={24} style={{ color: 'var(--gym-primary)' }} />
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+              </div>
+              <div>
+                <h3 className="font-bold text-lg">Ocupación en Tiempo Real</h3>
+                <p className="text-zinc-500 text-xs">Personas dentro ahora mismo</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <p className="text-5xl font-black" style={{ color: 'var(--gym-primary)' }} data-testid="occupancy-count">
+                {stats.occupancy.current}
+              </p>
+              {stats.occupancy.max_capacity && (
+                <p className="text-xs text-zinc-500">de {stats.occupancy.max_capacity} máx.</p>
+              )}
+            </div>
+          </div>
+          {stats.occupancy.max_capacity && stats.occupancy.occupancy_percent !== null && (
+            <div className="mb-4">
+              <div className="w-full bg-zinc-800 rounded-full h-3 overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all duration-1000 ${
+                    stats.occupancy.occupancy_percent >= 90 ? 'bg-red-500' :
+                    stats.occupancy.occupancy_percent >= 70 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}
+                  style={{ width: `${Math.min(stats.occupancy.occupancy_percent, 100)}%` }}
+                />
+              </div>
+              <p className={`text-xs mt-1 font-bold ${
+                stats.occupancy.occupancy_percent >= 90 ? 'text-red-400' :
+                stats.occupancy.occupancy_percent >= 70 ? 'text-amber-400' : 'text-emerald-400'
+              }`}>
+                {stats.occupancy.occupancy_percent}% de capacidad
+              </p>
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/5 border border-emerald-500/10">
+              <LogIn size={18} className="text-emerald-400" />
+              <div>
+                <p className="text-lg font-black text-emerald-400" data-testid="entries-today">{stats.occupancy.entries_today}</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Entradas hoy</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-blue-500/5 border border-blue-500/10">
+              <LogOut size={18} className="text-blue-400" />
+              <div>
+                <p className="text-lg font-black text-blue-400" data-testid="exits-today">{stats.occupancy.exits_today}</p>
+                <p className="text-[10px] text-zinc-500 uppercase tracking-wider">Salidas hoy</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-[10px] text-zinc-600 mt-3 text-right">Se actualiza cada 30 segundos</p>
+        </div>
+      )}
 
       {/* Suspended Members Alert */}
       {stats?.suspended_members > 0 && (
