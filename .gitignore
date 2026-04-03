@@ -26,7 +26,7 @@ next-env.d.ts
 *.tsbuildinfo
 
 # Production builds
-/build
+# /build  ← REMOVIDO para incluir build en el repo
 dist/
 dist
 
