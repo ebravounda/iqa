@@ -31,6 +31,7 @@ from routes.gamification_routes import router as gamification_router
 from routes.routine_routes import router as routine_router
 from routes.stripe_auto_routes import router as stripe_auto_router
 from routes.demo_routes import router as demo_router
+from routes.whmcs_routes import router as whmcs_router
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -73,6 +74,7 @@ app.include_router(gamification_router)
 app.include_router(routine_router)
 app.include_router(stripe_auto_router)
 app.include_router(demo_router)
+app.include_router(whmcs_router)
 
 app.add_middleware(
     CORSMiddleware,
