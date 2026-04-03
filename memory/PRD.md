@@ -45,6 +45,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Colores corporativos por gimnasio (primary, bg, menu, text, secondary) con pickers y vista previa
 - TPV/POS profesional con categorias, 4 tabs (TPV, Productos, Ventas, Estadisticas), carrito
 - Modulo RFID para tarjetas/llaveros fisicos: asignacion, validacion, anti-passback
+- Contador de ocupacion en tiempo real en Dashboard (entradas - salidas del dia, barra de capacidad, auto-refresh 30s) (3 Abr 2026)
 
 ### Multi-Vertical (Abril 2026)
 - Campo `business_type` en modelo Gym (gym, condominium, hotel, coworking)
@@ -63,7 +64,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Script de actualizacion masiva para multiples dominios
 
 ## P1 - Pendiente
-1. Portal de registro publico mejorado (landing page independiente)
+1. Portal de registro publico / landing page por negocio (slideshow, tarifas, "Hazte Socio")
 2. Check-in de asistencia a clases (trainers marcan asistencia)
 
 ## P2 - Futuro
@@ -73,7 +74,8 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Reportes PDF exportables adicionales
 
 ## Notas de Despliegue
-- Backend: `cd /opt/gymaccess && git pull origin main && sudo systemctl restart gymaccess-api`
-- Frontend: yarn build con REACT_APP_BACKEND_URL=https://c.ingresoqr.com + subir build/ a app.ingresoqr.com via Plesk File Manager
+- Backend actualizar: `cd /opt/gymaccess && git pull origin main && sudo systemctl restart gymaccess-api`
+- Los archivos principales (server.py, auth.py, database.py, models.py, etc.) son symlinks de /opt/gymaccess/ -> /opt/gymaccess/backend/ para que git pull los actualice automaticamente
+- La carpeta /opt/gymaccess/routes/ es symlink a /opt/gymaccess/backend/routes/
+- Frontend: Descargar build compilado con REACT_APP_BACKEND_URL=https://c.ingresoqr.com y subir a app.ingresoqr.com via Plesk File Manager
 - Dominios personalizados: copiar build + .htaccess (ver GUIA_DOMINIOS_PERSONALIZADOS.md)
-- Script masivo disponible para actualizar todos los dominios a la vez
