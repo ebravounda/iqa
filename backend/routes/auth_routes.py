@@ -6,7 +6,7 @@ import uuid
 from database import db
 from auth import (
     security, hash_password, verify_password, create_jwt_token, 
-    decode_jwt_token, get_current_admin
+    decode_jwt_token, get_current_admin, check_role
 )
 from models import AdminCreate, AdminLogin
 from routes.security_routes import is_ip_blocked, record_failed_attempt, record_successful_login, get_client_ip
@@ -195,3 +195,33 @@ async def update_admin_profile(request: Request, admin: dict = Depends(get_curre
     updated = await db.admins.find_one({"id": admin["id"]}, {"_id": 0, "password": 0})
     new_token = create_jwt_token({"sub": updated["id"], "role": updated["role"], "gym_id": updated.get("gym_id")})
     return {"message": "Perfil actualizado correctamente", "admin": updated, "token": new_token}
+
+
+@router.put("/auth/admin/{admin_id}/credentials")
+async def update_admin_credentials(admin_id: str, request: Request, admin: dict = Depends(get_current_admin)):
+    """Super admin can change email/password of any gym admin"""
+    check_role(admin, ["super_admin"])
+    body = await request.json()
+    new_email = body.get("email", "").strip()
+    new_password = body.get("password", "").strip()
+    target = await db.admins.find_one({"id": admin_id})
+    if not target:
+        raise HTTPException(status_code=404, detail="Administrador no encontrado")
+    updates = {}
+    if new_email and new_email != target.get("email"):
+        existing = await db.admins.find_one({"email": new_email, "id": {"$ne": admin_id}})
+        if existing:
+            raise HTTPException(status_code=400, detail="Ese email ya esta en uso")
+        updates["email"] = new_email
+    if new_password:
+        if len(new_password) < 6:
+            raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 6 caracteres")
+        updates["password"] = hash_password(new_password)
+    if not updates:
+        raise HTTPException(status_code=400, detail="No hay cambios")
+    await db.admins.update_one({"id": admin_id}, {"$set": updates})
+    updated = await db.admins.find_one({"id": admin_id}, {"_id": 0, "password": 0})
+    # Also update gym record if email changed
+    if "email" in updates and target.get("gym_id"):
+        await db.gyms.update_one({"id": target["gym_id"]}, {"$set": {"gym_admin_email": updates["email"]}})
+    return {"message": "Credenciales actualizadas", "admin": updated}

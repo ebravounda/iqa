@@ -193,7 +193,7 @@ async def get_pos_stats(gym_id: Optional[str] = None, admin: dict = Depends(get_
 @router.get("/pos/categories")
 async def get_pos_categories(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
     """Get distinct product categories for a gym"""
-    query = {}
+    query = {"active": True}
     if admin["role"] != "super_admin":
         query["gym_id"] = admin.get("gym_id")
     elif gym_id:
@@ -204,3 +204,16 @@ async def get_pos_categories(gym_id: Optional[str] = None, admin: dict = Depends
     if not cats:
         cats = ["general"]
     return sorted(cats)
+
+
+@router.delete("/pos/categories/{category_name}")
+async def delete_category(category_name: str, gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):
+    check_role(admin, ["super_admin", "gym_admin", "gym_manager"])
+    check_permission(admin, "pos_products")
+    query = {"category": category_name, "active": True}
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
+        query["gym_id"] = gym_id
+    result = await db.pos_products.update_many(query, {"$set": {"category": "General"}})
+    return {"message": f"Categoria eliminada. {result.modified_count} productos movidos a General"}

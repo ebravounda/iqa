@@ -173,6 +173,18 @@ export default function AdminPOS() {
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Eliminar producto?')) return;
     try {
+
+  const handleDeleteCategory = async (cat) => {
+    if (cat === 'General') { toast.error('No puedes eliminar la categoria General'); return; }
+    if (!window.confirm(`Eliminar categoria "${cat}"? Los productos se moveran a "General".`)) return;
+    try {
+      const params = gymId ? { gym_id: gymId } : {};
+      await axios.delete(`${API}/pos/categories/${encodeURIComponent(cat)}`, { params });
+      toast.success('Categoria eliminada');
+      setActiveCategory('all');
+      fetchData();
+    } catch (err) { toast.error(err.response?.data?.detail || 'Error al eliminar categoria'); }
+  };
       await axios.delete(`${API}/pos/products/${id}`);
       toast.success('Producto eliminado');
       fetchData();
@@ -352,10 +364,17 @@ export default function AdminPOS() {
             {allCategories.map(cat => {
               const count = products.filter(p => (p.category || 'General') === cat).length;
               return (
-                <button key={cat} onClick={() => setActiveCategory(cat)} className={`px-3 py-1.5 rounded-full text-xs font-bold ${activeCategory.toLowerCase() === cat.toLowerCase() ? 'text-black' : 'text-zinc-400 bg-zinc-800'}`}
-                  style={activeCategory.toLowerCase() === cat.toLowerCase() ? { backgroundColor: 'var(--gym-primary)' } : {}}>
-                  {cat} ({count})
-                </button>
+                <div key={cat} className="flex items-center gap-1">
+                  <button onClick={() => setActiveCategory(cat)} className={`px-3 py-1.5 rounded-full text-xs font-bold ${activeCategory.toLowerCase() === cat.toLowerCase() ? 'text-black' : 'text-zinc-400 bg-zinc-800'}`}
+                    style={activeCategory.toLowerCase() === cat.toLowerCase() ? { backgroundColor: 'var(--gym-primary)' } : {}}>
+                    {cat} ({count})
+                  </button>
+                  {cat !== 'General' && (
+                    <button onClick={() => handleDeleteCategory(cat)} className="p-1 rounded-full hover:bg-red-900/30 text-red-400/60 hover:text-red-400" title="Eliminar categoria" data-testid={`delete-cat-${cat}`}>
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               );
             })}
           </div>
@@ -398,7 +417,7 @@ export default function AdminPOS() {
               <tbody>
                 {(sales || []).map(s => (
                   <tr key={s.id}>
-                    <td className="text-sm">{s.created_at?.slice(0, 16).replace('T', ' ')}</td>
+                    <td className="text-sm">{s.created_at ? new Date(s.created_at).toLocaleString() : '-'}</td>
                     <td><div className="flex flex-wrap gap-1">{(s.items || []).map((i, idx) => (
                       <span key={idx} className="text-xs bg-zinc-800 px-2 py-0.5 rounded">{i.quantity}x {i.product_name || i.product_id?.slice(0,8)}</span>
                     ))}</div></td>

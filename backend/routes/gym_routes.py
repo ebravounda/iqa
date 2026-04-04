@@ -64,10 +64,11 @@ async def get_gyms(admin: dict = Depends(get_current_admin)):
             gym.setdefault("business_type", "gym")
             gym_admin = await db.admins.find_one(
                 {"gym_id": gym["id"], "role": "gym_admin"}, 
-                {"_id": 0, "email": 1, "name": 1}
+                {"_id": 0, "email": 1, "name": 1, "id": 1}
             )
             gym["gym_admin_email"] = gym_admin["email"] if gym_admin else None
             gym["gym_admin_name"] = gym_admin["name"] if gym_admin else None
+            gym["admin_id"] = gym_admin["id"] if gym_admin else None
     else:
         gyms = await db.gyms.find({"id": admin.get("gym_id")}, {"_id": 0}).to_list(1)
         for gym in gyms:

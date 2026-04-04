@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../../components/ui/dropdown-menu';
 import { 
   Plus, Building2, Search, MoreVertical, Pencil, Trash2, Ban, CheckCircle,
-  AlertTriangle, LogIn, Users, Mail, Shield, CreditCard, Dumbbell, Building, Hotel, Laptop
+  AlertTriangle, LogIn, Users, Mail, Shield, CreditCard, Dumbbell, Building, Hotel, Laptop, Save
 } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
@@ -28,6 +28,9 @@ export default function AdminGyms() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [selectedGym, setSelectedGym] = useState(null);
   const [impersonating, setImpersonating] = useState(null);
+  const [showCredentialsModal, setShowCredentialsModal] = useState(false);
+  const [credentialsForm, setCredentialsForm] = useState({ email: '', password: '' });
+  const [credentialsGym, setCredentialsGym] = useState(null);
   const [newGym, setNewGym] = useState({
     name: '', address: '', phone: '', email: '', primary_color: '#E1FF01', max_members: null,
     business_type: 'gym', custom_domain: '', admin_email: '', admin_password: '', admin_name: ''
@@ -90,6 +93,27 @@ export default function AdminGyms() {
       fetchGyms();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error al actualizar');
+    }
+  };
+
+  const handleOpenCredentials = (gym) => {
+    setCredentialsGym(gym);
+    setCredentialsForm({ email: gym.gym_admin_email || '', password: '' });
+    setShowCredentialsModal(true);
+  };
+
+  const handleUpdateCredentials = async () => {
+    if (!credentialsForm.email && !credentialsForm.password) { toast.error('Ingresa un email o contraseña nueva'); return; }
+    if (credentialsForm.password && credentialsForm.password.length < 6) { toast.error('La contraseña debe tener al menos 6 caracteres'); return; }
+    try {
+      const adminId = credentialsGym.admin_id;
+      if (!adminId) { toast.error('Este negocio no tiene un administrador asignado'); return; }
+      await axios.put(`${API}/auth/admin/${adminId}/credentials`, credentialsForm);
+      toast.success('Credenciales actualizadas');
+      setShowCredentialsModal(false);
+      fetchGyms();
+    } catch (err) {
+      toast.error(err.response?.data?.detail || 'Error al actualizar credenciales');
     }
   };
 
@@ -363,6 +387,11 @@ export default function AdminGyms() {
                     <DropdownMenuItem onClick={() => handleDeleteConfirm(gym)} className="cursor-pointer text-red-500" data-testid={`gym-delete-${gym.id}`}>
                       <Trash2 size={16} className="mr-2" /> Eliminar
                     </DropdownMenuItem>
+                    {gym.admin_id && (
+                      <DropdownMenuItem onClick={() => handleOpenCredentials(gym)} className="cursor-pointer" data-testid={`gym-credentials-${gym.id}`}>
+                        <Shield size={16} className="mr-2 text-blue-400" /> Cambiar Credenciales
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -516,6 +545,32 @@ export default function AdminGyms() {
                 <Trash2 size={18} className="mr-2" /> Sí, Eliminar
               </Button>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Credentials Modal */}
+      <Dialog open={showCredentialsModal} onOpenChange={setShowCredentialsModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-700 max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-white flex items-center gap-2">
+              <Shield size={20} className="text-blue-400" />
+              Cambiar Credenciales — {credentialsGym?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-2">
+            <div>
+              <label className="text-sm text-zinc-400 mb-1 block">Nuevo Email</label>
+              <Input type="email" value={credentialsForm.email} onChange={e => setCredentialsForm({...credentialsForm, email: e.target.value})}
+                placeholder="admin@negocio.com" className="input-dark" data-testid="credentials-email" />
+            </div>
+            <div>
+              <label className="text-sm text-zinc-400 mb-1 block">Nueva Contraseña</label>
+              <Input type="password" value={credentialsForm.password} onChange={e => setCredentialsForm({...credentialsForm, password: e.target.value})}
+                placeholder="Dejar vacio para no cambiar" className="input-dark" data-testid="credentials-password" />
+            </div>
+            <Button onClick={handleUpdateCredentials} className="w-full btn-gym-primary" data-testid="save-credentials-btn">
+              <Save size={16} className="mr-2" /> Guardar Credenciales
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
