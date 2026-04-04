@@ -1,84 +1,63 @@
 # IngresoQR - PRD (Product Requirements Document)
 
-## Vision
-Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hoteles y coworkings con QR dinamico, pagos Stripe/MercadoPago, control fisico via Raspberry Pi, y app PWA para socios/residentes/huespedes/miembros.
+## Problema Original
+Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hoteles, etc. con QR dinámico, control de torniquetes (Raspberry Pi), pagos Stripe, roles multi-tier, PWA para socios y panel admin.
 
-## Stack Tecnologico
-- Backend: FastAPI + MongoDB (Motor) + JWT
-- Frontend: React 18 + Tailwind + Shadcn/UI
-- IoT: Raspberry Pi 3B+ + GPIO relays + USB QR scanner
-- Deploy: Plesk VPS (c.ingresoqr.com / app.ingresoqr.com)
-
-## Completado
-
-### Core (historico)
-- Sistema base multi-tenant con auth JWT
-- QR dinamico/estatico con HMAC y anti-passback
-- Raspberry Pi script con GPIO y evdev
-- Stripe + MercadoPago por gimnasio + pagos manuales
-- Clases recurrentes con reservas y check-in
-- SaaS plans con 12 feature flags
-- POS, Gamificacion, Rutinas, Formularios, Guest passes
-- Email SMTP por gimnasio, Analytics, Excel export, PDF ventas
-- Seguridad: bloqueo IP, device management, dark/light theme
-- ErrorBoundary, Impersonation, Broadcasts
-- Despliegue Plesk + sync backend via GitHub
-- Documentacion tecnica PDF (EN + ES)
-- Capturas Google Play (8 screenshots + feature graphic)
-
-### Bugs P0 Corregidos (Abril 2026)
-- Registro publico creaba membresia activa sin pago -> status "pending" + "pending_payment"
-- Contabilidad mostraba ingresos sin cobrar -> columna Estado (Pagado/Pendiente) + solo paid en revenue
-- Dropdown foto admin se cerraba -> onSelect preventDefault
-- QR y reservas sin restriccion -> 403 para miembros pending sin membresia activa
-- JWT de registro publico usaba "type" -> corregido a "role"
-- Division por cero AdminPlans.js -> (duration_days || 1)
-- Modal "Editar Negocio" no permitia scroll -> agregado max-h-[90vh] overflow-y-auto (2 Abr 2026)
-- PWA Estadisticas del socio mostraba 0 -> endpoint usaba auth de admin, creado nuevo endpoint /api/access/stats/member con auth de miembro (2 Abr 2026)
-
-### Features P1 Implementadas
-- Email de bienvenida con boton de pago al registrarse con plan
-- Limpieza de socios inactivos 60+ dias (boton "Limpiar Inactivos" en Admin)
-- Socio sube/cambia su foto desde PWA (icono camara en perfil)
-- Endpoint /api/accounting/transactions con resumen pagado/pendiente
-- Boton reenviar email para todos los tipos
-- Colores corporativos por gimnasio (primary, bg, menu, text, secondary) con pickers y vista previa
-- TPV/POS profesional con categorias, 4 tabs (TPV, Productos, Ventas, Estadisticas), carrito
-- Modulo RFID para tarjetas/llaveros fisicos: asignacion, validacion, anti-passback
-- Contador de ocupacion en tiempo real en Dashboard (entradas - salidas del dia, barra de capacidad, auto-refresh 30s) (3 Abr 2026)
-- Diferenciacion de suspension: manual (cierra sesion inmediato) vs pago (permite login para pagar) (4 Abr 2026)
-
-### Multi-Vertical (Abril 2026)
-- Campo `business_type` en modelo Gym (gym, condominium, hotel, coworking)
-- Selector visual de 4 tipos de negocio al crear/editar en AdminGyms
-- Badge de tipo de negocio en tarjetas de gym
-- Labels dinamicos en sidebar, Dashboard, Members, Plans, Classes, PWA
-- BusinessContext React context para propagar labels a toda la app
-- Pagina "Gimnasios" renombrada a "Negocios"
-
-### Custom Domain (Abril 2026)
-- Campo custom_domain por tenant con login branded
-- Resolucion de dominio via /api/gyms/resolve-domain/{domain}
-- Hook useCustomDomain para deteccion automatica
-- Dominio personalizado botwtsp.com funcionando en produccion
-- Guia completa de configuracion de dominios personalizados (GUIA_DOMINIOS_PERSONALIZADOS.md)
-- Script de actualizacion masiva para multiples dominios
-
-## P1 - Pendiente
-1. Portal de registro publico / landing page por negocio (slideshow, tarifas, "Hazte Socio")
-2. Check-in de asistencia a clases (trainers marcan asistencia)
-
-## P2 - Futuro
-- Push Notifications reales (Firebase/PWA Push API)
-- Dashboard mejorado para Trainers
-- Chat trainer-socio
-- Reportes PDF exportables adicionales
+## Arquitectura
+- **Backend**: FastAPI + MongoDB (rutas en `/app/backend/routes/`)
+- **Frontend**: React + Tailwind + Shadcn UI
+- **Producción**: EC2 con Plesk (`c.ingresoqr.com` backend, `app.ingresoqr.com` frontend)
 
 ## Notas de Despliegue
-- Backend actualizar: `cd /opt/gymaccess && git pull origin main && sudo systemctl restart gymaccess-api`
-- Los archivos principales (server.py, auth.py, database.py, models.py, etc.) son symlinks de /opt/gymaccess/ -> /opt/gymaccess/backend/ para que git pull los actualice automaticamente
+- Backend actualizar: `cd /opt/gymaccess && git pull origin main && git checkout -- backend/ && sudo systemctl restart gymaccess-api`
+- **Frontend ruta real**: `/var/www/vhosts/ingresoqr.com/app.ingresoqr.com/`
+- Frontend deploy: `\cp -rf /opt/gymaccess/frontend/build/* /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/ && chown -R ingresoqr:psaserv /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/`
+- Comando completo: `cd /opt/gymaccess && git pull origin main && git checkout -- backend/ && sudo systemctl restart gymaccess-api && \cp -rf frontend/build/* /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/ && chown -R ingresoqr:psaserv /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/`
 - La carpeta /opt/gymaccess/routes/ es symlink a /opt/gymaccess/backend/routes/
-- **Frontend ruta real**: `/var/www/vhosts/ingresoqr.com/app.ingresoqr.com/` (NO es /var/www/vhosts/app.ingresoqr.com/)
-- Frontend: Descargar build compilado con REACT_APP_BACKEND_URL=https://c.ingresoqr.com y subir contenido de `frontend/build/` a `/var/www/vhosts/ingresoqr.com/app.ingresoqr.com/`
-- Despues de subir: `chown -R ingresoqr:psaserv /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/`
-- Dominios personalizados: `sudo cp -r /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/* /var/www/vhosts/botwtsp.com/httpdocs/` (ver GUIA_DOMINIOS_PERSONALIZADOS.md)
+- Dominios personalizados: `sudo cp -rf /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/* /var/www/vhosts/botwtsp.com/httpdocs/`
+
+## Features Completadas
+
+### Core (Sesiones anteriores)
+- JWT Authentication multi-tier (Super Admin, Gym Admin, Manager, Trainer)
+- QR dinámico con refresh configurable (5/10/15s)
+- Control de torniquetes via Raspberry Pi + API
+- Stripe payments (tenant-specific keys)
+- PWA para socios (QR, clases, perfil, stats, gamificación)
+- Panel Admin (Dashboard, Socios, Planes, Clases, Horarios, Accesos, Dispositivos)
+- Multi-tenant: cada gym/negocio tiene su propio admin y datos aislados
+- WHMCS integration para billing automatizado
+- Colores corporativos por negocio
+- TPV/POS con categorías, carrito, estadísticas
+- RFID para tarjetas/llaveros físicos
+- Ocupación en tiempo real en Dashboard
+- Auto-approve members toggle
+- Avatar upload para socios
+
+### Sesión 4 Abr 2026
+- Diferenciación de suspensión: manual (cierre sesión inmediato) vs pago (permite login para pagar)
+- Chequeo periódico 30s para detectar suspensiones en tiempo real
+- Pago manual reactiva automáticamente socios suspendidos/pendientes
+- Banner PWA "Instalar App" (Android nativo + iOS instrucciones), dismissible, toggle por negocio
+- Cambiar credenciales gym admin desde Super Admin
+- Eliminar categorías POS
+- Hora local en ventas POS
+- Scroll en modal dispositivos de socio
+- Soft-delete dispositivos con historial últimos 8
+- Avatar PWA con cache-busting
+- Filtro active:True en categorías POS
+
+## Backlog Priorizado
+
+### P1 - Próximas
+- Portal de registro público / landing page por negocio (slideshow, tarifas, auto-registro)
+- Check-in de asistencia a clases
+
+### P2 - Futuras
+- Push Notifications reales (Firebase/PWA Push API)
+- Chat trainer-socio
+- Reportes PDF exportables
+- Dashboard mejorado para Trainers
+
+### Bug Conocido
+- "Save to Github" de Emergent solo empuja .emergent/emergent.yml y .gitignore (reportado a soporte)
