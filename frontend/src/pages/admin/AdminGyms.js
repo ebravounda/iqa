@@ -79,7 +79,8 @@ export default function AdminGyms() {
       max_members: gym.max_members || null,
       business_type: gym.business_type || 'gym',
       custom_domain: gym.custom_domain || '',
-      auto_approve_members: gym.auto_approve_members || false
+      auto_approve_members: gym.auto_approve_members || false,
+      show_pwa_install_prompt: gym.show_pwa_install_prompt !== false
     });
     setShowEditModal(true);
   };
@@ -502,6 +503,21 @@ export default function AdminGyms() {
                   </div>
                   <span className={`text-sm ${editGym.auto_approve_members ? 'text-emerald-400' : 'text-zinc-500'}`}>
                     {editGym.auto_approve_members ? 'Activado — Los socios con pago realizado se activan automaticamente' : 'Desactivado — Los socios requieren aprobacion manual'}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Mostrar banner "Instalar App" (PWA)</label>
+                <div
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${editGym.show_pwa_install_prompt ? 'border-blue-500/50 bg-blue-500/5' : 'border-zinc-700 bg-zinc-800/50'}`}
+                  onClick={() => setEditGym({ ...editGym, show_pwa_install_prompt: !editGym.show_pwa_install_prompt })}
+                  data-testid="toggle-pwa-install"
+                >
+                  <div className={`w-10 h-6 rounded-full p-0.5 transition-all ${editGym.show_pwa_install_prompt ? 'bg-blue-500' : 'bg-zinc-600'}`}>
+                    <div className={`w-5 h-5 rounded-full bg-white transition-all ${editGym.show_pwa_install_prompt ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </div>
+                  <span className={`text-sm ${editGym.show_pwa_install_prompt ? 'text-blue-400' : 'text-zinc-500'}`}>
+                    {editGym.show_pwa_install_prompt ? 'Activado — Los socios veran la opcion de instalar la app' : 'Desactivado — No se muestra el banner de instalacion'}
                   </span>
                 </div>
               </div>

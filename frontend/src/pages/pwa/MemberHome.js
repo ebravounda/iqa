@@ -6,7 +6,7 @@ import { getMembershipStatus, getDaysRemaining } from '../../lib/utils';
 import { getLabels } from '../../lib/businessLabels';
 import { QRCodeSVG } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard, BarChart3, Calendar, Clock, Trophy, Dumbbell } from 'lucide-react';
+import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard, BarChart3, Calendar, Clock, Trophy, Dumbbell, Download, Smartphone } from 'lucide-react';
 import { Button } from '../../components/ui/button';
 
 export default function MemberHome() {
@@ -21,6 +21,48 @@ export default function MemberHome() {
   const [fullscreen, setFullscreen] = useState(false);
   const [error, setError] = useState(null);
   const [qrMode, setQrMode] = useState('dynamic');
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(false);
+
+  // PWA Install Prompt
+  useEffect(() => {
+    const dismissed = localStorage.getItem(`pwa_install_dismissed_${gym?.id}`);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+    const gymAllows = gym?.show_pwa_install_prompt !== false;
+    
+    if (dismissed || isStandalone || !gymAllows) return;
+
+    const handler = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+    window.addEventListener('beforeinstallprompt', handler);
+    
+    // For iOS (no beforeinstallprompt), show manual instructions
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS && !isStandalone && gymAllows && !dismissed) {
+      setShowInstallBanner(true);
+    }
+    
+    return () => window.removeEventListener('beforeinstallprompt', handler);
+  }, [gym]);
+
+  const handleInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setShowInstallBanner(false);
+      }
+      setDeferredPrompt(null);
+    }
+  };
+
+  const dismissInstallBanner = () => {
+    localStorage.setItem(`pwa_install_dismissed_${gym?.id}`, 'true');
+    setShowInstallBanner(false);
+  };
 
   const fetchQR = useCallback(async () => {
     try {
@@ -108,6 +150,41 @@ export default function MemberHome() {
 
   return (
     <div className="space-y-6" data-testid="member-home">
+      {/* PWA Install Banner */}
+      <AnimatePresence>
+        {showInstallBanner && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="relative p-4 rounded-2xl border border-blue-500/30 overflow-hidden"
+            style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1) 0%, rgba(99,102,241,0.1) 100%)' }}
+            data-testid="pwa-install-banner"
+          >
+            <button onClick={dismissInstallBanner} className="absolute top-3 right-3 p-1 rounded-full hover:bg-white/10 text-zinc-400 hover:text-white transition-colors" data-testid="dismiss-install-btn">
+              <X size={16} />
+            </button>
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center shrink-0">
+                <Smartphone size={24} className="text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-bold text-white text-sm">Instalar App</p>
+                <p className="text-zinc-400 text-xs mt-0.5">
+                  {deferredPrompt 
+                    ? 'Agrega un acceso directo en tu pantalla de inicio' 
+                    : 'Abre el menu de tu navegador y selecciona "Agregar a pantalla de inicio"'}
+                </p>
+              </div>
+              {deferredPrompt && (
+                <Button onClick={handleInstall} size="sm" className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-4 shrink-0" data-testid="install-pwa-btn">
+                  <Download size={14} className="mr-1" /> Instalar
+                </Button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       {/* Pending Payment Block - No active membership */}
       {isPending && !isPaymentSuspended && (
         <motion.div
