@@ -46,6 +46,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - TPV/POS profesional con categorias, 4 tabs (TPV, Productos, Ventas, Estadisticas), carrito
 - Modulo RFID para tarjetas/llaveros fisicos: asignacion, validacion, anti-passback
 - Contador de ocupacion en tiempo real en Dashboard (entradas - salidas del dia, barra de capacidad, auto-refresh 30s) (3 Abr 2026)
+- Diferenciacion de suspension: manual (cierra sesion inmediato) vs pago (permite login para pagar) (4 Abr 2026)
 
 ### Multi-Vertical (Abril 2026)
 - Campo `business_type` en modelo Gym (gym, condominium, hotel, coworking)

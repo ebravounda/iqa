@@ -25,7 +25,7 @@ async def generate_qr(credentials: HTTPAuthorizationCredentials = Depends(securi
     
     # Check if this specific member has static QR override
     member = await db.members.find_one({"id": member_id}, {"_id": 0})
-    if not member or member.get("status") == "pending":
+    if not member or member.get("status") in ("pending", "suspended"):
         raise HTTPException(status_code=403, detail="Necesitas una membresia activa para generar tu QR")
     
     # Check active membership

@@ -60,7 +60,8 @@ export default function MemberHome() {
 
   const membershipStatus = getMembershipStatus(membership);
   const daysRemaining = membership ? getDaysRemaining(membership.end_date) : 0;
-  const isPending = member?.status === 'pending' || (!membership && member?.status !== 'active');
+  const isPending = member?.status === 'pending' || (!membership && member?.status !== 'active' && member?.status !== 'suspended');
+  const isPaymentSuspended = member?.status === 'suspended' && member?.suspension_type === 'payment';
   const hasActiveMembership = membership && membership.status === 'active' && membershipStatus.status !== 'expired';
 
   // Calculate countdown ring
@@ -105,7 +106,7 @@ export default function MemberHome() {
   return (
     <div className="space-y-6" data-testid="member-home">
       {/* Pending Payment Block - No active membership */}
-      {isPending && (
+      {isPending && !isPaymentSuspended && (
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -124,6 +125,30 @@ export default function MemberHome() {
           >
             <CreditCard size={16} className="mr-2" />
             Pagar {labels.membership}
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Payment Suspended Block - Membership expired, needs renewal */}
+      {isPaymentSuspended && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-6 rounded-xl bg-red-500/10 border border-red-500/30 text-center"
+          data-testid="payment-suspended-block"
+        >
+          <AlertTriangle size={40} className="mx-auto mb-3 text-red-400" />
+          <p className="text-red-300 font-bold text-lg mb-2">Cuenta Suspendida por Falta de Pago</p>
+          <p className="text-zinc-400 text-sm mb-4">
+            Tu {labels.membership.toLowerCase()} ha vencido. Renueva tu plan para recuperar el acceso.
+          </p>
+          <Button
+            onClick={() => navigate('/app/membership')}
+            className="bg-red-500 hover:bg-red-600 text-white font-bold"
+            data-testid="renew-membership-btn"
+          >
+            <CreditCard size={16} className="mr-2" />
+            Renovar {labels.membership}
           </Button>
         </motion.div>
       )}
@@ -172,7 +197,7 @@ export default function MemberHome() {
       )}
 
       {/* Main QR Card - Only show if member has active access */}
-      {!isPending ? (
+      {!isPending && !isPaymentSuspended ? (
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

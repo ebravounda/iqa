@@ -315,10 +315,14 @@ export default function AdminMembers() {
     return gym?.name || '';
   };
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = (status, member) => {
     const badges = { active: 'badge-success', pending: 'badge-warning', blocked: 'badge-danger', suspended: 'bg-orange-500/20 text-orange-400 border border-orange-500/30' };
     const labels = { active: 'Activo', pending: 'Pendiente', blocked: 'Bloqueado', suspended: 'Suspendido' };
-    return <span className={`badge ${badges[status] || 'badge-warning'}`}>{labels[status] || status}</span>;
+    let label = labels[status] || status;
+    if (status === 'suspended' && member?.suspension_type === 'payment') {
+      label = 'Susp. Pago';
+    }
+    return <span className={`badge ${badges[status] || 'badge-warning'}`}>{label}</span>;
   };
 
   return (
@@ -474,7 +478,7 @@ export default function AdminMembers() {
                       <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{getGymName(member.gym_id)}</span>
                     </td>
                   )}
-                  <td className="p-3 text-center">{getStatusBadge(member.status)}</td>
+                  <td className="p-3 text-center">{getStatusBadge(member.status, member)}</td>
                   <td className="p-3 text-center relative">
                     <button
                       onClick={(e) => { e.stopPropagation(); setExpandedContact(expandedContact === member.id ? null : member.id); }}

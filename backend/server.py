@@ -133,6 +133,7 @@ async def do_auto_suspend():
             if not other_active:
                 await db.members.update_one({"id": m["member_id"]}, {"$set": {
                     "status": "suspended",
+                    "suspension_type": "payment",
                     "suspension_reason": "Membresia vencida (automatico)",
                     "suspended_at": now
                 }})

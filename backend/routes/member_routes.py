@@ -191,7 +191,7 @@ async def update_member(member_id: str, member_update: MemberUpdate, admin: dict
 
 @router.post("/members/{member_id}/approve")
 async def approve_member(member_id: str, admin: dict = Depends(get_current_admin)):
-    await db.members.update_one({"id": member_id}, {"$set": {"status": "active"}})
+    await db.members.update_one({"id": member_id}, {"$set": {"status": "active"}, "$unset": {"suspension_type": "", "suspension_reason": "", "suspended_at": "", "suspended_by": ""}})
     return {"message": "Member approved"}
 
 @router.post("/members/{member_id}/block")
@@ -205,6 +205,7 @@ async def suspend_member(member_id: str, body: dict = {}, admin: dict = Depends(
     reason = body.get("reason", "Sin motivo especificado") if isinstance(body, dict) else "Sin motivo especificado"
     await db.members.update_one({"id": member_id}, {"$set": {
         "status": "suspended",
+        "suspension_type": "manual",
         "suspension_reason": reason,
         "suspended_at": datetime.now(timezone.utc).isoformat(),
         "suspended_by": admin.get("name", admin.get("email", ""))
@@ -236,6 +237,7 @@ async def check_expired_memberships(admin: dict = Depends(get_current_admin)):
             if not other_active:
                 await db.members.update_one({"id": m["member_id"]}, {"$set": {
                     "status": "suspended",
+                    "suspension_type": "payment",
                     "suspension_reason": "Membresia vencida",
                     "suspended_at": now
                 }})
