@@ -95,7 +95,8 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
         raise HTTPException(status_code=403, detail="Cuenta bloqueada")
     if member.get("status") == "suspended":
         # Payment suspension: allow login so member can pay
-        if member.get("suspension_type") == "payment":
+        is_payment = member.get("suspension_type") == "payment" or "vencida" in (member.get("suspension_reason") or "").lower()
+        if is_payment:
             pass  # Allow login, frontend will show payment banner
         else:
             # Manual suspension: block login entirely
@@ -136,7 +137,8 @@ async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(secu
         raise HTTPException(status_code=404, detail="Member not found")
     if member.get("status") == "suspended":
         # Payment suspension: allow access so member can pay
-        if member.get("suspension_type") != "payment":
+        is_payment = member.get("suspension_type") == "payment" or "vencida" in (member.get("suspension_reason") or "").lower()
+        if not is_payment:
             raise HTTPException(status_code=403, detail="Cuenta suspendida")
     if member.get("status") == "blocked":
         raise HTTPException(status_code=403, detail="Cuenta bloqueada")
