@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Package, Plus, ShoppingCart, Search, Tags, Edit, Trash2, Minus,
   DollarSign, BarChart3, Archive, AlertTriangle, X, Check, Save, Loader2,
-  Camera, ImageIcon
+  Camera, ImageIcon, Printer
 } from 'lucide-react';
 
 const API = process.env.REACT_APP_BACKEND_URL + '/api';
@@ -110,18 +110,79 @@ export default function AdminPOS() {
     if (!saleGymId) { toast.error('No se pudo determinar el negocio'); return; }
     setProcessing(true);
     try {
-      await axios.post(`${API}/pos/sales`, {
+      const res = await axios.post(`${API}/pos/sales`, {
         gym_id: saleGymId,
         items: cart.map(i => ({ product_id: i.id, quantity: i.qty, unit_price: i.sale_price })),
         total: cartTotal,
         currency: 'EUR',
         payment_method: paymentMethod
       });
-      toast.success(`Venta procesada: $${cartTotal.toFixed(2)}`);
+      toast.success(`Venta procesada: $${cartTotal.toFixed(2)}`, {
+        action: { label: 'Imprimir Ticket', onClick: () => printReceipt(res.data.sale || { items: cart.map(i => ({ product_name: i.name, quantity: i.qty, unit_price: i.sale_price })), total: cartTotal, payment_method: paymentMethod, created_at: new Date().toISOString(), id: res.data.sale?.id || '' }) },
+        duration: 8000
+      });
       setCart([]);
       fetchData();
     } catch (err) { toast.error(err.response?.data?.detail || 'Error al procesar venta'); }
     finally { setProcessing(false); }
+  };
+
+  const printReceipt = (sale, gymName) => {
+    const businessName = gymName || admin?.gym_name || 'Mi Negocio';
+    const date = sale.created_at ? new Date(sale.created_at).toLocaleString() : new Date().toLocaleString();
+    const payMethod = sale.payment_method === 'cash' ? 'Efectivo' : sale.payment_method === 'card_reception' ? 'Tarjeta' : 'Transferencia';
+    
+    const itemsHtml = (sale.items || []).map(i => 
+      `<tr>
+        <td style="text-align:left;padding:2px 0">${i.quantity}x ${i.product_name || 'Producto'}</td>
+        <td style="text-align:right;padding:2px 0">$${(i.unit_price * i.quantity).toFixed(2)}</td>
+      </tr>`
+    ).join('');
+
+    const receiptHtml = `<!DOCTYPE html><html><head><meta charset="utf-8">
+      <style>
+        @page { margin: 0; size: 80mm auto; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Courier New', monospace; width: 80mm; padding: 4mm; font-size: 12px; color: #000; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .divider { border-top: 1px dashed #000; margin: 6px 0; }
+        .business-name { font-size: 16px; font-weight: bold; margin-bottom: 2px; }
+        table { width: 100%; border-collapse: collapse; }
+        .total-row { font-size: 15px; font-weight: bold; border-top: 2px solid #000; padding-top: 4px; margin-top: 4px; }
+        .footer { margin-top: 10px; font-size: 10px; text-align: center; color: #555; }
+      </style>
+    </head><body>
+      <div class="center">
+        <div class="business-name">${businessName}</div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;justify-content:space-between;font-size:11px">
+        <span>${date}</span>
+      </div>
+      <div style="font-size:11px;margin-bottom:4px">Metodo: ${payMethod}</div>
+      <div class="divider"></div>
+      <table>${itemsHtml}</table>
+      <div class="divider"></div>
+      <div class="total-row" style="display:flex;justify-content:space-between">
+        <span>TOTAL</span>
+        <span>$${(sale.total || 0).toFixed(2)}</span>
+      </div>
+      <div class="divider"></div>
+      <div class="footer">
+        Ticket #${(sale.id || '').slice(0, 8).toUpperCase()}<br>
+        Gracias por su compra
+      </div>
+      <script>window.onload=function(){window.print();setTimeout(function(){window.close()},500)}</script>
+    </body></html>`;
+
+    const win = window.open('', '_blank', 'width=320,height=600');
+    if (win) {
+      win.document.write(receiptHtml);
+      win.document.close();
+    } else {
+      toast.error('Permite ventanas emergentes para imprimir');
+    }
   };
 
   const handleSaveProduct = async () => {
@@ -413,7 +474,7 @@ export default function AdminPOS() {
           <h3 className="font-bold">Historial de Ventas</h3>
           <div className="overflow-x-auto">
             <table className="data-table">
-              <thead><tr><th>Fecha</th><th>Articulos</th><th>Metodo</th><th className="text-right">Total</th></tr></thead>
+              <thead><tr><th>Fecha</th><th>Articulos</th><th>Metodo</th><th className="text-right">Total</th><th></th></tr></thead>
               <tbody>
                 {(sales || []).map(s => (
                   <tr key={s.id}>
@@ -425,6 +486,11 @@ export default function AdminPOS() {
                       {s.payment_method === 'cash' ? 'Efectivo' : s.payment_method === 'card_reception' ? 'Tarjeta' : 'Transfer.'}
                     </span></td>
                     <td className="text-right font-mono font-bold">${s.total?.toFixed(2)}</td>
+                    <td>
+                      <button onClick={() => printReceipt(s)} className="p-1.5 rounded hover:bg-zinc-700 text-zinc-400 hover:text-white" title="Imprimir ticket" data-testid={`print-sale-${s.id}`}>
+                        <Printer size={14} />
+                      </button>
+                    </td>
                   </tr>
                 ))}
                 {(sales || []).length === 0 && <tr><td colSpan={4} className="text-center text-zinc-500">No hay ventas</td></tr>}
