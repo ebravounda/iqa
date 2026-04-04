@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 export default function AdminDevices() {
   const { admin, isSuperAdmin } = useAuth();
   const [devices, setDevices] = useState([]);
+  const [inactiveDevices, setInactiveDevices] = useState([]);
   const [gym, setGym] = useState(null);
   const [gyms, setGyms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +30,9 @@ export default function AdminDevices() {
       const [devicesRes] = await Promise.all([
         getDevices(isSuperAdmin ? null : gymId)
       ]);
-      setDevices(devicesRes.data);
+      const res = devicesRes.data;
+      setDevices(res.active || res);
+      setInactiveDevices(res.inactive || []);
       
       if (isSuperAdmin) {
         const gymsRes = await getGyms();
@@ -273,13 +276,41 @@ export default function AdminDevices() {
                   data-testid={`delete-device-${device.id}`}
                 >
                   <Trash2 size={16} className="mr-2" />
-                  Eliminar Dispositivo
+                  Desactivar Dispositivo
                 </Button>
               </div>
             </div>
           ))
         )}
       </div>
+
+      {/* Inactive Devices - Last 8 */}
+      {inactiveDevices.length > 0 && (
+        <div className="mt-6">
+          <h3 className="text-sm font-medium text-zinc-500 mb-3">Dispositivos Desactivados (ultimos 8)</h3>
+          <div className="space-y-2">
+            {inactiveDevices.map((device) => (
+              <div key={device.id} className="flex items-center justify-between p-3 rounded-lg bg-zinc-900/50 border border-zinc-800/50 opacity-60">
+                <div className="flex items-center gap-3">
+                  <Cpu size={16} className="text-zinc-600" />
+                  <div>
+                    <span className="text-sm text-zinc-400">{device.name}</span>
+                    {device.location && <span className="text-xs text-zinc-600 ml-2">({device.location})</span>}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-600">{device.deactivated_at ? new Date(device.deactivated_at).toLocaleDateString() : ''}</span>
+                  <Button variant="ghost" size="sm" className="h-7 text-red-500/50 hover:text-red-400 hover:bg-red-500/10 text-xs"
+                    onClick={() => { deleteDevice(device.id).then(() => { toast.success('Eliminado permanentemente'); fetchData(); }); }}
+                    data-testid={`delete-inactive-${device.id}`}>
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Setup Instructions - Solo Super Admin */}
       {isSuperAdmin && (
