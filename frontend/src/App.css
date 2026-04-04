@@ -65,6 +65,7 @@
 .admin-content {
   margin-left: 260px;
   min-height: 100vh;
+  overflow-y: auto;
   background: var(--admin-bg);
   color: var(--admin-text);
   color: var(--text-primary);
