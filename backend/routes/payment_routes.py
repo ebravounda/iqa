@@ -244,7 +244,7 @@ async def create_manual_payment(payment: ManualPayment, admin: dict = Depends(ge
     await db.memberships.insert_one(membership)
     membership.pop("_id", None)
     await db.members.update_one(
-        {"id": payment.member_id, "status": "suspended"},
-        {"$set": {"status": "active", "suspension_reason": None, "suspended_at": None}}
+        {"id": payment.member_id, "status": {"$in": ["suspended", "pending"]}},
+        {"$set": {"status": "active"}, "$unset": {"suspension_reason": "", "suspension_type": "", "suspended_at": "", "suspended_by": ""}}
     )
     return {"transaction": transaction, "membership": membership, "message": "Pago registrado y membresia activada"}
