@@ -12,6 +12,7 @@ export default function MemberProfile() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [canInstall, setCanInstall] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [avatarKey, setAvatarKey] = useState(Date.now());
   const fileInputRef = useRef(null);
 
   useEffect(() => {
@@ -73,9 +74,10 @@ export default function MemberProfile() {
     }
     setUploading(true);
     try {
-      await uploadAvatar(file);
+      const res = await uploadAvatar(file);
       toast.success('Foto actualizada');
-      if (refreshMemberData) refreshMemberData();
+      setAvatarKey(Date.now());
+      if (refreshMemberData) await refreshMemberData();
     } catch (err) {
       toast.error(err.response?.data?.detail || 'Error al subir foto');
     } finally {
@@ -100,7 +102,7 @@ export default function MemberProfile() {
           <div className="relative">
             {member?.avatar_url ? (
               <img 
-                src={member.avatar_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${member.avatar_url}` : member.avatar_url} 
+                src={`${member.avatar_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${member.avatar_url}` : member.avatar_url}?v=${avatarKey}`} 
                 alt={member.name}
                 className="w-20 h-20 rounded-2xl object-cover"
               />
