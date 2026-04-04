@@ -86,6 +86,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Periodic status check for members - detects suspension in real-time
+  useEffect(() => {
+    if (!token || userType !== 'member') return;
+    const interval = setInterval(async () => {
+      try {
+        await axios.get(`${API}/auth/member/me`);
+      } catch (err) {
+        // 403 will be caught by the Axios interceptor and force logout
+      }
+    }, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, [token, userType]);
+
   const loginAdmin = async (email, password) => {
     const response = await axios.post(`${API}/auth/admin/login`, { email, password });
     const { admin: adminData, token: newToken } = response.data;
