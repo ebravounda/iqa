@@ -784,7 +784,7 @@ export default function AdminMembers() {
               Dispositivos de {devicesMember?.name}
             </DialogTitle>
           </DialogHeader>
-          <div className="mt-2 space-y-3">
+          <div className="mt-2 space-y-3 max-h-[60vh] overflow-y-auto pr-1">
             {memberDevices.length === 0 ? (
               <p className="text-zinc-500 text-sm text-center py-4">No hay dispositivos registrados</p>
             ) : (
