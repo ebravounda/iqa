@@ -75,7 +75,8 @@ export default function AdminGyms() {
       primary_color: gym.primary_color || '#E1FF01',
       max_members: gym.max_members || null,
       business_type: gym.business_type || 'gym',
-      custom_domain: gym.custom_domain || ''
+      custom_domain: gym.custom_domain || '',
+      auto_approve_members: gym.auto_approve_members || false
     });
     setShowEditModal(true);
   };
