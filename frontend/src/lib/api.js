@@ -2,6 +2,25 @@ import axios from 'axios';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
+// Force logout on 403 (suspended/blocked member)
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 403 && error.response?.data?.detail) {
+      const detail = error.response.data.detail;
+      if (detail.includes('suspendida') || detail.includes('bloqueada')) {
+        localStorage.removeItem('member_token');
+        localStorage.removeItem('member');
+        if (window.location.pathname.startsWith('/app')) {
+          alert(detail);
+          window.location.href = '/app/login';
+        }
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Gyms
 export const getGyms = () => axios.get(`${API}/gyms`);
 export const getGym = (id) => axios.get(`${API}/gyms/${id}`);

@@ -224,6 +224,8 @@ async def kiosk_register(member: MemberPublicRegister):
         "code": generate_member_code(), "status": "pending",
         "registered_via": "kiosk", "created_at": datetime.now(timezone.utc).isoformat()
     }
+    # Auto-approve if gym has it enabled
+    auto_approve = gym.get("auto_approve_members", False)
     while await db.members.find_one({"code": member_dict["code"]}):
         member_dict["code"] = generate_member_code()
     await db.members.insert_one(member_dict)

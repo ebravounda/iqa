@@ -100,7 +100,7 @@ export default function MemberProfile() {
           <div className="relative">
             {member?.avatar_url ? (
               <img 
-                src={member.avatar_url} 
+                src={member.avatar_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${member.avatar_url}` : member.avatar_url} 
                 alt={member.name}
                 className="w-20 h-20 rounded-2xl object-cover"
               />

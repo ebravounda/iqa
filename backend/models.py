@@ -40,6 +40,7 @@ class GymUpdate(BaseModel):
     smtp_from_email: Optional[str] = None
     currency: Optional[str] = None
     mercadopago_access_token: Optional[str] = None
+    auto_approve_members: Optional[bool] = None
 
 class AdminCreate(BaseModel):
     email: EmailStr

@@ -55,12 +55,13 @@ async def upload_avatar(
         await db.files.insert_one(file_record)
         
         # Update member avatar
+        avatar_url = f"/api/files/{storage_path}"
         await db.members.update_one(
             {"id": user_id},
-            {"$set": {"avatar_path": storage_path, "updated_at": datetime.now(timezone.utc).isoformat()}}
+            {"$set": {"avatar_path": storage_path, "avatar_url": avatar_url, "updated_at": datetime.now(timezone.utc).isoformat()}}
         )
         
-        return {"storage_path": storage_path, "message": "Avatar subido correctamente"}
+        return {"storage_path": storage_path, "avatar_url": avatar_url, "message": "Avatar subido correctamente"}
     except Exception as e:
         logger.error(f"Upload error: {e}")
         raise HTTPException(status_code=500, detail=f"Error al subir imagen: {str(e)}")

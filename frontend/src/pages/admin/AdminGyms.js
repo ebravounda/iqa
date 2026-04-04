@@ -461,6 +461,21 @@ export default function AdminGyms() {
                 </div>
               </div>
               <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Auto-aprobar nuevos socios</label>
+                <div 
+                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${editGym.auto_approve_members ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-zinc-700 bg-zinc-800/50'}`}
+                  onClick={() => setEditGym({ ...editGym, auto_approve_members: !editGym.auto_approve_members })}
+                  data-testid="edit-gym-auto-approve"
+                >
+                  <div className={`w-10 h-6 rounded-full p-0.5 transition-all ${editGym.auto_approve_members ? 'bg-emerald-500' : 'bg-zinc-600'}`}>
+                    <div className={`w-5 h-5 rounded-full bg-white transition-all ${editGym.auto_approve_members ? 'translate-x-4' : 'translate-x-0'}`} />
+                  </div>
+                  <span className={`text-sm ${editGym.auto_approve_members ? 'text-emerald-400' : 'text-zinc-500'}`}>
+                    {editGym.auto_approve_members ? 'Activado — Los socios con pago realizado se activan automaticamente' : 'Desactivado — Los socios requieren aprobacion manual'}
+                  </span>
+                </div>
+              </div>
+              <div>
                 <label className="text-sm text-zinc-400 mb-1 block">Dominio Personalizado</label>
                 <Input value={editGym.custom_domain} onChange={(e) => setEditGym({ ...editGym, custom_domain: e.target.value.toLowerCase() })} className="input-dark" placeholder="panel.sunegocio.com" data-testid="edit-gym-custom-domain" />
                 <p className="text-[10px] text-zinc-500 mt-1">CNAME apuntando a app.ingresoqr.com</p>

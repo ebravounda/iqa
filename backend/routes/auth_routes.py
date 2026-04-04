@@ -93,6 +93,8 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
         raise HTTPException(status_code=404, detail="Codigo no encontrado")
     if member.get("status") == "blocked":
         raise HTTPException(status_code=403, detail="Cuenta bloqueada")
+    if member.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Cuenta suspendida. Contacta al administrador.")
     
     # Check gym payment suspension BEFORE device check
     gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0})
@@ -111,6 +113,9 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
         {"member_id": member["id"], "status": "active"}, {"_id": 0}
     )
     await record_successful_login(ip, code.upper(), "member")
+    # Convert avatar_path to avatar_url if needed
+    if member.get("avatar_path") and not member.get("avatar_url"):
+        member["avatar_url"] = f"/api/files/{member['avatar_path']}"
     token = create_jwt_token({"sub": member["id"], "role": "member", "gym_id": member["gym_id"]})
     if gym:
         gym.setdefault("business_type", "gym")
@@ -124,6 +129,13 @@ async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(secu
     member = await db.members.find_one({"id": payload.get("sub")}, {"_id": 0})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
+    if member.get("status") == "suspended":
+        raise HTTPException(status_code=403, detail="Cuenta suspendida")
+    if member.get("status") == "blocked":
+        raise HTTPException(status_code=403, detail="Cuenta bloqueada")
+    # Convert avatar_path to avatar_url if needed
+    if member.get("avatar_path") and not member.get("avatar_url"):
+        member["avatar_url"] = f"/api/files/{member['avatar_path']}"
     gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0})
     if gym and gym.get("status") in ("payment_suspended", "suspended"):
         raise HTTPException(status_code=403, detail="Cuenta Bloqueada")
