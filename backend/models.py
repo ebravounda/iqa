@@ -41,6 +41,7 @@ class GymUpdate(BaseModel):
     currency: Optional[str] = None
     mercadopago_access_token: Optional[str] = None
     auto_approve_members: Optional[bool] = None
+    show_pwa_install_prompt: Optional[bool] = None
 
 class AdminCreate(BaseModel):
     email: EmailStr

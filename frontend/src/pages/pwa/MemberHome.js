@@ -172,8 +172,10 @@ export default function MemberHome() {
                 <p className="font-bold text-white text-sm">Instalar App</p>
                 <p className="text-zinc-400 text-xs mt-0.5">
                   {deferredPrompt 
-                    ? 'Agrega un acceso directo en tu pantalla de inicio' 
-                    : 'Abre el menu de tu navegador y selecciona "Agregar a pantalla de inicio"'}
+                    ? 'Toca "Instalar" y tendras un acceso directo en tu inicio' 
+                    : /iPad|iPhone|iPod/.test(navigator.userAgent)
+                      ? 'Abre Safari, toca el icono de compartir y selecciona "Agregar a inicio"'
+                      : 'Abre el menu de tu navegador y selecciona "Agregar a pantalla de inicio"'}
                 </p>
               </div>
               {deferredPrompt && (
