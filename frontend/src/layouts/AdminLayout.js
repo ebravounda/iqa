@@ -270,7 +270,7 @@ export const AdminLayout = ({ children }) => {
 
       {/* Main content */}
       <main className="admin-content" style={{ paddingTop: isImpersonating ? '36px' : '0' }}>
-        <div className="p-6 lg:p-8 pt-20 lg:pt-8">
+        <div className="p-6 lg:p-8 pt-20 lg:pt-8 pb-16">
           {children}
         </div>
       </main>

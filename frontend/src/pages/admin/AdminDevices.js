@@ -113,7 +113,7 @@ export default function AdminDevices() {
   };
 
   return (
-    <div className="space-y-6" data-testid="admin-devices">
+    <div className="space-y-6 pb-12" style={{ overflowY: 'auto' }} data-testid="admin-devices">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Dispositivos Raspberry Pi</h1>
