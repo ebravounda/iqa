@@ -8,13 +8,14 @@ axios.interceptors.response.use(
   (error) => {
     if (error.response?.status === 403 && error.response?.data?.detail) {
       const detail = error.response.data.detail;
-      if (detail.includes('suspendida') || detail.includes('bloqueada')) {
-        localStorage.removeItem('member_token');
-        localStorage.removeItem('member');
-        if (window.location.pathname.startsWith('/app')) {
-          alert(detail);
-          window.location.href = '/app/login';
-        }
+      const isMember = localStorage.getItem('userType') === 'member';
+      if (isMember && (detail.includes('suspendida') || detail.includes('bloqueada'))) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('userType');
+        delete axios.defaults.headers.common['Authorization'];
+        alert(detail);
+        window.location.href = '/app/login';
+        return new Promise(() => {});
       }
     }
     return Promise.reject(error);
