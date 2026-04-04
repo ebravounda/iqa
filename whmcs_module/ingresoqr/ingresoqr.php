@@ -1,18 +1,8 @@
 <?php
 /**
- * IngresoQR - WHMCS Provisioning Module
+ * IngresoQR - WHMCS Provisioning Module (Compatible WHMCS 7.9+)
  * 
  * Instalar en: /path/to/whmcs/modules/servers/ingresoqr/ingresoqr.php
- * 
- * Configuracion en WHMCS:
- * 1. Setup > Products/Services > Servers > Add New Server
- *    - Name: IngresoQR API
- *    - Hostname: c.ingresoqr.com
- *    - Access Hash: (tu WHMCS_API_KEY)
- * 
- * 2. Setup > Products/Services > Products > Create/Edit Product
- *    - Module Settings > Module Name: ingresoqr
- *    - Configurar campos personalizados
  */
 
 if (!defined("WHMCS")) {
@@ -56,19 +46,84 @@ function ingresoqr_ApiCall($params, $endpoint, $data)
 {
     $server = $params['serverhostname'];
     $apiKey = $params['serveraccesshash'];
-    $protocol = $params['serversecure'] ? 'https' : 'http';
+    $protocol = !empty($params['serversecure']) ? 'https' : 'http';
     
     $url = "{$protocol}://{$server}/api/whmcs/{$endpoint}";
     
+    // Log para debug
+    logModuleCall('ingresoqr', $endpoint, [
+        'url' => $url,
+        'data' => $data,
+    ], '', '', []);
+    
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 30);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'x-whmcs-key: ' . $apiKey,
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($data),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 30,
+        CURLOPT_CONNECTTIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'x-whmcs-key: ' . trim($apiKey),
+        ],
+    ]);
+    
+    $response = curl_exec($ch);
+    $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $error = curl_error($ch);
+    $errno = curl_errno($ch);
+    curl_close($ch);
+    
+    // Log response
+    logModuleCall('ingresoqr', $endpoint . '_response', [
+        'http_code' => $httpCode,
+        'curl_error' => $error,
+        'curl_errno' => $errno,
+    ], $response, '', []);
+    
+    if ($error) {
+        return ['success' => false, 'message' => "Curl error ({$errno}): {$error}"];
+    }
+    
+    if (empty($response)) {
+        return ['success' => false, 'message' => "Empty response from server (HTTP: {$httpCode})"];
+    }
+    
+    $result = json_decode($response, true);
+    
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        return ['success' => false, 'message' => "Invalid JSON response: " . substr($response, 0, 200)];
+    }
+    
+    if ($httpCode >= 400) {
+        $detail = isset($result['detail']) ? $result['detail'] : "HTTP Error {$httpCode}";
+        return ['success' => false, 'message' => $detail];
+    }
+    
+    return $result ?: ['success' => false, 'message' => 'Empty result'];
+}
+
+function ingresoqr_TestConnection(array $params)
+{
+    $server = $params['serverhostname'];
+    $apiKey = $params['serveraccesshash'];
+    $protocol = !empty($params['serversecure']) ? 'https' : 'http';
+    
+    $url = "{$protocol}://{$server}/api/health";
+    
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
     ]);
     
     $response = curl_exec($ch);
@@ -77,25 +132,56 @@ function ingresoqr_ApiCall($params, $endpoint, $data)
     curl_close($ch);
     
     if ($error) {
-        return ['success' => false, 'message' => "Connection error: {$error}"];
+        return ['success' => false, 'error' => "No se puede conectar: {$error}"];
     }
     
-    $result = json_decode($response, true);
-    
-    if ($httpCode >= 400) {
-        $detail = isset($result['detail']) ? $result['detail'] : "HTTP Error {$httpCode}";
-        return ['success' => false, 'message' => $detail];
+    if ($httpCode !== 200) {
+        return ['success' => false, 'error' => "API responde HTTP {$httpCode}"];
     }
     
-    return $result ?: ['success' => false, 'message' => 'Invalid response'];
+    // Test API key
+    $testUrl = "{$protocol}://{$server}/api/whmcs/info";
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $testUrl,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode(['whmcs_service_id' => 'test']),
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT => 10,
+        CURLOPT_SSL_VERIFYPEER => false,
+        CURLOPT_SSL_VERIFYHOST => 0,
+        CURLOPT_HTTPHEADER => [
+            'Content-Type: application/json',
+            'x-whmcs-key: ' . trim($apiKey),
+        ],
+    ]);
+    
+    $response2 = curl_exec($ch);
+    $httpCode2 = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+    
+    if ($httpCode2 === 403) {
+        return ['success' => false, 'error' => "API Key invalida. Verifica el Access Hash."];
+    }
+    
+    return ['success' => true, 'error' => ''];
 }
 
 function ingresoqr_CreateAccount(array $params)
 {
+    $gymName = '';
+    if (!empty($params['domain'])) {
+        $gymName = $params['domain'];
+    } elseif (!empty($params['clientsdetails']['companyname'])) {
+        $gymName = $params['clientsdetails']['companyname'];
+    } else {
+        $gymName = $params['clientsdetails']['firstname'] . ' ' . $params['clientsdetails']['lastname'];
+    }
+    
     $data = [
-        'gym_name' => $params['domain'] ?: $params['clientsdetails']['companyname'] ?: $params['clientsdetails']['firstname'] . ' ' . $params['clientsdetails']['lastname'],
+        'gym_name' => $gymName,
         'admin_email' => $params['clientsdetails']['email'],
-        'admin_password' => $params['password'],
+        'admin_password' => $params['password'] ?: bin2hex(random_bytes(6)),
         'admin_name' => $params['clientsdetails']['firstname'] . ' ' . $params['clientsdetails']['lastname'],
         'business_type' => $params['configoption1'] ?: 'gym',
         'max_members' => intval($params['configoption2']) ?: 100,
@@ -106,18 +192,21 @@ function ingresoqr_CreateAccount(array $params)
     $result = ingresoqr_ApiCall($params, 'provision', $data);
     
     if (isset($result['success']) && $result['success']) {
-        // Save gym_id in custom field for future reference
         try {
-            \WHMCS\Database\Capsule::table('tblhosting')
-                ->where('id', $params['serviceid'])
-                ->update(['notes' => 'gym_id: ' . $result['gym_id']]);
+            if (class_exists('\WHMCS\Database\Capsule')) {
+                \WHMCS\Database\Capsule::table('tblhosting')
+                    ->where('id', $params['serviceid'])
+                    ->update(['notes' => 'gym_id: ' . $result['gym_id']]);
+            } else {
+                full_query("UPDATE tblhosting SET notes='gym_id: " . db_escape_string($result['gym_id']) . "' WHERE id=" . intval($params['serviceid']));
+            }
         } catch (\Exception $e) {
             // Non-critical
         }
         return 'success';
     }
     
-    return $result['message'] ?? 'Unknown error during provisioning';
+    return isset($result['message']) ? $result['message'] : 'Error desconocido en provisionamiento';
 }
 
 function ingresoqr_SuspendAccount(array $params)
@@ -133,7 +222,7 @@ function ingresoqr_SuspendAccount(array $params)
         return 'success';
     }
     
-    return $result['message'] ?? 'Unknown error during suspension';
+    return isset($result['message']) ? $result['message'] : 'Error en suspension';
 }
 
 function ingresoqr_UnsuspendAccount(array $params)
@@ -149,7 +238,7 @@ function ingresoqr_UnsuspendAccount(array $params)
         return 'success';
     }
     
-    return $result['message'] ?? 'Unknown error during unsuspension';
+    return isset($result['message']) ? $result['message'] : 'Error en reactivacion';
 }
 
 function ingresoqr_TerminateAccount(array $params)
@@ -165,7 +254,7 @@ function ingresoqr_TerminateAccount(array $params)
         return 'success';
     }
     
-    return $result['message'] ?? 'Unknown error during termination';
+    return isset($result['message']) ? $result['message'] : 'Error en terminacion';
 }
 
 function ingresoqr_AdminCustomButtonArray()
@@ -191,7 +280,7 @@ function ingresoqr_info(array $params)
             'hotel' => 'Hotel',
             'coworking' => 'Coworking',
         ];
-        $type = $typeLabels[$result['business_type']] ?? $result['business_type'];
+        $type = isset($typeLabels[$result['business_type']]) ? $typeLabels[$result['business_type']] : $result['business_type'];
         $status = $result['status'] === 'active' ? 'Activo' : ucfirst($result['status']);
         
         return "<strong>Negocio:</strong> {$result['name']}<br>"
@@ -203,5 +292,5 @@ function ingresoqr_info(array $params)
              . "<strong>Creado:</strong> {$result['created_at']}";
     }
     
-    return $result['message'] ?? 'Could not retrieve info';
+    return isset($result['message']) ? $result['message'] : 'No se pudo obtener info';
 }
