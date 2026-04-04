@@ -59,5 +59,11 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Reportes PDF exportables
 - Dashboard mejorado para Trainers
 
+### Sesion 5 Abr 2026
+- Fix modulo WHMCS 7.9.0: reescritura completa de ingresoqr.php con logging robusto a archivo local, limpieza de configoptions dropdown, boton "Test Provision Manual" en admin WHMCS, endpoint /api/whmcs/diagnostico
+- Backend: eliminado patron Header(alias=...) problematico, ahora usa x_whmcs_key: str = Header(None) directo
+- Backend: logging detallado en provision (request + resultado + errores)
+- Backend: try/catch con error 500 explícito en provision
+
 ### Bug Conocido
 - "Save to Github" de Emergent solo empuja .emergent/emergent.yml y .gitignore (reportado a soporte)
