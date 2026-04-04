@@ -61,7 +61,10 @@ export default function MemberHome() {
   const membershipStatus = getMembershipStatus(membership);
   const daysRemaining = membership ? getDaysRemaining(membership.end_date) : 0;
   const isPending = member?.status === 'pending' || (!membership && member?.status !== 'active' && member?.status !== 'suspended');
-  const isPaymentSuspended = member?.status === 'suspended' && member?.suspension_type === 'payment';
+  const isPaymentSuspended = member?.status === 'suspended' && (
+    member?.suspension_type === 'payment' || 
+    (member?.suspension_reason || '').toLowerCase().includes('vencida')
+  );
   const hasActiveMembership = membership && membership.status === 'active' && membershipStatus.status !== 'expired';
 
   // Calculate countdown ring
