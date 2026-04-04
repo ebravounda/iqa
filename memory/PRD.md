@@ -78,5 +78,7 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Backend actualizar: `cd /opt/gymaccess && git pull origin main && sudo systemctl restart gymaccess-api`
 - Los archivos principales (server.py, auth.py, database.py, models.py, etc.) son symlinks de /opt/gymaccess/ -> /opt/gymaccess/backend/ para que git pull los actualice automaticamente
 - La carpeta /opt/gymaccess/routes/ es symlink a /opt/gymaccess/backend/routes/
-- Frontend: Descargar build compilado con REACT_APP_BACKEND_URL=https://c.ingresoqr.com y subir a app.ingresoqr.com via Plesk File Manager
-- Dominios personalizados: copiar build + .htaccess (ver GUIA_DOMINIOS_PERSONALIZADOS.md)
+- **Frontend ruta real**: `/var/www/vhosts/ingresoqr.com/app.ingresoqr.com/` (NO es /var/www/vhosts/app.ingresoqr.com/)
+- Frontend: Descargar build compilado con REACT_APP_BACKEND_URL=https://c.ingresoqr.com y subir contenido de `frontend/build/` a `/var/www/vhosts/ingresoqr.com/app.ingresoqr.com/`
+- Despues de subir: `chown -R ingresoqr:psaserv /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/`
+- Dominios personalizados: `sudo cp -r /var/www/vhosts/ingresoqr.com/app.ingresoqr.com/* /var/www/vhosts/botwtsp.com/httpdocs/` (ver GUIA_DOMINIOS_PERSONALIZADOS.md)
