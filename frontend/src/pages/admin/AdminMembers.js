@@ -501,6 +501,8 @@ export default function AdminMembers() {
               <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Socio</th>
               <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Codigo</th>
               {isSuperAdmin && <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Gimnasio</th>}
+              <th className="text-left p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Plan</th>
+              <th className="text-center p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Vencimiento</th>
               <th className="text-center p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider">Estado</th>
               <th className="text-center p-3 text-zinc-400 font-medium text-xs uppercase tracking-wider w-[100px]">Contacto</th>
               <th className="text-right p-3 w-[50px]"></th>
@@ -508,9 +510,9 @@ export default function AdminMembers() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={5} className="text-center py-8"><div className="skeleton h-4 w-32 mx-auto" /></td></tr>
+              <tr><td colSpan={8} className="text-center py-8"><div className="skeleton h-4 w-32 mx-auto" /></td></tr>
             ) : filteredMembers.length === 0 ? (
-              <tr><td colSpan={5} className="text-center text-zinc-500 py-8">No se encontraron socios</td></tr>
+              <tr><td colSpan={8} className="text-center text-zinc-500 py-8">No se encontraron socios</td></tr>
             ) : (
               filteredMembers.map((member) => (
                 <tr key={member.id} className="border-b border-zinc-800/50 hover:bg-zinc-800/20 transition-colors group">
@@ -539,6 +541,28 @@ export default function AdminMembers() {
                       <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>{getGymName(member.gym_id)}</span>
                     </td>
                   )}
+                  <td className="p-3">
+                    {member.membership ? (
+                      <span className="text-xs text-zinc-300">{member.membership.plan_name || '-'}</span>
+                    ) : (
+                      <span className="text-xs text-zinc-600">Sin plan</span>
+                    )}
+                  </td>
+                  <td className="p-3 text-center">
+                    {member.membership?.end_date ? (
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                        new Date(member.membership.end_date) < new Date() 
+                          ? 'bg-red-900/30 text-red-400' 
+                          : new Date(member.membership.end_date) < new Date(Date.now() + 7 * 86400000) 
+                            ? 'bg-yellow-900/30 text-yellow-400' 
+                            : 'bg-emerald-900/30 text-emerald-400'
+                      }`}>
+                        {new Date(member.membership.end_date).toLocaleDateString('es-ES')}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-zinc-600">-</span>
+                    )}
+                  </td>
                   <td className="p-3 text-center">{getStatusBadge(member.status, member)}</td>
                   <td className="p-3 text-center relative">
                     <button

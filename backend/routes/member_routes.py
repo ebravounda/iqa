@@ -169,6 +169,41 @@ async def get_members(gym_id: Optional[str] = None, status: Optional[str] = None
     if status:
         query["status"] = status
     members = await db.members.find(query, {"_id": 0}).to_list(1000)
+
+    # Enrich with active membership data
+    member_ids = [m["id"] for m in members]
+    if member_ids:
+        memberships = await db.memberships.find(
+            {"member_id": {"$in": member_ids}, "status": {"$in": ["active", "expired"]}},
+            {"_id": 0}
+        ).sort("created_at", -1).to_list(5000)
+
+        plan_ids = list(set(m.get("plan_id") for m in memberships if m.get("plan_id")))
+        plans_map = {}
+        if plan_ids:
+            plans_list = await db.plans.find({"id": {"$in": plan_ids}}, {"_id": 0}).to_list(500)
+            plans_map = {p["id"]: p for p in plans_list}
+
+        membership_map = {}
+        for ms in memberships:
+            mid = ms["member_id"]
+            if mid not in membership_map:
+                membership_map[mid] = ms
+
+        for member in members:
+            ms = membership_map.get(member["id"])
+            if ms:
+                plan = plans_map.get(ms.get("plan_id"))
+                member["membership"] = {
+                    "plan_name": plan.get("name") if plan else None,
+                    "start_date": ms.get("start_date"),
+                    "end_date": ms.get("end_date"),
+                    "status": ms.get("status"),
+                    "payment_status": ms.get("payment_status"),
+                }
+            else:
+                member["membership"] = None
+
     return members
 
 @router.get("/members/{member_id}")
