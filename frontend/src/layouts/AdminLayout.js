@@ -59,6 +59,7 @@ export const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState(() => localStorage.getItem('ingresoqr-theme') || 'dark');
+  const [gymData, setGymData] = useState(null);
 
   useEffect(() => {
     if (theme === 'light') {
@@ -69,13 +70,14 @@ export const AdminLayout = ({ children }) => {
     localStorage.setItem('ingresoqr-theme', theme);
   }, [theme]);
 
-  // Apply corporate colors from gym
+  // Apply corporate colors from gym and store gym data for logo
   useEffect(() => {
     if (admin?.gym_id) {
       const API = process.env.REACT_APP_BACKEND_URL + '/api';
       fetch(`${API}/gyms/${admin.gym_id}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       }).then(r => r.json()).then(gym => {
+        setGymData(gym);
         if (gym?.primary_color) document.documentElement.style.setProperty('--gym-primary', gym.primary_color);
         if (gym?.bg_color) document.documentElement.style.setProperty('--admin-bg', gym.bg_color);
         if (gym?.menu_color) document.documentElement.style.setProperty('--admin-menu', gym.menu_color);
@@ -84,6 +86,10 @@ export const AdminLayout = ({ children }) => {
       }).catch(() => {});
     }
   }, [admin?.gym_id]);
+
+  const gymLogoUrl = gymData?.logo_url 
+    ? (gymData.logo_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${gymData.logo_url}` : gymData.logo_url)
+    : null;
 
   const toggleTheme = () => setTheme(t => t === 'dark' ? 'light' : 'dark');
   
@@ -168,8 +174,12 @@ export const AdminLayout = ({ children }) => {
             <Menu size={24} />
           </button>
           <div className="flex items-center gap-2">
-            <QrCode size={24} style={{ color: 'var(--gym-primary)' }} />
-            <span className="font-bold">IngresoQR</span>
+            {gymLogoUrl ? (
+              <img src={gymLogoUrl} alt={gymData?.name || 'Gym'} className="w-8 h-8 rounded-lg object-cover" data-testid="admin-mobile-logo" />
+            ) : (
+              <QrCode size={24} style={{ color: 'var(--gym-primary)' }} />
+            )}
+            <span className="font-bold">{gymData?.name || 'IngresoQR'}</span>
           </div>
           <div className="w-10" />
         </div>
@@ -188,11 +198,15 @@ export const AdminLayout = ({ children }) => {
         style={{ top: isImpersonating ? '36px' : '0', height: isImpersonating ? 'calc(100vh - 36px)' : '100vh' }}>
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'var(--gym-primary)' }}>
-              <QrCode size={22} className="text-black" />
-            </div>
+            {gymLogoUrl ? (
+              <img src={gymLogoUrl} alt={gymData?.name || 'Gym'} className="w-10 h-10 rounded-xl object-cover" data-testid="admin-sidebar-logo" />
+            ) : (
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'var(--gym-primary)' }}>
+                <QrCode size={22} className="text-black" />
+              </div>
+            )}
             <div>
-              <h1 className="font-bold text-sm">IngresoQR</h1>
+              <h1 className="font-bold text-sm">{gymData?.name || 'IngresoQR'}</h1>
               <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{admin?.role === 'super_admin' && !isImpersonating ? 'Super Admin' : 'Panel Admin'}</p>
             </div>
           </div>

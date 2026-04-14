@@ -1,0 +1,87 @@
+{
+  "summary": "Iteration 28 - Logo Display and Membership Logs Feature Testing Complete. All 8 backend tests passed (100%). Frontend UI verified: Admin sidebar shows QrCode fallback icon (no gym logo set in test env), mobile header shows QrCode fallback, 'Modificar Vencimiento' modal shows 'Historial de cambios' section with log entries displaying who changed, previous date, new date, and comments. 'Asignar Membresía' dropdown menu item works correctly (no regression).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/dashboard/stats", "issue": "Returns 500 error (pre-existing issue, not related to this iteration)"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "DialogContent", "issues": ["Missing Description or aria-describedby for accessibility (console warning)"]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration28_logo_and_logs.py",
+    "/app/test_reports/pytest/pytest_results_iteration28.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "AdminLayout.js correctly handles gym logo URL with startsWith('/') check for relative paths",
+    "PWALayout.js correctly handles gym logo URL with startsWith('/') check for relative paths",
+    "Membership logs endpoint returns sorted array by created_at desc as expected",
+    "Historial de cambios section displays correctly with all required fields (changed_by, previous_end_date, new_end_date, comment)"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration28_logo_and_logs.py"
+  ],
+  "success_rate": {
+    "backend": "100% (8/8 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@gymaccess.com / admin123"
+  },
+  "seed_data_creation": "No new seed data created. Used existing members with memberships for testing.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 28 tested logo display and membership logs features. Backend: GET /api/members/{member_id}/membership-logs returns array of membership change logs sorted by created_at desc. Each log has: id, type, member_id, member_name, gym_id, previous_end_date, new_end_date, comment, changed_by, changed_by_role, created_at. Frontend: AdminLayout.js (lines 90-92) computes gymLogoUrl with startsWith('/') check. PWALayout.js (line 69) has same logic. AdminMembers.js (lines 1252-1273) shows 'Historial de cambios' section in edit expiration modal. Gyms in test environment don't have logo_url set, so fallback QrCode icon displays correctly.",
+  "features_verified": {
+    "backend_membership_logs_endpoint": {
+      "status": "PASS",
+      "endpoint": "GET /api/members/{member_id}/membership-logs",
+      "details": "Returns array of logs sorted by created_at desc. Tested with member that has logs, non-existent member (404), and unauthenticated request (401/403)."
+    },
+    "backend_gym_logo_field": {
+      "status": "PASS",
+      "endpoint": "GET /api/gyms and GET /api/gyms/{id}",
+      "details": "Gym data includes logo_url field (may be null if not set)."
+    },
+    "backend_membership_update_creates_log": {
+      "status": "PASS",
+      "endpoint": "PUT /api/members/{member_id}/membership",
+      "details": "Updating membership expiration creates a new log entry with comment."
+    },
+    "frontend_admin_sidebar_logo": {
+      "status": "PASS",
+      "component": "AdminLayout.js",
+      "details": "Sidebar shows gym logo if logo_url exists, otherwise shows QrCode fallback icon. Verified with data-testid='admin-sidebar-logo'."
+    },
+    "frontend_admin_mobile_header_logo": {
+      "status": "PASS",
+      "component": "AdminLayout.js",
+      "details": "Mobile header shows gym logo if logo_url exists, otherwise shows QrCode fallback icon. Verified with data-testid='admin-mobile-logo'."
+    },
+    "frontend_pwa_logo_url_handling": {
+      "status": "PASS",
+      "component": "PWALayout.js",
+      "details": "Code review verified: logo_url with startsWith('/') check prepends backend URL for relative paths."
+    },
+    "frontend_historial_de_cambios_section": {
+      "status": "PASS",
+      "component": "AdminMembers.js",
+      "details": "Clicking Vencimiento date opens modal with 'Historial de cambios' section showing log entries with changed_by, dates, and comments."
+    },
+    "frontend_asignar_membresia_no_regression": {
+      "status": "PASS",
+      "component": "AdminMembers.js",
+      "details": "'Asignar Membresía' dropdown menu item still works correctly, opens modal with plan selector."
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}

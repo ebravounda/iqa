@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers, assignMembershipsBulk, updateMemberMembership } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers, assignMembershipsBulk, updateMemberMembership, getMembershipLogs } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -126,6 +126,7 @@ export default function AdminMembers() {
   const [membershipDate, setMembershipDate] = useState('');
   const [membershipComment, setMembershipComment] = useState('');
   const [savingMembership, setSavingMembership] = useState(false);
+  const [membershipLogs, setMembershipLogs] = useState([]);
 
   useEffect(() => { fetchMembers(); fetchPlans(); if (isSuperAdmin) fetchGyms(); }, [statusFilter]);
 
@@ -574,7 +575,9 @@ export default function AdminMembers() {
                           setMembershipMember(member); 
                           setMembershipDate(member.membership.end_date); 
                           setMembershipComment('');
-                          setShowEditExpirationModal(true); 
+                          setMembershipLogs([]);
+                          setShowEditExpirationModal(true);
+                          getMembershipLogs(member.id).then(res => setMembershipLogs(res.data)).catch(() => {});
                         }}
                         className={`text-xs font-medium px-2 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity ${
                           new Date(member.membership.end_date) < new Date() 
@@ -1245,6 +1248,30 @@ export default function AdminMembers() {
                   'Guardar Cambio'
                 )}
               </Button>
+
+              {membershipLogs.length > 0 && (
+                <div data-testid="membership-logs-section">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500 mb-2">Historial de cambios</p>
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {membershipLogs.map((log) => (
+                      <div key={log.id} className="p-2.5 rounded-lg bg-zinc-800/50 border border-zinc-700/50 text-xs">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-zinc-300 font-medium">{log.changed_by}</span>
+                          <span className="text-zinc-500">{new Date(log.created_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-zinc-400">
+                          <span>{log.previous_end_date ? new Date(log.previous_end_date).toLocaleDateString('es-ES') : '-'}</span>
+                          <span className="text-zinc-600">&rarr;</span>
+                          <span className="text-emerald-400 font-medium">{new Date(log.new_end_date).toLocaleDateString('es-ES')}</span>
+                        </div>
+                        {log.comment && (
+                          <p className="mt-1 text-zinc-400 italic">"{log.comment}"</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

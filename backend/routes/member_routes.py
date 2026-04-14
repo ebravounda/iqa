@@ -273,6 +273,26 @@ async def update_member_membership(member_id: str, data: dict, admin: dict = Dep
         raise HTTPException(status_code=404, detail="No se encontro membresia activa para este socio")
 
 
+@router.get("/members/{member_id}/membership-logs")
+async def get_membership_logs(member_id: str, admin: dict = Depends(get_current_admin)):
+    """Get membership change history for a member."""
+    check_permission(admin, "members_view")
+
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+
+    if admin["role"] != "super_admin" and member.get("gym_id") != admin.get("gym_id"):
+        raise HTTPException(status_code=403, detail="No tienes acceso a este socio")
+
+    logs = await db.membership_logs.find(
+        {"member_id": member_id},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(50)
+
+    return logs
+
+
 
 @router.get("/members/{member_id}")
 async def get_member(member_id: str, admin: dict = Depends(get_current_admin)):

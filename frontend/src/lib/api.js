@@ -53,6 +53,7 @@ export const registerMember = (data) => axios.post(`${API}/members/register`, da
 export const importMembers = (formData) => axios.post(`${API}/members/import`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 export const assignMembershipsBulk = (data) => axios.post(`${API}/members/assign-memberships-bulk`, data);
 export const updateMemberMembership = (memberId, data) => axios.put(`${API}/members/${memberId}/membership`, data);
+export const getMembershipLogs = (memberId) => axios.get(`${API}/members/${memberId}/membership-logs`);
 
 // Plans
 export const getPlans = (gymId) => {
