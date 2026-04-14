@@ -34,6 +34,10 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
 - [x] Edit Expiration Modal in AdminMembers.js (click on Vencimiento date)
 - [x] membership_edit permission for gym managers
 - [x] Audit logging in membership_logs collection
+- [x] GET /api/members/{member_id}/membership-logs endpoint - fetch change history
+- [x] Gym logo displayed correctly in PWA Layout (relative URL fix)
+- [x] Gym logo displayed in Admin Layout sidebar and mobile header
+- [x] "Historial de cambios" section in edit expiration modal showing who/when/what changed
 
 ## Pending / Backlog
 
