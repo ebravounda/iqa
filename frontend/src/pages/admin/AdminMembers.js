@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -12,7 +12,7 @@ import {
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
   AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode, Camera,
-  Mail, Phone, Copy, X as XIcon, Smartphone, Building2, Loader2, Send
+  Mail, Phone, Copy, X as XIcon, Smartphone, Building2, Loader2, Send, Upload, FileSpreadsheet
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
@@ -107,6 +107,13 @@ export default function AdminMembers() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paymentNotes, setPaymentNotes] = useState('');
   const [gyms, setGyms] = useState([]);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importGymId, setImportGymId] = useState('');
+  const [importKeepCodes, setImportKeepCodes] = useState(true);
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => { fetchMembers(); fetchPlans(); if (isSuperAdmin) fetchGyms(); }, [statusFilter]);
 
@@ -315,6 +322,26 @@ export default function AdminMembers() {
     return gym?.name || '';
   };
 
+  const handleImport = async () => {
+    if (!importFile) { toast.error('Selecciona un archivo Excel'); return; }
+    if (!importGymId) { toast.error('Selecciona un gimnasio destino'); return; }
+    setImporting(true);
+    setImportResult(null);
+    try {
+      const formData = new FormData();
+      formData.append('file', importFile);
+      formData.append('gym_id', importGymId);
+      formData.append('keep_codes', importKeepCodes);
+      const res = await importMembers(formData);
+      setImportResult(res.data);
+      toast.success(res.data.message);
+      fetchMembers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error en la importacion');
+      setImportResult({ success: false, message: error.response?.data?.detail || 'Error' });
+    } finally { setImporting(false); }
+  };
+
   const getStatusBadge = (status, member) => {
     const badges = { active: 'badge-success', pending: 'badge-warning', blocked: 'badge-danger', suspended: 'bg-orange-500/20 text-orange-400 border border-orange-500/30' };
     const labels = { active: 'Activo', pending: 'Pendiente', blocked: 'Bloqueado', suspended: 'Suspendido' };
@@ -362,6 +389,13 @@ export default function AdminMembers() {
                 <Plus size={20} className="mr-2" /> Nuevo {labels.member}
               </Button>
             </DialogTrigger>
+          {isSuperAdmin && (
+            <Button variant="outline" className="border-emerald-700 text-emerald-400 hover:bg-emerald-900/30"
+              onClick={() => { setShowImportModal(true); setImportResult(null); setImportFile(null); }}
+              data-testid="import-members-btn">
+              <Upload size={16} className="mr-2" /> Importar Socios
+            </Button>
+          )}
             <DialogContent className="bg-zinc-900 border-zinc-800">
               <DialogHeader><DialogTitle>Crear Nuevo {labels.member}</DialogTitle></DialogHeader>
               <div className="space-y-4 mt-4">
@@ -857,6 +891,117 @@ export default function AdminMembers() {
                 )}
               </div>
             ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Import Members Modal */}
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet size={18} /> Importar Socios desde Excel
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm text-zinc-400 mb-1 block">Gimnasio destino</label>
+              <Select value={importGymId} onValueChange={setImportGymId}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="import-gym-select">
+                  <SelectValue placeholder="Seleccionar gimnasio" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {gyms.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm text-zinc-400 mb-2 block">Archivo Excel (.xlsx)</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => setImportFile(e.target.files[0])}
+                className="hidden"
+                data-testid="import-file-input"
+              />
+              <div 
+                onClick={() => fileInputRef.current?.click()}
+                className="border-2 border-dashed border-zinc-700 rounded-xl p-6 text-center cursor-pointer hover:border-zinc-500 transition-colors"
+              >
+                {importFile ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <FileSpreadsheet size={24} className="text-emerald-400" />
+                    <div className="text-left">
+                      <p className="font-medium">{importFile.name}</p>
+                      <p className="text-xs text-zinc-500">{(importFile.size / 1024).toFixed(1)} KB</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={32} className="mx-auto text-zinc-600 mb-2" />
+                    <p className="text-zinc-400 text-sm">Haz clic para seleccionar archivo</p>
+                    <p className="text-zinc-600 text-xs mt-1">Formato: .xlsx</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                id="keepCodes"
+                checked={importKeepCodes}
+                onChange={(e) => setImportKeepCodes(e.target.checked)}
+                className="rounded"
+                data-testid="import-keep-codes"
+              />
+              <label htmlFor="keepCodes" className="text-sm text-zinc-300">
+                Mantener codigos de socio originales
+              </label>
+            </div>
+
+            <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
+              <p className="text-xs text-zinc-400">
+                El Excel debe tener headers en la primera fila. Columnas reconocidas: 
+                <span className="text-zinc-300"> Nombre Completo, Email, Telefono, DNI, Codigo, Fecha Alta, Cuota, Activo</span>.
+                Los socios con email duplicado se omitiran.
+              </p>
+            </div>
+
+            {importResult && (
+              <div className={`p-4 rounded-lg border ${importResult.success ? 'bg-emerald-900/20 border-emerald-700' : 'bg-red-900/20 border-red-700'}`}>
+                <p className="font-medium text-sm">{importResult.message}</p>
+                {importResult.imported > 0 && (
+                  <div className="mt-2 text-xs space-y-1 text-zinc-300">
+                    <p>Importados: <span className="text-emerald-400 font-bold">{importResult.imported}</span></p>
+                    <p>Omitidos (duplicados): <span className="text-yellow-400">{importResult.skipped}</span></p>
+                    {importResult.errors > 0 && <p>Errores: <span className="text-red-400">{importResult.errors}</span></p>}
+                  </div>
+                )}
+                {importResult.error_details?.length > 0 && (
+                  <div className="mt-2 text-xs text-red-400 max-h-20 overflow-y-auto">
+                    {importResult.error_details.map((e, i) => <p key={i}>{e}</p>)}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Button 
+              onClick={handleImport} 
+              disabled={importing || !importFile || !importGymId}
+              className="w-full btn-gym-primary"
+              data-testid="import-submit-btn"
+            >
+              {importing ? (
+                <><Loader2 size={16} className="mr-2 animate-spin" /> Importando...</>
+              ) : (
+                <><Upload size={16} className="mr-2" /> Importar Socios</>
+              )}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

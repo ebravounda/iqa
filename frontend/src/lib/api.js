@@ -50,6 +50,7 @@ export const suspendMember = (id, reason) => axios.post(`${API}/members/${id}/su
 export const deleteMember = (id) => axios.delete(`${API}/members/${id}`);
 export const checkExpiredMemberships = () => axios.post(`${API}/members/check-expired-memberships`);
 export const registerMember = (data) => axios.post(`${API}/members/register`, data);
+export const importMembers = (formData) => axios.post(`${API}/members/import`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
 
 // Plans
 export const getPlans = (gymId) => {

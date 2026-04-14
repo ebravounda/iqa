@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from datetime import datetime, timezone, timedelta
 from typing import Optional
@@ -455,3 +455,163 @@ async def update_guest_permission(
         {"$set": {"can_bring_guests": can_bring_guests, "max_guests_per_month": max_guests_per_month}}
     )
     return {"message": "Guest permission updated"}
+
+
+@router.post("/members/import")
+async def import_members(
+    file: UploadFile = File(...),
+    gym_id: str = Form(...),
+    keep_codes: bool = Form(True),
+    admin: dict = Depends(get_current_admin)
+):
+    check_role(admin, ["super_admin"])
+
+    gym = await db.gyms.find_one({"id": gym_id})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+
+    import openpyxl
+
+    try:
+        content = await file.read()
+        wb = openpyxl.load_workbook(io.BytesIO(content))
+        ws = wb.active
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Error al leer el archivo Excel: {str(e)}")
+
+    headers = [cell.value for cell in ws[1]]
+    if not headers or len(headers) < 2:
+        raise HTTPException(status_code=400, detail="El archivo no tiene headers validos")
+
+    header_map = {}
+    for i, h in enumerate(headers):
+        if not h:
+            continue
+        hl = h.lower().strip()
+        if 'nombre' in hl and 'completo' in hl:
+            header_map['nombre_completo'] = i
+        elif 'nombre' in hl and 'completo' not in hl and 'factura' not in hl:
+            header_map['nombre'] = i
+        elif 'email' in hl and 'factura' not in hl:
+            header_map['email'] = i
+        elif 'tel' in hl:
+            header_map['telefono'] = i
+        elif 'dni' in hl or 'documento' in hl:
+            header_map['dni'] = i
+        elif 'nacimiento' in hl:
+            header_map['fecha_nacimiento'] = i
+        elif 'alta' in hl:
+            header_map['fecha_alta'] = i
+        elif 'baja' in hl:
+            header_map['fecha_baja'] = i
+        elif hl in ['codigo', 'código', 'code']:
+            header_map['codigo'] = i
+        elif 'socio' in hl and 'num' in hl:
+            header_map['numero_socio'] = i
+        elif 'cuota' in hl and 'tipo' not in hl:
+            header_map['cuota'] = i
+        elif 'tipo' in hl and 'cuota' in hl:
+            header_map['tipo_cuota'] = i
+        elif 'activo' in hl:
+            header_map['activo'] = i
+        elif 'observ' in hl:
+            header_map['observaciones'] = i
+
+    imported = 0
+    skipped = 0
+    errors = []
+    existing_codes = set()
+
+    if keep_codes:
+        cursor = db.members.find({"gym_id": gym_id}, {"code": 1, "_id": 0})
+        async for doc in cursor:
+            if doc.get("code"):
+                existing_codes.add(doc["code"])
+
+    for row_num, row in enumerate(ws.iter_rows(min_row=2, values_only=True), start=2):
+        try:
+            nombre_completo = ''
+            if 'nombre_completo' in header_map:
+                nombre_completo = str(row[header_map['nombre_completo']] or '').strip()
+            elif 'nombre' in header_map:
+                nombre_completo = str(row[header_map['nombre']] or '').strip()
+
+            if not nombre_completo:
+                continue
+
+            email = str(row[header_map['email']] or '').strip() if 'email' in header_map else ''
+            phone = str(row[header_map['telefono']] or '').strip() if 'telefono' in header_map else ''
+            dni = str(row[header_map['dni']] or '').strip() if 'dni' in header_map else ''
+
+            # Skip if email already exists in this gym
+            if email:
+                existing = await db.members.find_one({"email": email, "gym_id": gym_id})
+                if existing:
+                    skipped += 1
+                    continue
+
+            # Handle member code
+            code = ''
+            if keep_codes and 'codigo' in header_map:
+                code = str(row[header_map['codigo']] or '').strip()
+                if code and code in existing_codes:
+                    code = ''  # Code already taken, generate new one
+
+            if not code:
+                code = generate_member_code()
+                while await db.members.find_one({"code": code}):
+                    code = generate_member_code()
+
+            existing_codes.add(code)
+
+            # Determine status
+            activo_val = str(row[header_map['activo']] or '').strip().lower() if 'activo' in header_map else 'si'
+            status = 'active' if activo_val in ['si', 'sí', 'yes', 'true', '1', 'activo'] else 'suspended'
+
+            cuota = str(row[header_map['cuota']] or '').strip() if 'cuota' in header_map else ''
+            tipo_cuota = str(row[header_map['tipo_cuota']] or '').strip() if 'tipo_cuota' in header_map else ''
+            observaciones = str(row[header_map['observaciones']] or '').strip() if 'observaciones' in header_map else ''
+            fecha_alta = str(row[header_map['fecha_alta']] or '').strip() if 'fecha_alta' in header_map else ''
+
+            member_dict = {
+                "id": str(uuid.uuid4()),
+                "name": nombre_completo,
+                "email": email if email else None,
+                "phone": phone if phone else None,
+                "dni": dni if dni else None,
+                "gym_id": gym_id,
+                "code": code,
+                "status": status,
+                "gender": "prefer_not_to_say",
+                "imported": True,
+                "import_source": "ismygym",
+                "import_data": {
+                    "cuota": cuota,
+                    "tipo_cuota": tipo_cuota,
+                    "fecha_alta_original": fecha_alta,
+                    "observaciones": observaciones,
+                },
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+
+            if status == 'suspended':
+                member_dict["suspension_type"] = "manual"
+                member_dict["suspension_reason"] = "Importado como inactivo desde IsMyGym"
+
+            await db.members.insert_one(member_dict)
+            member_dict.pop("_id", None)
+            imported += 1
+
+        except Exception as e:
+            errors.append(f"Fila {row_num}: {str(e)}")
+            if len(errors) > 50:
+                break
+
+    return {
+        "success": True,
+        "imported": imported,
+        "skipped": skipped,
+        "errors": len(errors),
+        "error_details": errors[:10],
+        "message": f"Importacion completada: {imported} socios importados, {skipped} omitidos (email duplicado), {len(errors)} errores"
+    }

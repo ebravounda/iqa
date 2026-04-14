@@ -64,6 +64,9 @@ Sistema SaaS multi-tenant de control de acceso para gimnasios, condominios, hote
 - Backend: eliminado patron Header(alias=...) problematico, ahora usa x_whmcs_key: str = Header(None) directo
 - Backend: logging detallado en provision (request + resultado + errores)
 - Backend: try/catch con error 500 explícito en provision
+- Scraping automatico de IsMyGym (lafabrika.ismygym.com): 596 socios extraidos a Excel
+- Importador masivo de socios: endpoint POST /api/members/import (solo super_admin), sube Excel, selecciona gym destino, mantiene codigos originales opcionales, detecta headers automaticamente
+- Frontend: boton "Importar Socios" en AdminMembers.js (solo super_admin) con modal, selector de gym, drag&drop de archivo, checkbox de codigos, resultado de importacion
 
 ### Bug Conocido
 - "Save to Github" de Emergent solo empuja .emergent/emergent.yml y .gitignore (reportado a soporte)
