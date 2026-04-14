@@ -206,6 +206,74 @@ async def get_members(gym_id: Optional[str] = None, status: Optional[str] = None
 
     return members
 
+@router.put("/members/{member_id}/membership")
+async def update_member_membership(member_id: str, data: dict, admin: dict = Depends(get_current_admin)):
+    """Update membership expiration date with comment. Gym admin or manager with membership_edit permission."""
+    check_permission(admin, "membership_edit")
+
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+
+    if admin["role"] != "super_admin" and member.get("gym_id") != admin.get("gym_id"):
+        raise HTTPException(status_code=403, detail="No tienes acceso a este socio")
+
+    new_end_date = data.get("end_date")
+    comment = data.get("comment", "").strip()
+
+    if not new_end_date:
+        raise HTTPException(status_code=400, detail="Fecha de vencimiento requerida")
+
+    # Find active membership
+    membership = await db.memberships.find_one(
+        {"member_id": member_id, "status": {"$in": ["active", "expired"]}},
+        sort=[("created_at", -1)]
+    )
+
+    if membership:
+        update_data = {
+            "end_date": new_end_date,
+            "modified_at": datetime.now(timezone.utc).isoformat(),
+            "modified_by": admin.get("email", admin.get("id")),
+        }
+        if comment:
+            update_data["modification_comment"] = comment
+
+        # Check if new date makes it active or expired
+        from datetime import datetime as dt
+        try:
+            end_dt = dt.strptime(new_end_date, "%Y-%m-%d")
+            update_data["status"] = "active" if end_dt >= dt.now() else "expired"
+        except ValueError:
+            pass
+
+        await db.memberships.update_one(
+            {"id": membership["id"]},
+            {"$set": update_data}
+        )
+
+        # Log the change
+        log_entry = {
+            "id": str(uuid.uuid4()),
+            "type": "membership_change",
+            "member_id": member_id,
+            "member_name": member.get("name"),
+            "gym_id": member.get("gym_id"),
+            "previous_end_date": membership.get("end_date"),
+            "new_end_date": new_end_date,
+            "comment": comment,
+            "changed_by": admin.get("email", admin.get("id")),
+            "changed_by_role": admin.get("role"),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+        await db.membership_logs.insert_one(log_entry)
+
+        return {"success": True, "message": f"Vencimiento actualizado a {new_end_date}"}
+    else:
+        raise HTTPException(status_code=404, detail="No se encontro membresia activa para este socio")
+
+
+
 @router.get("/members/{member_id}")
 async def get_member(member_id: str, admin: dict = Depends(get_current_admin)):
     member = await db.members.find_one({"id": member_id}, {"_id": 0})

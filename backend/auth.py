@@ -69,6 +69,7 @@ ALL_MANAGER_PERMISSIONS = [
     "members_edit",
     "members_delete",
     "members_suspend",
+    "membership_edit",
     "payments_register",
     "pos_sell",
     "pos_products",

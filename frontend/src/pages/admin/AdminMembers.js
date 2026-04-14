@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers, assignMembershipsBulk } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers, assignMembershipsBulk, updateMemberMembership } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -121,6 +121,11 @@ export default function AdminMembers() {
   const [assignResult, setAssignResult] = useState(null);
   const [assignPreview, setAssignPreview] = useState(null);
   const assignFileRef = useRef(null);
+  const [showEditExpirationModal, setShowEditExpirationModal] = useState(false);
+  const [membershipMember, setMembershipMember] = useState(null);
+  const [membershipDate, setMembershipDate] = useState('');
+  const [membershipComment, setMembershipComment] = useState('');
+  const [savingMembership, setSavingMembership] = useState(false);
 
   useEffect(() => { fetchMembers(); fetchPlans(); if (isSuperAdmin) fetchGyms(); }, [statusFilter]);
 
@@ -362,6 +367,20 @@ export default function AdminMembers() {
     } finally { setAssigning(false); }
   };
 
+  const handleUpdateMembership = async () => {
+    if (!membershipMember || !membershipDate) { toast.error('Fecha requerida'); return; }
+    setSavingMembership(true);
+    try {
+      await updateMemberMembership(membershipMember.id, { end_date: membershipDate, comment: membershipComment });
+      toast.success('Vencimiento actualizado');
+      setShowMembershipModal(false);
+      setMembershipComment('');
+      fetchMembers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error al actualizar');
+    } finally { setSavingMembership(false); }
+  };
+
   const getStatusBadge = (status, member) => {
     const badges = { active: 'badge-success', pending: 'badge-warning', blocked: 'badge-danger', suspended: 'bg-orange-500/20 text-orange-400 border border-orange-500/30' };
     const labels = { active: 'Activo', pending: 'Pendiente', blocked: 'Bloqueado', suspended: 'Suspendido' };
@@ -550,13 +569,23 @@ export default function AdminMembers() {
                   </td>
                   <td className="p-3 text-center">
                     {member.membership?.end_date ? (
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                        new Date(member.membership.end_date) < new Date() 
-                          ? 'bg-red-900/30 text-red-400' 
-                          : new Date(member.membership.end_date) < new Date(Date.now() + 7 * 86400000) 
-                            ? 'bg-yellow-900/30 text-yellow-400' 
-                            : 'bg-emerald-900/30 text-emerald-400'
-                      }`}>
+                      <span 
+                        onClick={() => { 
+                          setMembershipMember(member); 
+                          setMembershipDate(member.membership.end_date); 
+                          setMembershipComment('');
+                          setShowEditExpirationModal(true); 
+                        }}
+                        className={`text-xs font-medium px-2 py-0.5 rounded cursor-pointer hover:opacity-80 transition-opacity ${
+                          new Date(member.membership.end_date) < new Date() 
+                            ? 'bg-red-900/30 text-red-400' 
+                            : new Date(member.membership.end_date) < new Date(Date.now() + 7 * 86400000) 
+                              ? 'bg-yellow-900/30 text-yellow-400' 
+                              : 'bg-emerald-900/30 text-emerald-400'
+                        }`}
+                        title="Clic para editar vencimiento"
+                        data-testid={`edit-membership-${member.id}`}
+                      >
                         {new Date(member.membership.end_date).toLocaleDateString('es-ES')}
                       </span>
                     ) : (
@@ -1161,6 +1190,63 @@ export default function AdminMembers() {
               )}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Membership Expiration Modal */}
+      <Dialog open={showEditExpirationModal} onOpenChange={setShowEditExpirationModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-md">
+          <DialogHeader>
+            <DialogTitle>Modificar Vencimiento</DialogTitle>
+          </DialogHeader>
+          {membershipMember && (
+            <div className="space-y-4 mt-4">
+              <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
+                <p className="font-medium">{membershipMember.name}</p>
+                <p className="text-xs text-zinc-400">
+                  Plan: {membershipMember.membership?.plan_name || 'Sin plan'}
+                  {membershipMember.membership?.end_date && (
+                    <> · Vence: {new Date(membershipMember.membership.end_date).toLocaleDateString('es-ES')}</>
+                  )}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Nueva fecha de vencimiento</label>
+                <Input
+                  type="date"
+                  value={membershipDate}
+                  onChange={(e) => setMembershipDate(e.target.value)}
+                  className="bg-zinc-800 border-zinc-700"
+                  data-testid="membership-date-input"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm text-zinc-400 mb-1 block">Comentario (opcional)</label>
+                <Textarea
+                  value={membershipComment}
+                  onChange={(e) => setMembershipComment(e.target.value)}
+                  placeholder="Razon del cambio..."
+                  className="bg-zinc-800 border-zinc-700 min-h-[60px]"
+                  data-testid="membership-comment-input"
+                />
+              </div>
+
+              <Button
+                onClick={handleUpdateMembership}
+                disabled={savingMembership || !membershipDate}
+                className="w-full btn-gym-primary"
+                data-testid="membership-save-btn"
+              >
+                {savingMembership ? (
+                  <><Loader2 size={16} className="mr-2 animate-spin" /> Guardando...</>
+                ) : (
+                  'Guardar Cambio'
+                )}
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
