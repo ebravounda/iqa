@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers } from '../../lib/api';
+import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers, assignMembershipsBulk } from '../../lib/api';
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -114,6 +114,13 @@ export default function AdminMembers() {
   const [importing, setImporting] = useState(false);
   const [importResult, setImportResult] = useState(null);
   const fileInputRef = useRef(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
+  const [assignFile, setAssignFile] = useState(null);
+  const [assignGymId, setAssignGymId] = useState('');
+  const [assigning, setAssigning] = useState(false);
+  const [assignResult, setAssignResult] = useState(null);
+  const [assignPreview, setAssignPreview] = useState(null);
+  const assignFileRef = useRef(null);
 
   useEffect(() => { fetchMembers(); fetchPlans(); if (isSuperAdmin) fetchGyms(); }, [statusFilter]);
 
@@ -342,6 +349,19 @@ export default function AdminMembers() {
     } finally { setImporting(false); }
   };
 
+  const handleAssignBulk = async () => {
+    if (!assignPreview || !assignGymId) { toast.error('Selecciona gym y archivo'); return; }
+    setAssigning(true); setAssignResult(null);
+    try {
+      const res = await assignMembershipsBulk({ gym_id: assignGymId, vencimientos: assignPreview });
+      setAssignResult(res.data);
+      toast.success(res.data.message);
+      fetchMembers();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error');
+    } finally { setAssigning(false); }
+  };
+
   const getStatusBadge = (status, member) => {
     const badges = { active: 'badge-success', pending: 'badge-warning', blocked: 'badge-danger', suspended: 'bg-orange-500/20 text-orange-400 border border-orange-500/30' };
     const labels = { active: 'Activo', pending: 'Pendiente', blocked: 'Bloqueado', suspended: 'Suspendido' };
@@ -394,6 +414,13 @@ export default function AdminMembers() {
               onClick={() => { setShowImportModal(true); setImportResult(null); setImportFile(null); }}
               data-testid="import-members-btn">
               <Upload size={16} className="mr-2" /> Importar Socios
+            </Button>
+          )}
+          {isSuperAdmin && (
+            <Button variant="outline" className="border-amber-700 text-amber-400 hover:bg-amber-900/30"
+              onClick={() => { setShowAssignModal(true); setAssignResult(null); setAssignFile(null); setAssignPreview(null); }}
+              data-testid="assign-memberships-btn">
+              <FileSpreadsheet size={16} className="mr-2" /> Asignar Membresias
             </Button>
           )}
             <DialogContent className="bg-zinc-900 border-zinc-800">
@@ -1000,6 +1027,113 @@ export default function AdminMembers() {
                 <><Loader2 size={16} className="mr-2 animate-spin" /> Importando...</>
               ) : (
                 <><Upload size={16} className="mr-2" /> Importar Socios</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Assign Memberships Modal */}
+      <Dialog open={showAssignModal} onOpenChange={setShowAssignModal}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileSpreadsheet size={18} /> Asignar Membresias Masivamente
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 mt-4">
+            <div>
+              <label className="text-sm text-zinc-400 mb-1 block">Gimnasio</label>
+              <Select value={assignGymId} onValueChange={setAssignGymId}>
+                <SelectTrigger className="bg-zinc-800 border-zinc-700" data-testid="assign-gym-select">
+                  <SelectValue placeholder="Seleccionar gimnasio" />
+                </SelectTrigger>
+                <SelectContent className="bg-zinc-900 border-zinc-700">
+                  {gyms.map((g) => (
+                    <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="text-sm text-zinc-400 mb-2 block">Archivo de vencimientos (.json)</label>
+              <input
+                ref={assignFileRef}
+                type="file"
+                accept=".json"
+                onChange={(e) => {
+                  const f = e.target.files[0];
+                  setAssignFile(f);
+                  if (f) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      try {
+                        const data = JSON.parse(ev.target.result);
+                        setAssignPreview(data);
+                        const total = Object.keys(data).length;
+                        const conFecha = Object.values(data).filter(v => v.fecha_hasta).length;
+                        toast.info(`${total} socios encontrados, ${conFecha} con fecha de vencimiento`);
+                      } catch { setAssignPreview(null); toast.error('JSON invalido'); }
+                    };
+                    reader.readAsText(f);
+                  }
+                }}
+                className="hidden"
+                data-testid="assign-file-input"
+              />
+              <div
+                onClick={() => assignFileRef.current?.click()}
+                className="border-2 border-dashed border-zinc-700 rounded-xl p-6 text-center cursor-pointer hover:border-zinc-500 transition-colors"
+              >
+                {assignFile ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <FileSpreadsheet size={24} className="text-amber-400" />
+                    <div className="text-left">
+                      <p className="font-medium">{assignFile.name}</p>
+                      <p className="text-xs text-zinc-500">
+                        {assignPreview ? `${Object.keys(assignPreview).length} socios, ${Object.values(assignPreview).filter(v => v.fecha_hasta).length} con vencimiento` : ''}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={32} className="mx-auto text-zinc-600 mb-2" />
+                    <p className="text-zinc-400 text-sm">Sube el archivo vencimientos_lafabrika.json</p>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700">
+              <p className="text-xs text-zinc-400">
+                Asigna membresias a los socios importados usando sus <span className="text-zinc-300">fechas de vencimiento reales</span> y <span className="text-zinc-300">cuota</span> para asociar el plan correcto. Los socios sin cuota activa se omiten.
+              </p>
+            </div>
+
+            {assignResult && (
+              <div className={`p-4 rounded-lg border ${assignResult.success ? 'bg-emerald-900/20 border-emerald-700' : 'bg-red-900/20 border-red-700'}`}>
+                <p className="font-medium text-sm">{assignResult.message}</p>
+                {assignResult.assigned > 0 && (
+                  <div className="mt-2 text-xs space-y-1 text-zinc-300">
+                    <p>Membresias creadas: <span className="text-emerald-400 font-bold">{assignResult.assigned}</span></p>
+                    <p>Omitidos: <span className="text-yellow-400">{assignResult.skipped}</span></p>
+                    {assignResult.no_plan > 0 && <p>Sin plan: <span className="text-red-400">{assignResult.no_plan}</span></p>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <Button
+              onClick={handleAssignBulk}
+              disabled={assigning || !assignPreview || !assignGymId}
+              className="w-full bg-amber-600 hover:bg-amber-700 text-white"
+              data-testid="assign-submit-btn"
+            >
+              {assigning ? (
+                <><Loader2 size={16} className="mr-2 animate-spin" /> Asignando...</>
+              ) : (
+                <><FileSpreadsheet size={16} className="mr-2" /> Asignar Membresias</>
               )}
             </Button>
           </div>

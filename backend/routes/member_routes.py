@@ -615,3 +615,119 @@ async def import_members(
         "error_details": errors[:10],
         "message": f"Importacion completada: {imported} socios importados, {skipped} omitidos (email duplicado), {len(errors)} errores"
     }
+
+
+@router.post("/members/assign-memberships-bulk")
+async def assign_memberships_bulk(data: dict, admin: dict = Depends(get_current_admin)):
+    """Assign memberships to imported members using vencimientos data"""
+    check_role(admin, ["super_admin"])
+
+    gym_id = data.get("gym_id")
+    vencimientos = data.get("vencimientos", {})
+    
+    if not gym_id or not vencimientos:
+        raise HTTPException(status_code=400, detail="gym_id y vencimientos requeridos")
+
+    gym = await db.gyms.find_one({"id": gym_id})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+
+    plans = await db.plans.find({"gym_id": gym_id, "active": True}).to_list(100)
+    
+    assigned = 0
+    skipped = 0
+    no_plan = 0
+    errors = []
+
+    for ismygym_id, info in vencimientos.items():
+        try:
+            fecha_hasta = info.get("fecha_hasta", "").strip()
+            if not fecha_hasta:
+                skipped += 1
+                continue
+
+            codigo = info.get("codigo", "").strip()
+            email = info.get("email", "").strip()
+            importe_str = info.get("importe", "0").replace("€", "").replace(",", ".").strip()
+            
+            try:
+                importe = float(importe_str) if importe_str else 0
+            except:
+                importe = 0
+
+            # Find member by code or email
+            member = None
+            if codigo:
+                member = await db.members.find_one({"code": codigo, "gym_id": gym_id})
+            if not member and email:
+                member = await db.members.find_one({"email": email, "gym_id": gym_id})
+            
+            if not member:
+                skipped += 1
+                continue
+
+            # Check if already has active membership
+            existing = await db.memberships.find_one({
+                "member_id": member["id"],
+                "status": "active"
+            })
+            if existing:
+                skipped += 1
+                continue
+
+            # Find matching plan by price
+            matched_plan = None
+            for p in plans:
+                if abs(p.get("price", 0) - importe) < 0.5:
+                    matched_plan = p
+                    break
+            
+            if not matched_plan and plans:
+                matched_plan = plans[0]
+
+            if not matched_plan:
+                no_plan += 1
+                continue
+
+            # Parse fecha_hasta (dd/mm/yyyy)
+            try:
+                parts = fecha_hasta.split("/")
+                end_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
+            except:
+                errors.append(f"Fecha invalida: {fecha_hasta} ({info.get('nombre', '')})")
+                continue
+
+            # Calculate start date from end date minus plan duration
+            from datetime import datetime as dt
+            end_dt = dt.strptime(end_date, "%Y-%m-%d")
+            start_dt = end_dt - timedelta(days=matched_plan.get("duration_days", 30))
+
+            membership = {
+                "id": str(uuid.uuid4()),
+                "member_id": member["id"],
+                "plan_id": matched_plan["id"],
+                "gym_id": gym_id,
+                "start_date": start_dt.strftime("%Y-%m-%d"),
+                "end_date": end_date,
+                "status": "active" if end_dt >= dt.now() else "expired",
+                "payment_status": "paid",
+                "imported": True,
+                "created_at": datetime.now(timezone.utc).isoformat()
+            }
+
+            await db.memberships.insert_one(membership)
+            membership.pop("_id", None)
+            assigned += 1
+
+        except Exception as e:
+            errors.append(f"{info.get('nombre', '')}: {str(e)}")
+
+    return {
+        "success": True,
+        "assigned": assigned,
+        "skipped": skipped,
+        "no_plan": no_plan,
+        "errors": len(errors),
+        "error_details": errors[:10],
+        "message": f"Asignacion completada: {assigned} membresias creadas, {skipped} omitidos, {no_plan} sin plan, {len(errors)} errores"
+    }

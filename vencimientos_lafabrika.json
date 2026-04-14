@@ -1,0 +1,4770 @@
+{
+  "300004": {
+    "nombre": "Evian Velinov",
+    "codigo": "E5GKXH",
+    "email": "evianvelinov@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "296323": {
+    "nombre": "",
+    "codigo": "UGDA6H",
+    "email": "",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "297915": {
+    "nombre": "Paula Olmos",
+    "codigo": "7TDH3L",
+    "email": "paula_lastras@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "299272": {
+    "nombre": "Antonio Maroto serrano",
+    "codigo": "YFFZMV",
+    "email": "maroto.sg.ed@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "300474": {
+    "nombre": "Lucía Pagola Sánchez",
+    "codigo": "JDO2U3",
+    "email": "lps.pasan@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "300201": {
+    "nombre": "Carlos Fernández Álvaro",
+    "codigo": "TZ8GWG",
+    "email": "carlitoslg23@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "298644": {
+    "nombre": "Alberto Lacañina Orta",
+    "codigo": "LH1LXT",
+    "email": "albertolacor@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "300202": {
+    "nombre": "Diego Fernández Iglesias",
+    "codigo": "WAUDIW",
+    "email": "dieguetebae@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "300221": {
+    "nombre": "José Antonio Segovia García",
+    "codigo": "3XHBUX",
+    "email": "jansego@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "298455": {
+    "nombre": "Marta Santalla Guijarro",
+    "codigo": "GCHZSP",
+    "email": "mrtsantalla@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "301294": {
+    "nombre": "Javier Perez pastor",
+    "codigo": "2W2KOF",
+    "email": "javierperezpastor9@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "298724": {
+    "nombre": "Victor Tablada Pardillos",
+    "codigo": "FMT76J",
+    "email": "victortabpar6@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "301226": {
+    "nombre": "Bilal Chehibou",
+    "codigo": "EAKDTF",
+    "email": "bilalchehbou20121973@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "20,00€"
+  },
+  "299161": {
+    "nombre": "Ivan De Frutos Padilla",
+    "codigo": "KETKUZ",
+    "email": "defrutospadillaivan@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "299736": {
+    "nombre": "Wilmer Sandoval ureña",
+    "codigo": "LRYYAF",
+    "email": "wilmer281017@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "296318": {
+    "nombre": "Jaime Cañas Manso",
+    "codigo": "ZBEIVO",
+    "email": "adolfosuarezolmos@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "22,50€"
+  },
+  "299799": {
+    "nombre": "Asia Sikiric",
+    "codigo": "U67PX8",
+    "email": "asia.sikiric@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "298752": {
+    "nombre": "Víctor Manuel Erices Guerrero",
+    "codigo": "MALZDH",
+    "email": "victorericesguerrero@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "299729": {
+    "nombre": "Alex Tsolov Mihaylov",
+    "codigo": "SCYPBO",
+    "email": "tsvetelinovalex@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "296656": {
+    "nombre": "ewerton da silva reis",
+    "codigo": "XSIQFD",
+    "email": "reisewerton36@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "297825": {
+    "nombre": "Mohmed Zayan Rifi",
+    "codigo": "ONUK1R",
+    "email": "guwnzo572@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "300433": {
+    "nombre": "Costin Cojocaru Boncu",
+    "codigo": "VZ1IOJ",
+    "email": "costydany31@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "299770": {
+    "nombre": "José Luis Gil Patiño",
+    "codigo": "CKHUTB",
+    "email": "josecatire77@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "298649": {
+    "nombre": "Jorge Latorre Martínez",
+    "codigo": "JTYPNH",
+    "email": "jlatorre2006@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "299160": {
+    "nombre": "Andrés Tapias Arroyo",
+    "codigo": "LUKN2C",
+    "email": "andres.m.1998@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "298876": {
+    "nombre": "David García Martín",
+    "codigo": "BDBPUN",
+    "email": "davidgm.sg@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "295906": {
+    "nombre": "Juan Rodriguez Jimenez",
+    "codigo": "OJJ7LX",
+    "email": "sonlleva@live.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "299412": {
+    "nombre": "Yanira De Blas del Barrio",
+    "codigo": "3W0UJN",
+    "email": "yanirayaniyar@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "299366": {
+    "nombre": "Aitor Del Pozo Rueda",
+    "codigo": "DQ2Y2T",
+    "email": "aitor.delpozo.rueda@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "299734": {
+    "nombre": "Mohamed Ziani",
+    "codigo": "OGAMLN",
+    "email": "darifakarim11@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "297228": {
+    "nombre": "Leo Moraleda Trigo",
+    "codigo": "UQ4EFY",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "297718": {
+    "nombre": "Nihat Asanov",
+    "codigo": "L42QQT",
+    "email": "nihatasanov93@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "299277": {
+    "nombre": "Luis Hernández Rivera",
+    "codigo": "Z3KDSF",
+    "email": "luisitorinthin@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "298143": {
+    "nombre": "Rodrigo Martín García",
+    "codigo": "LXUZYJ",
+    "email": "rodri001m2@gmail.com",
+    "fecha_hasta": "19/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "297836": {
+    "nombre": "Mohamed Zayan Rifi",
+    "codigo": "UHY21E",
+    "email": "guenzo572@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "298823": {
+    "nombre": "Aynan Abdous Boujnane",
+    "codigo": "RMTLUG",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "295904": {
+    "nombre": "Gonzalo Rdriguez Herranz",
+    "codigo": "XDAIWP",
+    "email": "gonzalo.rodher@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "55,00€"
+  },
+  "298661": {
+    "nombre": "Jacob Castellano Alcedo",
+    "codigo": "XXQXU6",
+    "email": "jacobcastellanoalcedo@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "301292": {
+    "nombre": "Martín Rumenov Stankov",
+    "codigo": "3OWPLV",
+    "email": "rumenovm32@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "65,00€"
+  },
+  "299323": {
+    "nombre": "Antony Mendoza miranda",
+    "codigo": "RU60GH",
+    "email": "victoria1990.es@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "290476": {
+    "nombre": "Daniel Santana Chamorro",
+    "codigo": "2CS5PZ",
+    "email": "pakitodsg@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "292030": {
+    "nombre": "Jesus Pintos saucedo",
+    "codigo": "93WDPM",
+    "email": "jesuspintos95@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "295722": {
+    "nombre": "Fernando Galán López",
+    "codigo": "7GAKXM",
+    "email": "fergalop8@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "295727": {
+    "nombre": "Maria Gamio",
+    "codigo": "JOJVYM",
+    "email": "mariapazgamioloayza@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "293070": {
+    "nombre": "Hector Gomez",
+    "codigo": "ZDRTZG",
+    "email": "hectorgomezsb0@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "293776": {
+    "nombre": "SHEILA GOMEZ DE GODOS",
+    "codigo": "XVGYOR",
+    "email": "sheilagdg82@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "291403": {
+    "nombre": "Marta González Campo",
+    "codigo": "CTKSW1",
+    "email": "mgcampo06@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "292259": {
+    "nombre": "Cristopher Daniel Mancía Sarmiento",
+    "codigo": "WZGOVZ",
+    "email": "maria.juliasarmiento@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "295666": {
+    "nombre": "Dastin González Heredia",
+    "codigo": "WSNI7U",
+    "email": "dastingonza03@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "292685": {
+    "nombre": "Raul Izquierdo Casado",
+    "codigo": "XGZ0CV",
+    "email": "ruliizca90@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "45,00€"
+  },
+  "292294": {
+    "nombre": "Millán Hernando de Julián",
+    "codigo": "K67DTC",
+    "email": "millanhdj@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "292296": {
+    "nombre": "Héctor Cedeño",
+    "codigo": "IS9FV9",
+    "email": "hectyheecty@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "294417": {
+    "nombre": "Alejandro Silveira Sáez",
+    "codigo": "I8FIGB",
+    "email": "ale.silveira.saez@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "10,00€"
+  },
+  "291703": {
+    "nombre": "Oscar Casla Oviedo",
+    "codigo": "GYOQIS",
+    "email": "rxkde3@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "291173": {
+    "nombre": "Oscar Pedrero Casado",
+    "codigo": "XGQA0J",
+    "email": "gusilpc2004@yahoo.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "290699": {
+    "nombre": "Mario Zatarain Hernanz",
+    "codigo": "YQD4IF",
+    "email": "ahorarompetuslimites@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "292285": {
+    "nombre": "Marcel Majchrzak",
+    "codigo": "P4GOR2",
+    "email": "majekk777@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "292688": {
+    "nombre": "Valeria Castañeda Paucar",
+    "codigo": "LIZEL0",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "291435": {
+    "nombre": "Maria Antonia Redondo Garcia",
+    "codigo": "FXMT38",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "295892": {
+    "nombre": "Nicolas Mihailov Trifonov",
+    "codigo": "VUH2AH",
+    "email": "geripetkova0605@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "293637": {
+    "nombre": "Gergo Valentin Krkos",
+    "codigo": "2FF52E",
+    "email": "krkosgergo54@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "290707": {
+    "nombre": "Luna Benedi Segura",
+    "codigo": "VZXUCB",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "292287": {
+    "nombre": "Sergio Arturo Ceacero",
+    "codigo": "EIZ2UM",
+    "email": "avelazquezceacero@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "295590": {
+    "nombre": "Felipe Álvarez Bermejo",
+    "codigo": "SJUMNL",
+    "email": "felipealvarezbermejo@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "290480": {
+    "nombre": "Ismail Iguaran",
+    "codigo": "GOXLGH",
+    "email": "isma.ip.96@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "293005": {
+    "nombre": "Cristian Garcia Ballesteros",
+    "codigo": "OZXV9X",
+    "email": "cristiangarciaballesteros751@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "291879": {
+    "nombre": "Daniel Garrido de Lucas",
+    "codigo": "XWFINC",
+    "email": "danielgarridodelucas321@icloud.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "290704": {
+    "nombre": "José Benedí Segura",
+    "codigo": "199EYJ",
+    "email": "martasv82@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "291405": {
+    "nombre": "Milagros Gonzalez. Martin",
+    "codigo": "IQUIXV",
+    "email": "mila.gonzalez@yahoo.es",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "292404": {
+    "nombre": "Eira Pedrero Herrero",
+    "codigo": "TCSP7K",
+    "email": "eirita21@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "292402": {
+    "nombre": "Gloria Hernández",
+    "codigo": "AGTXXC",
+    "email": "pituhg87@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "292687": {
+    "nombre": "Valeria Lucero Castañeda Paucar",
+    "codigo": "FQK85H",
+    "email": "lulucp1998@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "291891": {
+    "nombre": "David Aguado Santos",
+    "codigo": "CHEKDL",
+    "email": "ddavidaguadoo14@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "291657": {
+    "nombre": "Felix Fernandez Gonzalez",
+    "codigo": "WLXLCF",
+    "email": "felixblaposkb@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "295459": {
+    "nombre": "Nicolas Mihailov Trifonov",
+    "codigo": "FZGAG4",
+    "email": "geripechalova@abv.bg",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "293117": {
+    "nombre": "Marin Krastev Marinov",
+    "codigo": "DOA6BB",
+    "email": "marinkrastevmarinov@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "294875": {
+    "nombre": "Rodrigo Herrero Castaño",
+    "codigo": "S4CCYB",
+    "email": "rodrigoherrero2006@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "291250": {
+    "nombre": "Angel Fresneda Martin",
+    "codigo": "FBG0CQ",
+    "email": "angelfremar@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "292884": {
+    "nombre": "Amalia Marie Valdivia Aguiar",
+    "codigo": "XKJTGQ",
+    "email": "amarbya@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "293157": {
+    "nombre": "Ivan Marinov Marinov",
+    "codigo": "V8IHQR",
+    "email": "iartmarinov@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "286384": {
+    "nombre": "Juan Miguel Rosch Alonso",
+    "codigo": "UJ3YIS",
+    "email": "juanmialonso20@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "286343": {
+    "nombre": "Sofía García Grande",
+    "codigo": "6Y01U1",
+    "email": "misoma61314@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "288696": {
+    "nombre": "Víctor Megias aguirre",
+    "codigo": "2HDYTA",
+    "email": "victormegias6@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "287770": {
+    "nombre": "David Ballesteros Serrano",
+    "codigo": "KUO8PA",
+    "email": "davidballesteros0608@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "286718": {
+    "nombre": "Brooke Fahey",
+    "codigo": "PARNZG",
+    "email": "brookeefahey@icloud.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "286386": {
+    "nombre": "Diego Meana",
+    "codigo": "JGNEWA",
+    "email": "diegomeanastan003@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "289664": {
+    "nombre": "Mateo Martin Soares",
+    "codigo": "GH4NZZ",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "286535": {
+    "nombre": "Andrea Otones Garcia",
+    "codigo": "JL4PTF",
+    "email": "andreoto@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "288878": {
+    "nombre": "Alejo Fraile Llorente",
+    "codigo": "MP3APQ",
+    "email": "frailealejo@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "289990": {
+    "nombre": "Jorge Fidalgo",
+    "codigo": "ATBG5B",
+    "email": "fidalgoarias1@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "286967": {
+    "nombre": "Marcos Martin",
+    "codigo": "IJWCNZ",
+    "email": "marcosgarcarasco@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "288972": {
+    "nombre": "Samuel Galindo Garrido",
+    "codigo": "IW6K1N",
+    "email": "samugaligarri@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "286677": {
+    "nombre": "Matías Tufiño Molina",
+    "codigo": "7ZDS0Y",
+    "email": "matiasdamiantufinomolina@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "286336": {
+    "nombre": "Julia Otero Cobo",
+    "codigo": "TFMNFN",
+    "email": "juliaoterocobo@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "286734": {
+    "nombre": "Jose Angel Aragoneses",
+    "codigo": "7KSZCX",
+    "email": "joseitzinayps@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "287002": {
+    "nombre": "Ignacio San Loren",
+    "codigo": "3YLHRH",
+    "email": "nacho.abades2003@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "288010": {
+    "nombre": "Ramon De Cádiz",
+    "codigo": "L1OYIR",
+    "email": "marianogueracortes@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "289833": {
+    "nombre": "Gadea Gutiérrez Díez",
+    "codigo": "2HCXRZ",
+    "email": "gadegudi@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "290186": {
+    "nombre": "Yassin Mizeb",
+    "codigo": "F4DDK0",
+    "email": "yassinelizeb5@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "289248": {
+    "nombre": "Daniel Escorial alcalde",
+    "codigo": "UPMGYM",
+    "email": "esco356@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "286599": {
+    "nombre": "Andres Barrios Perez",
+    "codigo": "BWV1TA",
+    "email": "",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "68,00€"
+  },
+  "288541": {
+    "nombre": "Jorge Gabriel Martín Soares",
+    "codigo": "SB0XUD",
+    "email": "mara4771@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "286954": {
+    "nombre": "Gonzalo fernandez",
+    "codigo": "ZFCU5A",
+    "email": "segoalaluminios@hotmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "289524": {
+    "nombre": "Javier Escribano Sidera",
+    "codigo": "0GVQNX",
+    "email": "escrisidera97@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "287799": {
+    "nombre": "Javier Pablo Ruberte",
+    "codigo": "BQAJIU",
+    "email": "javierpabloruberte@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "287078": {
+    "nombre": "Fran G",
+    "codigo": "TZH3PP",
+    "email": "hfrn502@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "290448": {
+    "nombre": "Jorge Hernandez Castro",
+    "codigo": "BLIY7H",
+    "email": "jorgehc2503@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "42,50€"
+  },
+  "288895": {
+    "nombre": "Raquel García-Consuegra Gutiérrez",
+    "codigo": "535NHS",
+    "email": "ahimsaygandhi@hotmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "286971": {
+    "nombre": "Lucía Agramunt Liras",
+    "codigo": "YC587E",
+    "email": "luciali3007@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "287532": {
+    "nombre": "Miguel Ángel Hernández",
+    "codigo": "IFOXL1",
+    "email": "ivanivanivan6565@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "55,00€"
+  },
+  "287875": {
+    "nombre": "Manuel Santa Isabel",
+    "codigo": "QR5EF2",
+    "email": "msantaisabelm@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "287764": {
+    "nombre": "Alvaro Gonzalez Pastrana",
+    "codigo": "QUHUD4",
+    "email": "apastrana201@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "289800": {
+    "nombre": "GREGORIO Gil TEJEDOR",
+    "codigo": "AUCMUM",
+    "email": "greggiltejedor@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "289461": {
+    "nombre": "Carla Sanz Gago",
+    "codigo": "7TPATA",
+    "email": "albertsghonta85@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "288009": {
+    "nombre": "Ramon De Cádiz",
+    "codigo": "PC6LWO",
+    "email": "ramondecastro18@icloud.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "288851": {
+    "nombre": "Sandra Veronica Rosino Freudenberger",
+    "codigo": "ZWLFGM",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "286969": {
+    "nombre": "Ghitha Ouardi Laaraj",
+    "codigo": "LWMLZP",
+    "email": "ghitha2607@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "10,00€"
+  },
+  "287530": {
+    "nombre": "Ivan Clemente de la insua",
+    "codigo": "XL0U4T",
+    "email": "nistii65@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "55,00€"
+  },
+  "286698": {
+    "nombre": "Néstor Acosta Delgado",
+    "codigo": "QDG2HN",
+    "email": "chukynestor@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "288978": {
+    "nombre": "Yani Genao",
+    "codigo": "3Q4ISW",
+    "email": "yanignao@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "285854": {
+    "nombre": "Goyo Luelmo Horcajo",
+    "codigo": "1PLK4O",
+    "email": "gluelmohorcajo@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "285655": {
+    "nombre": "Víctor Moreno Hurtado",
+    "codigo": "YEAUWE",
+    "email": "victormorenohurtado@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "286234": {
+    "nombre": "Abraham Gonzalez Lopez",
+    "codigo": "G0JND2",
+    "email": "mercherodeoro28@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "284891": {
+    "nombre": "Darío Gabriel Lorusso Gaglianone",
+    "codigo": "R9QRX2",
+    "email": "dariolorusso@hotmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "285560": {
+    "nombre": "Yassine Boukhmili",
+    "codigo": "NYUI9S",
+    "email": "nourita374@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285772": {
+    "nombre": "Juan Pablo Espinosa Cano",
+    "codigo": "NTTDLA",
+    "email": "juan8p.2005@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285462": {
+    "nombre": "Guillermo Francisco Jimenez Nestar",
+    "codigo": "HNHCRZ",
+    "email": "guipara2001@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "286244": {
+    "nombre": "Jaime Herreras García",
+    "codigo": "GALZIW",
+    "email": "herreras2000@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "284447": {
+    "nombre": "Antonio Agramunt Manzanares",
+    "codigo": "4KJP7R",
+    "email": "agramuntantonio@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "70,00€"
+  },
+  "284484": {
+    "nombre": "Alejandro Gómez Hernández",
+    "codigo": "HNMFLD",
+    "email": "alejandrogh77@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285059": {
+    "nombre": "Manuel Esparza Herrero",
+    "codigo": "XCKFLP",
+    "email": "manuesp.e.h@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "284512": {
+    "nombre": "Pilar Ponce Diez",
+    "codigo": "Z9UKRG",
+    "email": "",
+    "fecha_hasta": "16/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "285827": {
+    "nombre": "Rubén Valades pedrosa",
+    "codigo": "F5HUNU",
+    "email": "ruben_vala_12@hotmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "285308": {
+    "nombre": "Juan Manuel Mezquita Canas",
+    "codigo": "OIP0LU",
+    "email": "harriguay@yahoo.es",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285207": {
+    "nombre": "Maria Herrero Herranz",
+    "codigo": "HMSK4O",
+    "email": "mariaherrero4hh@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "284639": {
+    "nombre": "javier sanchez alvarez",
+    "codigo": "8105JO",
+    "email": "javi_san84@hotmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "285840": {
+    "nombre": "Lyubomir Iordanov Iordanov",
+    "codigo": "VHYW5P",
+    "email": "lyubomiriordanov26@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "286231": {
+    "nombre": "Fernando Rojas García",
+    "codigo": "OVZCRR",
+    "email": "fernanrojasgarcia@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "285770": {
+    "nombre": "Eduardo Camin Gomez",
+    "codigo": "LNEBOD",
+    "email": "eduardocamin2@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285665": {
+    "nombre": "Melis Gyunay",
+    "codigo": "ZHAWSE",
+    "email": "gyunaymelisa1@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "285878": {
+    "nombre": "Miriam Tejedor",
+    "codigo": "NDTFRH",
+    "email": "esmeraldadefrutosmontes76@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "285629": {
+    "nombre": "Borja Garcia martin",
+    "codigo": "CU4U9H",
+    "email": "borjitamadrona@icloud.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285865": {
+    "nombre": "javier medina diez",
+    "codigo": "WHRMMQ",
+    "email": "javimedinadiez52@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "284921": {
+    "nombre": "Ignacio Borges",
+    "codigo": "SVMY72",
+    "email": "nachobc2599@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285506": {
+    "nombre": "Julio María Arévalo Herreros",
+    "codigo": "05U9OK",
+    "email": "julioarevalo2001@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "285866": {
+    "nombre": "Francisco Zamorano Gigosos",
+    "codigo": "JOWQLX",
+    "email": "kiko.zamorano@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "286245": {
+    "nombre": "Azucena Brañas Santos",
+    "codigo": "ZUILN1",
+    "email": "azucena.abs@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "28,00€"
+  },
+  "286225": {
+    "nombre": "DAVID CASTILLA FLECHILLAS",
+    "codigo": "RBBVO6",
+    "email": "davidcasty14@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "286332": {
+    "nombre": "María Teresa Grande González",
+    "codigo": "V5I2QX",
+    "email": "mtgrago@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "285870": {
+    "nombre": "Jorge Lopez Cano",
+    "codigo": "BFXMZZ",
+    "email": "jorgelc.audit@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "28,00€"
+  },
+  "286333": {
+    "nombre": "Julia Cobo carreño",
+    "codigo": "OTX0GI",
+    "email": "juliacobocarreno@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "285653": {
+    "nombre": "Daniel Juarrero",
+    "codigo": "YKWW1X",
+    "email": "danieljuhe@hmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "285825": {
+    "nombre": "Kaloian Iordanov Iordanov",
+    "codigo": "0IVEZO",
+    "email": "kaloianiordanov98@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "284713": {
+    "nombre": "Juan Rizzo Calderón",
+    "codigo": "C42LOA",
+    "email": "juanrizzo163@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "285508": {
+    "nombre": "Fernando Bonelli González",
+    "codigo": "QY5UTX",
+    "email": "fernandobonelligonzalez@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "284469": {
+    "nombre": "Steven Chicaiza Alcocer",
+    "codigo": "YOOK3V",
+    "email": "sch99vlc@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "285944": {
+    "nombre": "Miguel Alfredo Rodríguez Martins",
+    "codigo": "WX9GUX",
+    "email": "2002miguelro@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "284829": {
+    "nombre": "Mariia Slobodeniuk",
+    "codigo": "LNB5QL",
+    "email": "slobodenjuk8@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "285694": {
+    "nombre": "Juan Villacampa Nuevo",
+    "codigo": "QNOB1T",
+    "email": "juanvillacampa@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "90,00€"
+  },
+  "286249": {
+    "nombre": "Arturo Chicón marti.",
+    "codigo": "OFJSGA",
+    "email": "artureitor300@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "281691": {
+    "nombre": "Rafael Espinosa García",
+    "codigo": "SLTPJJ",
+    "email": "rafaelespinosagarcia146@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "283006": {
+    "nombre": "Marcos Beltrán Rubio",
+    "codigo": "AJLV9I",
+    "email": "marcosbel94@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "282989": {
+    "nombre": "Ricardo Matesanz",
+    "codigo": "SO2FDY",
+    "email": "ricardomtsnz@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "281684": {
+    "nombre": "Aranzazu De frutos",
+    "codigo": "XRKOEY",
+    "email": "hola@eventoszazu.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "284052": {
+    "nombre": "Loriel Olivera",
+    "codigo": "BU72KU",
+    "email": "",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "282726": {
+    "nombre": "Miguel Atienza",
+    "codigo": "DZGXQK",
+    "email": "miguelatienza_95@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "283390": {
+    "nombre": "Juan Antonio González ortega",
+    "codigo": "G0K2UL",
+    "email": "mercherodeoro28@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "281723": {
+    "nombre": "Sara Jimenez Jimenez",
+    "codigo": "TDTSAG",
+    "email": "sarajimenez331@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "283214": {
+    "nombre": "Fran Gil Perez",
+    "codigo": "47TCQ4",
+    "email": "sonyny26@hotmail.com",
+    "fecha_hasta": "09/09/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281621": {
+    "nombre": "Antonio Jiménez  miranda",
+    "codigo": "AUELSO",
+    "email": "antoniodayana89@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281602": {
+    "nombre": "Adai Jimenez de la Cruz",
+    "codigo": "AF596V",
+    "email": "",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "282063": {
+    "nombre": "José Javier Davía Herranz",
+    "codigo": "Y4HKIN",
+    "email": "gildebiema63@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "284351": {
+    "nombre": "Nora Casado",
+    "codigo": "ZKVSM0",
+    "email": "noracasado97@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "281617": {
+    "nombre": "Manuel Fernandez del Barrio",
+    "codigo": "SXWPZQ",
+    "email": "",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "284294": {
+    "nombre": "Carmen Redondo Herrero",
+    "codigo": "5AHTEA",
+    "email": "carmenredondo.crh@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "282739": {
+    "nombre": "Amanda Velazquez",
+    "codigo": "U5TQCZ",
+    "email": "amandavelazquez1984@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "284235": {
+    "nombre": "Oscar Rey sanz",
+    "codigo": "RA6P4H",
+    "email": "oscareytecno@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "281650": {
+    "nombre": "Pablo Alonso Velasco",
+    "codigo": "ACS2VY",
+    "email": "",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "282767": {
+    "nombre": "Marc Nicolae",
+    "codigo": "IZVFQA",
+    "email": "linox2006marc@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "281601": {
+    "nombre": "Noelia Gomez",
+    "codigo": "9F6G8J",
+    "email": "noeliaviola@hotmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281507": {
+    "nombre": "INVITADO 1 INVITADO 1",
+    "codigo": "A5YJW1",
+    "email": "",
+    "fecha_hasta": "01/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "282710": {
+    "nombre": "Javier Vélez Gómez",
+    "codigo": "UTOUGM",
+    "email": "javiervelezgomez5@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "284435": {
+    "nombre": "Sergio Rubio García",
+    "codigo": "3WE39N",
+    "email": "sergiorubiogarcia2002@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "283074": {
+    "nombre": "Rodrigo Pascual Lobo",
+    "codigo": "NUUXWF",
+    "email": "rodrigo10unami@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "282014": {
+    "nombre": "Santiago Casado herreo",
+    "codigo": "AR1SOR",
+    "email": "casherjr@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "281870": {
+    "nombre": "Julio Sanchez ferradal",
+    "codigo": "2O3Z66",
+    "email": "js.ferradal@gmail.com",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281587": {
+    "nombre": "Gonzalo Agudo",
+    "codigo": "RV1XSF",
+    "email": "g.aguvir@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281515": {
+    "nombre": "INVITADO 3 INVITADO 3",
+    "codigo": "D7TGIZ",
+    "email": "",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "284204": {
+    "nombre": "Valentina Córdoba Ramírez",
+    "codigo": "7HA6OU",
+    "email": "valentinacordobaramirez70@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "282062": {
+    "nombre": "Jose Javier Davía Herranz",
+    "codigo": "GDOFE9",
+    "email": "gildebiedma63@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "281647": {
+    "nombre": "Javier Lopez Velasco",
+    "codigo": "KOLRMH",
+    "email": "",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "283399": {
+    "nombre": "SONIA YOLANDA LAFUENTE LÁZARO",
+    "codigo": "T74KK3",
+    "email": "suylafuente4321@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "281712": {
+    "nombre": "Luna Brunicardi Nieto",
+    "codigo": "UZSY0J",
+    "email": "ebsga@hotmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "120,00€"
+  },
+  "281631": {
+    "nombre": "Daniel Salgado andrade",
+    "codigo": "HROCFD",
+    "email": "danielsalgadoandrade43@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "281685": {
+    "nombre": "Neythal Cristopher de Oliveira Unda",
+    "codigo": "9EXBC8",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "284431": {
+    "nombre": "Sergio Rubio García",
+    "codigo": "A51DPQ",
+    "email": "sergirubiogarcia2002@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "281675": {
+    "nombre": "Mihail Trifonof",
+    "codigo": "VZS2NU",
+    "email": "",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "281513": {
+    "nombre": "INVITADO 2 INVITADO 2",
+    "codigo": "EMIQNZ",
+    "email": "",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "283017": {
+    "nombre": "Teymour Alireza",
+    "codigo": "7JGBJ0",
+    "email": "timo.alireza@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "281625": {
+    "nombre": "Flavia Martinez Goitia",
+    "codigo": "QUZ0WR",
+    "email": "fco.martinez@outlook.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "280813": {
+    "nombre": "Jaime Esteban Merino",
+    "codigo": "VMBN64",
+    "email": "jemcopy2@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "281218": {
+    "nombre": "Naim Isais",
+    "codigo": "MW5HWP",
+    "email": "naimcb17@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280767": {
+    "nombre": "Pablo Jiménez Bernabé",
+    "codigo": "EDRQXI",
+    "email": "pablojd476@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "281372": {
+    "nombre": "José Gabriel Mancia Alonzo",
+    "codigo": "QCTBMF",
+    "email": "manciajose600@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "281264": {
+    "nombre": "Daniela Jerez",
+    "codigo": "Y5VESD",
+    "email": "adita26@hotmail.es",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "20,00€"
+  },
+  "281291": {
+    "nombre": "Carmen Blanco Velázquez",
+    "codigo": "DGZBKU",
+    "email": "cblancov9@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "281267": {
+    "nombre": "Santi Areses",
+    "codigo": "5JSJPF",
+    "email": "areses.aguado@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "20,00€"
+  },
+  "281186": {
+    "nombre": "Nizar Lakreia",
+    "codigo": "YMKW1Z",
+    "email": "idriss.lak08@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "281051": {
+    "nombre": "Tanio Vasilev",
+    "codigo": "RDDEC8",
+    "email": "tanio14061994@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "280862": {
+    "nombre": "Miguel De Gonzalo",
+    "codigo": "LUNZXO",
+    "email": "migueldegonzalo1995@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "281038": {
+    "nombre": "Enzo Gimenez Muñoz",
+    "codigo": "7RD4YQ",
+    "email": "",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "280787": {
+    "nombre": "Kristina Hristoforova Dimitrova",
+    "codigo": "UOY5D7",
+    "email": "kris73582@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "281178": {
+    "nombre": "Rafael Angel Blanco Vallin",
+    "codigo": "QVQBOG",
+    "email": "rablaval@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "64,00€"
+  },
+  "281255": {
+    "nombre": "Jose Antonio Areses Aguado",
+    "codigo": "AVOESX",
+    "email": "areses.aguado@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281097": {
+    "nombre": "Mihai Giorgian Chiuda",
+    "codigo": "T4DI3F",
+    "email": "mihaitzagc@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280865": {
+    "nombre": "Claudia Peinador De Frutos",
+    "codigo": "8TV5DB",
+    "email": "jipeinador79@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "280860": {
+    "nombre": "Sofia Maura Benito Herrranz",
+    "codigo": "HG3TDB",
+    "email": "juanibenito@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281378": {
+    "nombre": "Aitana San Miguel Del Dedo",
+    "codigo": "RWH96S",
+    "email": "isaacsanmigueldepablos14@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "281303": {
+    "nombre": "Juan carlos Herrero Llorente",
+    "codigo": "61KDT8",
+    "email": "juankytonky@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "281284": {
+    "nombre": "Ezequiel Colina Urrieta",
+    "codigo": "HWKQZJ",
+    "email": "elisercolinabarrero@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281311": {
+    "nombre": "Eyén Sanz Santos",
+    "codigo": "3BNB4T",
+    "email": "sanzeyen@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280810": {
+    "nombre": "César Valdenebro González",
+    "codigo": "QNEMIX",
+    "email": "cesarvg02@gmail.com",
+    "fecha_hasta": "31/07/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "280755": {
+    "nombre": "Sayf Eddine bouariche kaina",
+    "codigo": "IUBBQZ",
+    "email": "sayfe.bou@educa.jcyl.es",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "280797": {
+    "nombre": "Yassine Boukhmili",
+    "codigo": "IJ11MS",
+    "email": "boukhmiliyassine@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "280857": {
+    "nombre": "David Benito Herrranz",
+    "codigo": "UZMJ9Q",
+    "email": "juandebenito@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281042": {
+    "nombre": "Cristian Pomares",
+    "codigo": "QHZMAI",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281156": {
+    "nombre": "Sayfe Eddine Bouariche Kaina",
+    "codigo": "SES2S5",
+    "email": "wardakaina2018@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "281131": {
+    "nombre": "Rocío Torija Muñoz",
+    "codigo": "Q5KLBP",
+    "email": "off.torijamunozr@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "281041": {
+    "nombre": "Candela Gimenez Muñoz",
+    "codigo": "RYGKPV",
+    "email": "",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281316": {
+    "nombre": "Andres Tafur Huerta",
+    "codigo": "4Y7VIU",
+    "email": "andrestofu@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "281162": {
+    "nombre": "Ricardo Loureiro de Oliveira",
+    "codigo": "TUT0SY",
+    "email": "ricardooliveirajiu@hotmail.com",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "281263": {
+    "nombre": "MArtin Areses",
+    "codigo": "JIYX6R",
+    "email": "areses.aguado@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "20,00€"
+  },
+  "280848": {
+    "nombre": "Carlos Jaén",
+    "codigo": "X0KOPT",
+    "email": "carbertojaenruiz@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280867": {
+    "nombre": "Sofia Peinador De Frutos",
+    "codigo": "NDTTEY",
+    "email": "jipeinador79@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "280780": {
+    "nombre": "Kristina Hristoforova Dimitrova",
+    "codigo": "SX6QLS",
+    "email": "kristina73582@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "280719": {
+    "nombre": "Yeray Gonzalez Ortega",
+    "codigo": "MGEDWJ",
+    "email": "y7991900@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "280775": {
+    "nombre": "Alexia Vladislavova Kostova",
+    "codigo": "6DC8RV",
+    "email": "vladislavkostov@hotmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "280704": {
+    "nombre": "Marc Elespuru Rios",
+    "codigo": "1E8PXC",
+    "email": "rioscordovat@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "281289": {
+    "nombre": "Anna Colina Urrieta",
+    "codigo": "AF9CET",
+    "email": "elisercolinabarrero@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "280781": {
+    "nombre": "Alnader Baidas",
+    "codigo": "B4WKFD",
+    "email": "alnaderbaidas@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280668": {
+    "nombre": "Héctor Berrocal Velasco",
+    "codigo": "TLR648",
+    "email": "hberrocalvelasco@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280467": {
+    "nombre": "Cristobal De Pablos",
+    "codigo": "55KUGI",
+    "email": "cristobal_naval_95@hotmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "280248": {
+    "nombre": "Jose Luis De la Mata Arenal",
+    "codigo": "ELR9VI",
+    "email": "",
+    "fecha_hasta": "17/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "75,00€"
+  },
+  "279964": {
+    "nombre": "Angel Jimenez Garcia",
+    "codigo": "LWZY0L",
+    "email": "",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "279857": {
+    "nombre": "Vera Moraleda Trigo",
+    "codigo": "EEFE7V",
+    "email": "araneoj@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "279516": {
+    "nombre": "Irene Gómez Fernández",
+    "codigo": "GBDAWB",
+    "email": "irenegomezlg12@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "279530": {
+    "nombre": "Martín Svetoslavov Georgiev",
+    "codigo": "XQWRBG",
+    "email": "svetoslavovgeorgievmartin@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "279462": {
+    "nombre": "Raúl Mercado García",
+    "codigo": "TZSK4X",
+    "email": "rmercag@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "278845": {
+    "nombre": "Lucia Garcia Aragoneses",
+    "codigo": "4JMR5N",
+    "email": "lucinavillas2000@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "278754": {
+    "nombre": "Victor García García",
+    "codigo": "BJ54TV",
+    "email": "victorggarcia@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "279954": {
+    "nombre": "Flavio Oliveira da Silva Dhein",
+    "codigo": "KASPR4",
+    "email": "magrelamuzenza@gmail.com",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "278794": {
+    "nombre": "Idriss Lakreia",
+    "codigo": "VD8VTR",
+    "email": "08idriss.lakreia@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "279786": {
+    "nombre": "Mateo Blanco Alonso",
+    "codigo": "7PEMGH",
+    "email": "pe_algu@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "280696": {
+    "nombre": "Yerai González ortega",
+    "codigo": "MKDL6L",
+    "email": "y7991900@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "280686": {
+    "nombre": "Victor Manuel Hernandez Ruiz",
+    "codigo": "YRX4U7",
+    "email": "victorhernaandezz@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "279844": {
+    "nombre": "Irene Aguilar Naranjo",
+    "codigo": "YE0HPC",
+    "email": "maguilar381@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "280663": {
+    "nombre": "claudio arias",
+    "codigo": "NDEQS9",
+    "email": "ariasperezblazze@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "279302": {
+    "nombre": "Diego Leonel Gallardo",
+    "codigo": "BHQM3P",
+    "email": "diegogallardo1471@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "279555": {
+    "nombre": "DORI PALACIOS",
+    "codigo": "BEEQM9",
+    "email": "dori_ph@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "279166": {
+    "nombre": "ANGEL LUIS DE DIEGO SANTA ELENA",
+    "codigo": "W8QWHR",
+    "email": "sergiosd094@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "279051": {
+    "nombre": "Diego Mediavilla González",
+    "codigo": "MTYFC3",
+    "email": "mediavillagonzalezdiego@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "279268": {
+    "nombre": "Maria Del Rosario Martin Eguido",
+    "codigo": "VGL7WX",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "279594": {
+    "nombre": "Manuel Chaves",
+    "codigo": "TMJIPG",
+    "email": "chavesmanuel826@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "279499": {
+    "nombre": "Mukudzei Chigumbu",
+    "codigo": "ORODPP",
+    "email": "kudzichigs15@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "279596": {
+    "nombre": "Yusuf Fazlanie",
+    "codigo": "LNQ4LS",
+    "email": "yusuf.fazlanie@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280697": {
+    "nombre": "Manuel Montañes Berzal",
+    "codigo": "XXJQN0",
+    "email": "tibumonsg@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "279588": {
+    "nombre": "Gaetano Cavalleri",
+    "codigo": "YUKRYQ",
+    "email": "cavallerigaetano895@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "280523": {
+    "nombre": "Alejandra Sombria",
+    "codigo": "MYMVK2",
+    "email": "jose.sombria@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "279603": {
+    "nombre": "Isabel Rivero",
+    "codigo": "SBX3JE",
+    "email": "isabel.riverogarcia@yahoo.es",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "279503": {
+    "nombre": "Penelope Alonso Gutierrez",
+    "codigo": "3DYOSU",
+    "email": "pe_algu@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "279911": {
+    "nombre": "KEVIN MEDINA",
+    "codigo": "9YUWET",
+    "email": "fernandoguevaramedina265@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "279805": {
+    "nombre": "Victor Gallegos",
+    "codigo": "CSJJ8L",
+    "email": "kira_undabarrena@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "280548": {
+    "nombre": "María Paz Marín",
+    "codigo": "HYYMGX",
+    "email": "mamamaria_8@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "57,00€"
+  },
+  "279582": {
+    "nombre": "VICTOR LÓPEZ BRAÑAS",
+    "codigo": "KEMCSW",
+    "email": "victorlb.audit@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "28,00€"
+  },
+  "279116": {
+    "nombre": "Aleksandar Borislavov Belchinov",
+    "codigo": "PNP8YC",
+    "email": "alexbelchinov@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "279415": {
+    "nombre": "Petar Aleksandrov Simeonov",
+    "codigo": "NZGFDU",
+    "email": "petar.g.aleks@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "280574": {
+    "nombre": "Julen Brañas Velasco",
+    "codigo": "EZFFDY",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "279552": {
+    "nombre": "Daniel Herrero",
+    "codigo": "CVTTJQ",
+    "email": "dani.herr1617@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "279965": {
+    "nombre": "Maria Antonia Bermejo",
+    "codigo": "OLRXAI",
+    "email": "",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "280470": {
+    "nombre": "Guillermo Gael Aguirre Gomez",
+    "codigo": "YYBVUP",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "275861": {
+    "nombre": "Diego Martin alvarez",
+    "codigo": "8LET1O",
+    "email": "diegoma_95@hotnail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "277726": {
+    "nombre": "Anton Verheles",
+    "codigo": "JSGT6N",
+    "email": "greglukaspower@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "277725": {
+    "nombre": "Anton Verheles",
+    "codigo": "NYZMXV",
+    "email": "vvtoshaq@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "277977": {
+    "nombre": "Gabriel Vladimirov Vasilev",
+    "codigo": "GM0DAQ",
+    "email": "gabix356@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "276426": {
+    "nombre": "Naufal Taaouat",
+    "codigo": "POP4KK",
+    "email": "naufalpha@outlook.es",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "277617": {
+    "nombre": "Carla Mera Cruz",
+    "codigo": "GPTRJH",
+    "email": "sonia_cruz@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "278453": {
+    "nombre": "Nikola Ventsislavov Nikolov",
+    "codigo": "DOQLL3",
+    "email": "nikolanikolovv12@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "276576": {
+    "nombre": "Svetoslav Dimitrov Simeonov",
+    "codigo": "GJLCUQ",
+    "email": "perni_99@mail.bg",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "45,00€"
+  },
+  "276432": {
+    "nombre": "Victor Granero",
+    "codigo": "KUM8IL",
+    "email": "vicman.granero@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "45,00€"
+  },
+  "277190": {
+    "nombre": "Javier Tuñon Garcia",
+    "codigo": "KXNGLY",
+    "email": "javiertunongarcia@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "276444": {
+    "nombre": "Gabriela Gómez Orta",
+    "codigo": "HEF743",
+    "email": "gomezortagabriela5@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "277382": {
+    "nombre": "diego uceta lopez",
+    "codigo": "HI7LKU",
+    "email": "diego_uceta@hotmail.con",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "276558": {
+    "nombre": "Fajr  eddine Ben mansour",
+    "codigo": "5UUBJU",
+    "email": "rabieben76@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "276699": {
+    "nombre": "Samuel Martínez González",
+    "codigo": "ROMVAF",
+    "email": "sumlxoq123@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "278487": {
+    "nombre": "Salek Hamdi",
+    "codigo": "SVWRY2",
+    "email": "salekhamdibuyema@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "276428": {
+    "nombre": "Marco Vázquez Ortega",
+    "codigo": "OGGSSI",
+    "email": "marcovazquezortegapro@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "278047": {
+    "nombre": "Alvaro Sanchez",
+    "codigo": "IIBUYF",
+    "email": "neyxsanchez@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "278010": {
+    "nombre": "Jose Luis Huerta Bartolome",
+    "codigo": "RUYK8K",
+    "email": "yesosroymar@yahoo.es",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "278016": {
+    "nombre": "Juan Luis Alvarez Herrero",
+    "codigo": "DJTWDZ",
+    "email": "juanluisah@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "276552": {
+    "nombre": "Alvaro Del villar del ojo",
+    "codigo": "QBEABP",
+    "email": "leireyalvaro2102@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "20,00€"
+  },
+  "277702": {
+    "nombre": "Jose miguel Fernandez Roldan",
+    "codigo": "4UHU5D",
+    "email": "josemifernandezr91@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "276760": {
+    "nombre": "Rosa Martin Gonzalez",
+    "codigo": "VTDTFP",
+    "email": "rosamg58@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "276976": {
+    "nombre": "Ca Pa",
+    "codigo": "S39WYT",
+    "email": "aramuda8@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "276429": {
+    "nombre": "Álvaro Sombría Orejudo",
+    "codigo": "RTHOKX",
+    "email": "alvarosombria@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "277194": {
+    "nombre": "Rubén Rodriguez Vara",
+    "codigo": "QOWK8X",
+    "email": "rodriguezvararuben@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "277768": {
+    "nombre": "Luis Carlos Sanz Hijosa",
+    "codigo": "FEO2I4",
+    "email": "cshijosa@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "277553": {
+    "nombre": "Marien Otero Atienza",
+    "codigo": "CMOYTK",
+    "email": "riensita005@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "277845": {
+    "nombre": "Marcos Muñoz Marqués",
+    "codigo": "XOCSWM",
+    "email": "marcosmumarques@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "276737": {
+    "nombre": "Elena de Dios Rodriguez",
+    "codigo": "W9NVP3",
+    "email": "elenadedios88@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "276451": {
+    "nombre": "Alexandra Cano Hernández",
+    "codigo": "KQWNZR",
+    "email": "alexacano07@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "278530": {
+    "nombre": "Elena Rosado Martín",
+    "codigo": "PTNVSI",
+    "email": "elenarosado.turismo@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "276457": {
+    "nombre": "kostadin dobroslavov kostov",
+    "codigo": "WU0ZQ4",
+    "email": "kostadin1196@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "277590": {
+    "nombre": "José ortega Fernández",
+    "codigo": "QKWXS9",
+    "email": "totautonomo@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "276701": {
+    "nombre": "Jesus Manuel Martinez Moreno",
+    "codigo": "DSSVJU",
+    "email": "jmanuelmartmoreno@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "70,00€"
+  },
+  "277815": {
+    "nombre": "Alejandro Núñez García",
+    "codigo": "UB6K2D",
+    "email": "a.rades.95@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "277978": {
+    "nombre": "Radostin Radkov Spasov",
+    "codigo": "WSVPAN",
+    "email": "radkospasovspasov45@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "276745": {
+    "nombre": "Gabriel Abad Marino",
+    "codigo": "XBEF9A",
+    "email": "gabrielabadmarino111@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "277149": {
+    "nombre": "alberto sanchez gutierrez",
+    "codigo": "TIO1HW",
+    "email": "bereberto25@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "276691": {
+    "nombre": "Natalia Bastos  vila",
+    "codigo": "77LXFV",
+    "email": "conestilopropio82@gmail.com",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "277612": {
+    "nombre": "Maria Sonia Gilarranz Suarez",
+    "codigo": "AD9D3Y",
+    "email": "sergiosd094@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "274878": {
+    "nombre": "Luis Domínguez Mate",
+    "codigo": "8O5I16",
+    "email": "luisns14@gmail.com",
+    "fecha_hasta": "01/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "150,00€"
+  },
+  "275000": {
+    "nombre": "Leo Torres Bastida",
+    "codigo": "LKWGDG",
+    "email": "yoleotorres@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "275770": {
+    "nombre": "Ayoub Bouzid Essofyany",
+    "codigo": "0ZRFVP",
+    "email": "ayoubmarugan123@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "275429": {
+    "nombre": "José Luis García Rodríguez",
+    "codigo": "SZEYEB",
+    "email": "joselugarci15@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "275784": {
+    "nombre": "Rocio De Lucas Álamo",
+    "codigo": "ABYC2B",
+    "email": "rociodelucas38@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "275610": {
+    "nombre": "Miguel Ángel Lobo Galán",
+    "codigo": "Z8DLRQ",
+    "email": "lobo_dj10@hotmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "275597": {
+    "nombre": "Kristina Hristoforova Dimitrova",
+    "codigo": "91VY9X",
+    "email": "kristina.hridim@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "275457": {
+    "nombre": "Rubén Mico Martín",
+    "codigo": "V8GGME",
+    "email": "rubenmico98@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "275426": {
+    "nombre": "Ilyas MIZEB EDDARRAZ",
+    "codigo": "9ROV4W",
+    "email": "nadiaeddarraz5@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "275423": {
+    "nombre": "Jorge Casado Cristóbal",
+    "codigo": "WMJBPY",
+    "email": "jcc.jorcascri@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "274946": {
+    "nombre": "JONATAN BRAÑAS",
+    "codigo": "L0IZC5",
+    "email": "yonatanbranas@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "274943": {
+    "nombre": "Yasiria González Lopez",
+    "codigo": "SBSBHZ",
+    "email": "aurorajony1234@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "275098": {
+    "nombre": "Noel Herrero",
+    "codigo": "YFHLV5",
+    "email": "noelherreroalmen@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "274980": {
+    "nombre": "Diego Laoun garcia",
+    "codigo": "FVAOJX",
+    "email": "laoungarciad@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "275419": {
+    "nombre": "gonzalo blanco perez",
+    "codigo": "YOWDQN",
+    "email": "gonsabp@proton.me",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275421": {
+    "nombre": "Thiago González Pomares",
+    "codigo": "QXRDQ4",
+    "email": "patripomares@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "275005": {
+    "nombre": "Ricardo Díaz Jara",
+    "codigo": "U6ZX7P",
+    "email": "ricardodiaz050500@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "275002": {
+    "nombre": "Lucia Torres Bastida",
+    "codigo": "DVQGGJ",
+    "email": "lordmissis25@gmail.con",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "275414": {
+    "nombre": "Carlos Mateos",
+    "codigo": "W0RX5S",
+    "email": "carlos.m.casado@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "275602": {
+    "nombre": "Sonia Pérez Díaz",
+    "codigo": "FLWGEC",
+    "email": "sonyny26@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "275453": {
+    "nombre": "Raul Orejudo Garcia",
+    "codigo": "G3JN6R",
+    "email": "raulfebre2003@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275606": {
+    "nombre": "Sonia Pérez Díaz",
+    "codigo": "KCEVP1",
+    "email": "sonynyfran@gmail.com",
+    "fecha_hasta": "01/09/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "200,00€"
+  },
+  "274999": {
+    "nombre": "Carlos Guzmán",
+    "codigo": "CNNXEJ",
+    "email": "glovo23@outlook.es",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275384": {
+    "nombre": "Ivan Cocero sanz",
+    "codigo": "FISJXW",
+    "email": "cocerosanz@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275389": {
+    "nombre": "Marcos Santiuste Blanco",
+    "codigo": "RUMKN2",
+    "email": "carmenbv911@outlook.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "20,00€"
+  },
+  "275113": {
+    "nombre": "Elia Portero Sánchez",
+    "codigo": "HPWLQI",
+    "email": "eliaportero0611@gmail.com",
+    "fecha_hasta": "01/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "274968": {
+    "nombre": "Rubén Grande sacristán",
+    "codigo": "39UYUK",
+    "email": "sergigran86@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "275664": {
+    "nombre": "Ainhoa Cañadillas Momtoro",
+    "codigo": "D6M3FI",
+    "email": "inmoca26@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "274961": {
+    "nombre": "Omar Masri",
+    "codigo": "PENCB5",
+    "email": "ohmmasri.ieu2025@student.ie.edu",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274852": {
+    "nombre": "Jhonnier Rincon",
+    "codigo": "H6HRN4",
+    "email": "jhonnivicioso@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275480": {
+    "nombre": "Cristian Guerrero",
+    "codigo": "TVTPQV",
+    "email": "guerrero_1316@icloud.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "275011": {
+    "nombre": "Lucia Torres Bastida",
+    "codigo": "ONBIYI",
+    "email": "lordmissis25@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "37,00€"
+  },
+  "275639": {
+    "nombre": "María isabella Lalomia",
+    "codigo": "TGPFBJ",
+    "email": "germanlalomia@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274823": {
+    "nombre": "Abdelkarim Mhanni",
+    "codigo": "3UTXPY",
+    "email": "mhanniabdelkarim8@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275130": {
+    "nombre": "Liam A. Calle Galicia",
+    "codigo": "MUWQYU",
+    "email": "liamkishi0702@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275600": {
+    "nombre": "Daniel Atanasov Angelov",
+    "codigo": "RYGTDO",
+    "email": "daniel.atasto@proton.me",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "275773": {
+    "nombre": "Ivaylo Svetlinov Lilov",
+    "codigo": "GDQOND",
+    "email": "ivo_segovia@hotmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "274987": {
+    "nombre": "Pepe Tovar jimenez",
+    "codigo": "F046IW",
+    "email": "pepeucm@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "275373": {
+    "nombre": "Jose Aguado",
+    "codigo": "FZSC5T",
+    "email": "holajoseaguado@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "275441": {
+    "nombre": "Nicolás Matesanz Sanz",
+    "codigo": "DYSJIW",
+    "email": "",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "274631": {
+    "nombre": "Guillermo López Henríquez",
+    "codigo": "Q1T2MO",
+    "email": "guillermocgll6@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "273390": {
+    "nombre": "Silvia De La Fuente",
+    "codigo": "WDTI3F",
+    "email": "silviafugar26@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "273315": {
+    "nombre": "Oscar Reviejo Marigomez",
+    "codigo": "AFQRX6",
+    "email": "oscarreviejomarigomez@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274568": {
+    "nombre": "Rodrigo Lazaro Higuera",
+    "codigo": "ODK8ZP",
+    "email": "rodrigolazarohiguera@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "273311": {
+    "nombre": "Nicolás del la Calle Roldán",
+    "codigo": "NOPSYF",
+    "email": "sercall@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274495": {
+    "nombre": "Jaime Lázaro",
+    "codigo": "8BKUXM",
+    "email": "jaime.lazaro.higuera@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "273544": {
+    "nombre": "Elvira Pérez Navarro",
+    "codigo": "FUET9I",
+    "email": "elvi25pala@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "274507": {
+    "nombre": "Robert Ionut goaga",
+    "codigo": "AJKJUC",
+    "email": "robertiesmariamoliner@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "273372": {
+    "nombre": "Marina Pascual Manso",
+    "codigo": "FQNTAE",
+    "email": "marina.pascual.manso@hotmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "274794": {
+    "nombre": "Dania Marisol Fernández Martínez",
+    "codigo": "P2JAZC",
+    "email": "daniamfm26@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273965": {
+    "nombre": "Valeria Berrocal Moreno",
+    "codigo": "LQCYR0",
+    "email": "vberrocalmoreno@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "274804": {
+    "nombre": "Denis Danailov veselinov",
+    "codigo": "SGIROO",
+    "email": "marianavalova76@icloud.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "273698": {
+    "nombre": "Jorge Colina",
+    "codigo": "RQZE5Z",
+    "email": "eliesercolinabarrero@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "96,00€"
+  },
+  "274289": {
+    "nombre": "Nuri Gechev",
+    "codigo": "BBG0RW",
+    "email": "nurigechev@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274405": {
+    "nombre": "Manuel Berzal Matesanz",
+    "codigo": "QUDN4W",
+    "email": "manu92_sg@hotmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "48,39€"
+  },
+  "274029": {
+    "nombre": "Adrian De pablos de diego",
+    "codigo": "OB8YXW",
+    "email": "apablosdiego@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273482": {
+    "nombre": "Nadia Vasileva",
+    "codigo": "DJIGTO",
+    "email": "nadiavasilevataneva@icloud.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "273329": {
+    "nombre": "Nora Arce",
+    "codigo": "OE7NTE",
+    "email": "nora.ag@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274812": {
+    "nombre": "Elena Cristóbal De Juan",
+    "codigo": "E1SNBT",
+    "email": "ecrist1968@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273367": {
+    "nombre": "Cem Kayatekin",
+    "codigo": "9TW8DC",
+    "email": "c.s.kayatekin@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "90,00€"
+  },
+  "274232": {
+    "nombre": "David Brañas Dominguez",
+    "codigo": "EVPTOS",
+    "email": "sppuch@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "273646": {
+    "nombre": "Hamza Chegri",
+    "codigo": "HE0ZCW",
+    "email": "hamzachegri2@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "274404": {
+    "nombre": "Alberto Del Barrio Casado",
+    "codigo": "7KDKBZ",
+    "email": "albertodelb@hotmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "48,39€"
+  },
+  "273310": {
+    "nombre": "Leo Santos vela",
+    "codigo": "98VBKC",
+    "email": "leosantosvela@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "274048": {
+    "nombre": "Laura Portero",
+    "codigo": "EZVFAW",
+    "email": "lauraportero022@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "273694": {
+    "nombre": "Nael Herranz fraile",
+    "codigo": "AYAXA8",
+    "email": "juanmaherranz2997@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "273827": {
+    "nombre": "LUIS MI C.S.",
+    "codigo": "H6SEY6",
+    "email": "carpinterosanchezluismiguel@gmail.com",
+    "fecha_hasta": "31/07/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "274677": {
+    "nombre": "Zineb Kamli Younes",
+    "codigo": "7PESDM",
+    "email": "zinebkamli123@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273742": {
+    "nombre": "Javier Muñoz Burguillo",
+    "codigo": "C9QSKL",
+    "email": "javiermunozburguillo4@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274572": {
+    "nombre": "Adrián Callejo",
+    "codigo": "6A9XJX",
+    "email": "adriancallejo9@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "273915": {
+    "nombre": "Hristo Plamenov Veselinov",
+    "codigo": "NHL2JS",
+    "email": "hristoplamenov123@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "274679": {
+    "nombre": "Abdelhakim Rifi El Khadiri",
+    "codigo": "IHYLQC",
+    "email": "wwwrifihakim10@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273306": {
+    "nombre": "Mercedes García",
+    "codigo": "HQXVGU",
+    "email": "yeyesmg@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273961": {
+    "nombre": "Víctor Manuel Berrocal González",
+    "codigo": "RYSZYW",
+    "email": "victorberrocalz1000@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "70,00€"
+  },
+  "274720": {
+    "nombre": "Cristian Max Mroczek strycharz",
+    "codigo": "1QJZ0K",
+    "email": "cristianmroczek@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "274045": {
+    "nombre": "José Manuel Pedrero Casado",
+    "codigo": "4H513M",
+    "email": "jmpedrerocasado51@yahoo.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273302": {
+    "nombre": "Elvira Pérez Navarro",
+    "codigo": "FGKCP0",
+    "email": "elvira25pala@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "273382": {
+    "nombre": "Marcos Alejandro Moya Morocho",
+    "codigo": "WPE1D5",
+    "email": "moyamarcos190@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "274574": {
+    "nombre": "Samuel Sevillano",
+    "codigo": "BDFYOJ",
+    "email": "logisticbox@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "273557": {
+    "nombre": "Angela Montes San Lorenzo",
+    "codigo": "9SSLWM",
+    "email": "angelamontes83@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "272261": {
+    "nombre": "Kristina Hristoforova dimitrova",
+    "codigo": "HUOIKJ",
+    "email": "hristofordorevdimitrov@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "273145": {
+    "nombre": "Mafe Pedraza",
+    "codigo": "ZG4EMB",
+    "email": "mafepedraza09@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "272688": {
+    "nombre": "Ana isabel Garcia",
+    "codigo": "3HGS3Q",
+    "email": "apatinoart@yahoo.es",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272454": {
+    "nombre": "Anais Urrieta",
+    "codigo": "WHLVUO",
+    "email": "anaisurrieta1@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "272362": {
+    "nombre": "Gonzalo Borondo",
+    "codigo": "C0MXJV",
+    "email": "info.borondo@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "272251": {
+    "nombre": "Guzman Calle Arroyo",
+    "codigo": "BSW9ZP",
+    "email": "guzmancallearroyo@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272247": {
+    "nombre": "MARTIN HERRERO DE LAS MONJAS",
+    "codigo": "YSZDLX",
+    "email": "",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "272906": {
+    "nombre": "Miguel Ángel Laoun Martín",
+    "codigo": "4YU9IY",
+    "email": "laounmartinmiguelangel@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "65,00€"
+  },
+  "273070": {
+    "nombre": "Marcos Ipia",
+    "codigo": "XRJAQQ",
+    "email": "marcos.pazos.08@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "273125": {
+    "nombre": "Javier Salamanca del Barrio",
+    "codigo": "G6DYL9",
+    "email": "javisb10@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "272645": {
+    "nombre": "MARIA ANGELES VIEJO TOMERO",
+    "codigo": "TLUPMK",
+    "email": "tron_rr@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272239": {
+    "nombre": "Denis danailov veselinov",
+    "codigo": "F5MMEN",
+    "email": "danielveselinov82@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272372": {
+    "nombre": "Javier Cangas",
+    "codigo": "CHKP0L",
+    "email": "iamjavito23@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272822": {
+    "nombre": "Oliver Gómez González",
+    "codigo": "UKLYMZ",
+    "email": "oliver.gomgon@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "273156": {
+    "nombre": "Javier González Aparicio",
+    "codigo": "5BUTWM",
+    "email": "carolomt07@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "273147": {
+    "nombre": "Isaac Dirá",
+    "codigo": "CJJR0X",
+    "email": "isaacsira25@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272434": {
+    "nombre": "Mohamed Bouariche Kaina",
+    "codigo": "GZKVC8",
+    "email": "redahjks@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272667": {
+    "nombre": "Lucas Alexander Maroto Alvarado",
+    "codigo": "XML5F7",
+    "email": "gardelz@hotmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "272805": {
+    "nombre": "Daniel Castro Aguirre",
+    "codigo": "O79ZYM",
+    "email": "danielcastroaguirre2@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272671": {
+    "nombre": "Nicolás Vegas",
+    "codigo": "PBYAVV",
+    "email": "",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "273132": {
+    "nombre": "Beiker Giovanni Arellano cortes",
+    "codigo": "HLQQCT",
+    "email": "beikergiovanni@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272815": {
+    "nombre": "Hugo Gilarranz Nieto",
+    "codigo": "JAUBQX",
+    "email": "hugoscs94@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "273260": {
+    "nombre": "Daniel Castro Aguirre",
+    "codigo": "KZ7PZZ",
+    "email": "aguirretolima2020@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272996": {
+    "nombre": "María Ramona Sánchez García",
+    "codigo": "W36WVL",
+    "email": "mariacinemaniaca@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "272806": {
+    "nombre": "Gabriel De Andrés Rubio",
+    "codigo": "03RQQ7",
+    "email": "gabrieldeandres50@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272791": {
+    "nombre": "Juan Matogo Mibuy",
+    "codigo": "COJ7UQ",
+    "email": "juanmatogo10@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272437": {
+    "nombre": "MOISES ARAGON RIESTRA",
+    "codigo": "A7GHRU",
+    "email": "soymoisesaragon@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "272414": {
+    "nombre": "Sergio Ayuso Rodriguez",
+    "codigo": "CFWX7H",
+    "email": "sergioayusorodriguez@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272267": {
+    "nombre": "Alicia Esteban Tejada",
+    "codigo": "HQD5LT",
+    "email": "aliesalis@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272819": {
+    "nombre": "Jorge López Matesanz",
+    "codigo": "1DDLUD",
+    "email": "jorlm88@icloud.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272525": {
+    "nombre": "Sonia Bayón Machado",
+    "codigo": "9ALGD0",
+    "email": "sora77722@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "273035": {
+    "nombre": "Alberto bayón magdaleno",
+    "codigo": "IH6RKP",
+    "email": "bayon_cuellar@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272275": {
+    "nombre": "Miguel Merino",
+    "codigo": "2EBHVJ",
+    "email": "miguelmerinosanchez@hotmil.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "272375": {
+    "nombre": "Cristian Colussi Muñoz",
+    "codigo": "THG1GO",
+    "email": "colussicristian02@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272246": {
+    "nombre": "Eloy Herrero de las monjas",
+    "codigo": "SAAKIC",
+    "email": "lara.delasmonjasherranz@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "273139": {
+    "nombre": "Mihail Trifonov",
+    "codigo": "QACBRN",
+    "email": "mihailmarinovtrifonov@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "273146": {
+    "nombre": "Angel Cuzzi",
+    "codigo": "IL87HW",
+    "email": "angelcuzzi@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "273174": {
+    "nombre": "David De frutos izquierdo",
+    "codigo": "PGPGQY",
+    "email": "luzbelial666@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "70,00€"
+  },
+  "272307": {
+    "nombre": "Rosa Rojas Rodríguez",
+    "codigo": "BP8KRV",
+    "email": "rosarojasrodriguez13@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272413": {
+    "nombre": "Eduardo Tafur Huerta",
+    "codigo": "CNFZ7Q",
+    "email": "etafurhuerta@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "271893": {
+    "nombre": "Claudia Cecilia de Frutos",
+    "codigo": "QX78FR",
+    "email": "albercecilia@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271849": {
+    "nombre": "Miguel Juarez",
+    "codigo": "EMSHN0",
+    "email": "migueljuarez1989@hotmail.es",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272236": {
+    "nombre": "Saul Callejo gomez",
+    "codigo": "OJRH1K",
+    "email": "saulcallejo85@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272134": {
+    "nombre": "Javier Fernández Lopez",
+    "codigo": "YBPDYY",
+    "email": "javierc.fernandez.93@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "271843": {
+    "nombre": "Kristiyan Stiliyanov Nikolov",
+    "codigo": "JFA5GL",
+    "email": "kstiliyanovnikolov@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272237": {
+    "nombre": "Denis ivanov",
+    "codigo": "TZE4AX",
+    "email": "deniselivanov323@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271930": {
+    "nombre": "Asier García Matarranz",
+    "codigo": "ICHQM6",
+    "email": "sego1mma@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "272066": {
+    "nombre": "María José Muñoz Rodríguez",
+    "codigo": "9KRXNT",
+    "email": "mjmunozr@yahoo.es",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271866": {
+    "nombre": "Javier Gómez Postigo",
+    "codigo": "EQ9CVY",
+    "email": "jgposti@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "272235": {
+    "nombre": "Spas Vasilev Spasov",
+    "codigo": "DX8FCP",
+    "email": "pachovasilev07@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271847": {
+    "nombre": "Daniel Martínez",
+    "codigo": "CTXYS9",
+    "email": "danmartinez1998@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272035": {
+    "nombre": "Ricardo Ortiz Ferrer",
+    "codigo": "KEPFRA",
+    "email": "ricardin17@hotmail.es",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "74,00€"
+  },
+  "272077": {
+    "nombre": "Sandra Velasco Cala",
+    "codigo": "L3VNMQ",
+    "email": "sandrajulen16@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271784": {
+    "nombre": "Alex Perez gozalo",
+    "codigo": "YGLMCH",
+    "email": "perezosillobien@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271865": {
+    "nombre": "Roberto Carlos Rincón Guerrero",
+    "codigo": "YWGZSF",
+    "email": "rcrincon97@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271953": {
+    "nombre": "Rosa Rodriguez Paz",
+    "codigo": "QLS47L",
+    "email": "samurj7@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271992": {
+    "nombre": "María Jesús González Masedo",
+    "codigo": "LYLZVV",
+    "email": "maria43gm@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271952": {
+    "nombre": "Pablo Martin",
+    "codigo": "M54BCE",
+    "email": "pablo.marmen12@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "271819": {
+    "nombre": "Euro Barrios Guedez",
+    "codigo": "BJWVVB",
+    "email": "eurobarrios@hotmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "272107": {
+    "nombre": "Abraham Llorente Garcia",
+    "codigo": "8EUCX6",
+    "email": "alg.sg29@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271915": {
+    "nombre": "Sergio Calle Álvarez",
+    "codigo": "VUAYCF",
+    "email": "sergiocalalv94@outlook.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "272185": {
+    "nombre": "Mathyas Rodríguez",
+    "codigo": "DANTIF",
+    "email": "mathyasrodriguez953@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271923": {
+    "nombre": "Adrián Abella",
+    "codigo": "SMB6UK",
+    "email": "adriespeciale@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "271844": {
+    "nombre": "Rayan Kaina",
+    "codigo": "C15ELF",
+    "email": "gervontad543@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "272201": {
+    "nombre": "Paula Martinez Lopez",
+    "codigo": "10BVRI",
+    "email": "paulamlopez95@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271840": {
+    "nombre": "Cecilia De santos",
+    "codigo": "HBY3B0",
+    "email": "ceciliadesantos17@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "135,00€"
+  },
+  "271845": {
+    "nombre": "Esther Gómez Esteban",
+    "codigo": "XOLFFZ",
+    "email": "esthergomez27@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271834": {
+    "nombre": "Martina Rosino Freudenberger",
+    "codigo": "3CL9LH",
+    "email": "tamara.freudenberger@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "272203": {
+    "nombre": "Marcos Barcenilla Martín",
+    "codigo": "POYEEL",
+    "email": "marcosbarcenilla2002@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271832": {
+    "nombre": "Irene Aguilar Naranjo",
+    "codigo": "GFMHU3",
+    "email": "elena.naranjo73@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271783": {
+    "nombre": "Milagros De Miguel Velasco",
+    "codigo": "9WQWJM",
+    "email": "nekusumusu@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "272041": {
+    "nombre": "Ricardo Ortiz Hapalet",
+    "codigo": "G0J4EX",
+    "email": "ricardo.ortiz.ferrer.1981@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271788": {
+    "nombre": "Elias Antich Hazioun",
+    "codigo": "FK2AJG",
+    "email": "eliasantich099@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271863": {
+    "nombre": "Justin Encarnación",
+    "codigo": "HGDBBK",
+    "email": "dejesuselvin881@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271855": {
+    "nombre": "Jesus Garrido",
+    "codigo": "UWMQRO",
+    "email": "jesus25agui@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "20,00€"
+  },
+  "271861": {
+    "nombre": "cristina Corbi pérez",
+    "codigo": "6RHCCS",
+    "email": "cristinacorbiperez@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271858": {
+    "nombre": "VANESA Marín Velasco",
+    "codigo": "UOZF6U",
+    "email": "vanesamarinvelasco@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271851": {
+    "nombre": "Diana Martinez Fraile",
+    "codigo": "SHPJDG",
+    "email": "diana.kasak.martinez@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271804": {
+    "nombre": "Melina Perez",
+    "codigo": "0NE2HS",
+    "email": "melinaperez28@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271909": {
+    "nombre": "Rosalía Pérez Herrero",
+    "codigo": "ZCQOZU",
+    "email": "rosaliazarzu@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271670": {
+    "nombre": "Asier García Matarranz",
+    "codigo": "MOQV4I",
+    "email": "asiergarmat2011@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271558": {
+    "nombre": "Pablo García Loygorri Carles",
+    "codigo": "2WDO4J",
+    "email": "pavutman02@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271536": {
+    "nombre": "Lucia San Frutos Muñoz",
+    "codigo": "XFSOUL",
+    "email": "luciasanfrutos1@hotmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271701": {
+    "nombre": "Diego Gonzalez Sánchez",
+    "codigo": "F22AAK",
+    "email": "costalero03@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271673": {
+    "nombre": "Sufian Antich Hazioun",
+    "codigo": "J1YLB3",
+    "email": "sufianantich11@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "75,00€"
+  },
+  "271569": {
+    "nombre": "JUAN IGNACIO BENITO MARTIN",
+    "codigo": "XPYZHZ",
+    "email": "jbymh8793@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "100,00€"
+  },
+  "271541": {
+    "nombre": "Virginia García García",
+    "codigo": "YTAJZR",
+    "email": "virgi98gg@hotmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "271735": {
+    "nombre": "Francisco Pablo Fernández -caro",
+    "codigo": "TMAYFR",
+    "email": "canario.paco@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "90,00€"
+  },
+  "271686": {
+    "nombre": "Coralie Affeld",
+    "codigo": "AYCTA3",
+    "email": "coralie.affeld@gmx.de",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271549": {
+    "nombre": "Valerica Chiuda",
+    "codigo": "SUDUB7",
+    "email": "valerica_chiuda@yahoo.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271564": {
+    "nombre": "David San Martin",
+    "codigo": "QBSRB0",
+    "email": "artesanmartin@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "271535": {
+    "nombre": "Fernando Romano",
+    "codigo": "VSSTLA",
+    "email": "ferrg1980@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271757": {
+    "nombre": "Andrea Fernández Velázquez",
+    "codigo": "UKTAB9",
+    "email": "andre.fernandezzv@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271553": {
+    "nombre": "Néstor García Velasco",
+    "codigo": "ZGNAXW",
+    "email": "ngv_otero1998@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271548": {
+    "nombre": "Pedro Rivero del caz",
+    "codigo": "OFGW0Z",
+    "email": "riverocaz@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271658": {
+    "nombre": "Mohammed Azasray",
+    "codigo": "I8GVZ2",
+    "email": "deepbasted@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271554": {
+    "nombre": "Álvaro Vegas Prieto",
+    "codigo": "HOMEIH",
+    "email": "alvarovegas100@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271555": {
+    "nombre": "Bruno Cuesta serrat",
+    "codigo": "LKHJSQ",
+    "email": "b.cuestaaa@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271542": {
+    "nombre": "Lucia Villoria Hernan",
+    "codigo": "HKFKRM",
+    "email": "lushop0302@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271771": {
+    "nombre": "Sonia Vergara velazquez",
+    "codigo": "PQAJZM",
+    "email": "",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "195,00€"
+  },
+  "271550": {
+    "nombre": "Diego Postigo Benito",
+    "codigo": "NYY20P",
+    "email": "diegopobe@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271557": {
+    "nombre": "Pablo García Loygorri Carles",
+    "codigo": "QUFICL",
+    "email": "pavutman@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271777": {
+    "nombre": "Miguel angel Vergara grande",
+    "codigo": "LQV0PO",
+    "email": "miguelinvergara72@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271551": {
+    "nombre": "Jorge Enríquez González",
+    "codigo": "NLF2GT",
+    "email": "jor.enriquez02@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271639": {
+    "nombre": "Maria josefa Santos Revuelta",
+    "codigo": "BJX7G5",
+    "email": "mjsantosrevuelta@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "271687": {
+    "nombre": "Franklin Dariel",
+    "codigo": "01CK2J",
+    "email": "franklindariel21@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271559": {
+    "nombre": "Fernando Sacristán  Sanz",
+    "codigo": "BG2GLV",
+    "email": "ketalmajete@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271556": {
+    "nombre": "Gabriel Esteban Morales Padilla",
+    "codigo": "G8DNUP",
+    "email": "gabriel.esteban.mp@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271644": {
+    "nombre": "MARIA DANAILOVA VASILEVA",
+    "codigo": "LHEA5X",
+    "email": "denito2394@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "271681": {
+    "nombre": "Izan Herrera pereira",
+    "codigo": "FHYTVO",
+    "email": "izanherrerapereira@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271691": {
+    "nombre": "Pedro José Martín Muñoz",
+    "codigo": "701CVZ",
+    "email": "piedri2803@yahoo.es",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271566": {
+    "nombre": "Juan Ignacio Benito Martín",
+    "codigo": "ZIR09N",
+    "email": "juanibenito@yahoo.es",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271532": {
+    "nombre": "Mihai gabriel Costinas",
+    "codigo": "2PGZS5",
+    "email": "ganrielcostinas16@icloud.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271530": {
+    "nombre": "Nela Gutiérrez",
+    "codigo": "EA5UKP",
+    "email": "nela_8_4@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271671": {
+    "nombre": "Diego Sanz Martín",
+    "codigo": "3S6NJV",
+    "email": "disanzmar@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "271734": {
+    "nombre": "Juan De Diego Santa Elena",
+    "codigo": "HIA2EQ",
+    "email": "j.dediegoychus@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271593": {
+    "nombre": "Moad El Karbas",
+    "codigo": "QDEHB6",
+    "email": "moadelkarbas@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271677": {
+    "nombre": "Maria Rosa Pereira Oliveira Leroux",
+    "codigo": "AV1UIJ",
+    "email": "rosapereiraleroux@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271560": {
+    "nombre": "MANUEL BLANCO GONZÁLEZ",
+    "codigo": "FOADUY",
+    "email": "manuelblancogonzalez76@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271534": {
+    "nombre": "Alberto Blanco",
+    "codigo": "GSGCX6",
+    "email": "albertoblanco316@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271498": {
+    "nombre": "Fabián Cañas",
+    "codigo": "RIKHT3",
+    "email": "farfek123@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271473": {
+    "nombre": "Elsa Moreno Pérez",
+    "codigo": "5IYOJ5",
+    "email": "zdmelsaaa@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "271402": {
+    "nombre": "Jesus Manuel Monje",
+    "codigo": "HL2UBH",
+    "email": "stigma222@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "271525": {
+    "nombre": "Adrián Sáez Gutiérrez",
+    "codigo": "LOBTZH",
+    "email": "adriansaez9@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271453": {
+    "nombre": "Víctor Monjas Gutiérrez",
+    "codigo": "EGFBGI",
+    "email": "virginiagugo@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271485": {
+    "nombre": "Sindy Alvares",
+    "codigo": "H3748X",
+    "email": "yesela93@hotmail.com",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271515": {
+    "nombre": "Onintza Borja Cruz",
+    "codigo": "J2IZBU",
+    "email": "sonia_cruz@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271465": {
+    "nombre": "Alejandro Cobos Martín",
+    "codigo": "G6T1AQ",
+    "email": "alejandrocobosmartin5@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271527": {
+    "nombre": "María Jesús Gómez martinez",
+    "codigo": "G8F4TJ",
+    "email": "susi_gomar@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "271405": {
+    "nombre": "Alexia Cangas Niziolek",
+    "codigo": "D31TZB",
+    "email": "alexia02nvl@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271415": {
+    "nombre": "Nayara Posadas minguela",
+    "codigo": "Z7QL6Y",
+    "email": "tama.isra@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "271431": {
+    "nombre": "Paula Pecharromán Hoyos",
+    "codigo": "M2DOBF",
+    "email": "paulalg96dns@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "271484": {
+    "nombre": "Oscar Páez Contreras",
+    "codigo": "VPG1LK",
+    "email": "oscarpaezcontreras@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271499": {
+    "nombre": "Natalia Bastos Vila",
+    "codigo": "L20SJS",
+    "email": "natalialatina82@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271497": {
+    "nombre": "Luis Carlos Cardoso García",
+    "codigo": "6ONCTQ",
+    "email": "conchimatvie@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271471": {
+    "nombre": "Pedro Fernandes",
+    "codigo": "KTF0BU",
+    "email": "pedrocardoso1612@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271445": {
+    "nombre": "José Ignacio Peinador Rodríguez",
+    "codigo": "HLINXM",
+    "email": "jipeinador79@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "96,00€"
+  },
+  "271466": {
+    "nombre": "Paulina Seisdedos",
+    "codigo": "X6GWXB",
+    "email": "pauseisdedos@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271443": {
+    "nombre": "Ariel Martin Estebaran",
+    "codigo": "7FAW6V",
+    "email": "arielmarest123@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271493": {
+    "nombre": "Luis Carlos Cardoso García",
+    "codigo": "WIMBZN",
+    "email": "kanijomovilsamsung@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271474": {
+    "nombre": "Iara Matesanz",
+    "codigo": "QBXZOP",
+    "email": "iaramatesanz5@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "271441": {
+    "nombre": "Bianca Georgiana Iuras",
+    "codigo": "JHGPGT",
+    "email": "biancaiuras23@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271407": {
+    "nombre": "José Andrés Hernández Navarro",
+    "codigo": "YEWLN0",
+    "email": "jahernanavarro@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271437": {
+    "nombre": "Daniel De Santos Diaz",
+    "codigo": "UJKGYA",
+    "email": "csrdesantos@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271398": {
+    "nombre": "Maria Isabel Rodríguez Pascual",
+    "codigo": "TVXA2G",
+    "email": "maribelrodriguezpascual@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271475": {
+    "nombre": "Juan Lazaro",
+    "codigo": "NP3ZBA",
+    "email": "juanlago2016@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271480": {
+    "nombre": "RAQUEL Marqués  Garcia",
+    "codigo": "JR45LU",
+    "email": "rmarquesmusic@hotmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "271417": {
+    "nombre": "Abel Ortiz Navas",
+    "codigo": "W5EUZZ",
+    "email": "abelortiznavas1997@gmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "271410": {
+    "nombre": "Brenda Del Dedo",
+    "codigo": "07FUDZ",
+    "email": "brendadda2624@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271476": {
+    "nombre": "Andrea Herrero Marin",
+    "codigo": "LSVZYX",
+    "email": "andreaherreromarin10@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271482": {
+    "nombre": "Juan Carlos Portero",
+    "codigo": "QVSWAY",
+    "email": "jc.portero@yahoo.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271442": {
+    "nombre": "Amir Kariouh",
+    "codigo": "GXOKBO",
+    "email": "a98145169@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271418": {
+    "nombre": "Carlos González Cristóbal",
+    "codigo": "FDHJSS",
+    "email": "carlosgcris@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271501": {
+    "nombre": "Álvaro Gómez Casado",
+    "codigo": "7Q5ULB",
+    "email": "agcondacero@gmail.com",
+    "fecha_hasta": "01/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "150,00€"
+  },
+  "271411": {
+    "nombre": "Alejandro Rodríguez izquierdo",
+    "codigo": "ZFXMLJ",
+    "email": "mizquiher@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271436": {
+    "nombre": "Amir Kariouh",
+    "codigo": "96PKLY",
+    "email": "kebabsnaksegovia@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271502": {
+    "nombre": "Pawel Lyzwa",
+    "codigo": "OEADWV",
+    "email": "pawelillo@hotmail.com",
+    "fecha_hasta": "31/05/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "105,00€"
+  },
+  "271455": {
+    "nombre": "Annya Clelia De Oliveira Unda",
+    "codigo": "R5BMRM",
+    "email": "mary.criss6@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271486": {
+    "nombre": "Anibal García  Herrero",
+    "codigo": "BIVEBS",
+    "email": "carnicerianibal@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271477": {
+    "nombre": "Raquel Sanchez",
+    "codigo": "FTHFYJ",
+    "email": "raquelsg16@hotmail.es",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271343": {
+    "nombre": "Amelia Fernández de la Cruz",
+    "codigo": "7FSKK2",
+    "email": "melusiafdez@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "271338": {
+    "nombre": "Daniel San Frutos",
+    "codigo": "8AKUAK",
+    "email": "danielsanfrutos@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "135,00€"
+  },
+  "266694": {
+    "nombre": "Javier Gonzale",
+    "codigo": "ZEZWY4",
+    "email": "centrodeportivoapolo@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271345": {
+    "nombre": "Alba Bueno Peralta",
+    "codigo": "DSOTLN",
+    "email": "albaibueno3@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271359": {
+    "nombre": "Javier Martín de Miguel",
+    "codigo": "NBMFD4",
+    "email": "javi91_torre@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271349": {
+    "nombre": "Sandra Tarrero Marques",
+    "codigo": "017VBG",
+    "email": "tarrerosandra@gmail.com",
+    "fecha_hasta": "30/06/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271341": {
+    "nombre": "Eduardo Montesinos Cabrero",
+    "codigo": "7XJIHL",
+    "email": "edumontesinoscabrero@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271356": {
+    "nombre": "Jairo moises Muñoz Flores",
+    "codigo": "IM9X1L",
+    "email": "jaiirr29@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271284": {
+    "nombre": "Pepe loco Jjss",
+    "codigo": "OPNPC9",
+    "email": "centrodeportivoapolo@gmail.com",
+    "fecha_hasta": "30/11/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "22,17€"
+  },
+  "271282": {
+    "nombre": "Carmen Muñoz",
+    "codigo": "FYZCCD",
+    "email": "fruteriaplaza11sg@gmail.com",
+    "fecha_hasta": "31/12/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271331": {
+    "nombre": "Sergio De Diego Gilarranz",
+    "codigo": "HVF5ZP",
+    "email": "sergiosd094@gmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "0,00€"
+  },
+  "271358": {
+    "nombre": "Mateo Gila Ayuso",
+    "codigo": "CFLWJD",
+    "email": "novolico@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "271364": {
+    "nombre": "Aitor García Martín",
+    "codigo": "XVGM6N",
+    "email": "aitorgarciam.25@gmail.com",
+    "fecha_hasta": "28/02/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271348": {
+    "nombre": "Nerea Cardaba montero",
+    "codigo": "7O3M3H",
+    "email": "nerecardaba94@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271381": {
+    "nombre": "ULKE ARRANZ ESTEBAN",
+    "codigo": "UN9OB7",
+    "email": "ulkearranz@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271340": {
+    "nombre": "Sofía Otones García",
+    "codigo": "BQCANV",
+    "email": "sofioto@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271357": {
+    "nombre": "Carlos Cortina González",
+    "codigo": "MQUTBE",
+    "email": "corti87@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "35,00€"
+  },
+  "271353": {
+    "nombre": "Jose Sombria",
+    "codigo": "RSMNIP",
+    "email": "jose.sombria@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "270510": {
+    "nombre": "Eduardo Sistemas",
+    "codigo": "CG1MUA",
+    "email": "ed0.2580@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271265": {
+    "nombre": "Juan Carlos García",
+    "codigo": "4JT498",
+    "email": "juankarlossgarcia@hotmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271371": {
+    "nombre": "Samuel Subtil Subtil",
+    "codigo": "GVSI27",
+    "email": "samuelsubtil08@gmail.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271354": {
+    "nombre": "Victor Castro Escobar",
+    "codigo": "IV2LUD",
+    "email": "perdi24@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  },
+  "271344": {
+    "nombre": "Tamara Jiménez san frutos",
+    "codigo": "LCM3IR",
+    "email": "tamarajimenezsanfrutos.uva@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "25,00€"
+  },
+  "271366": {
+    "nombre": "aitor de la calle",
+    "codigo": "RFPESV",
+    "email": "aitorps52011@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "271392": {
+    "nombre": "Guillermo García Calvo",
+    "codigo": "EXMIG0",
+    "email": "guillermo358357@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271335": {
+    "nombre": "Isaac San miguel",
+    "codigo": "JS7D6M",
+    "email": "isaacsanmigueldepablos@gmail.com",
+    "fecha_hasta": "31/01/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "271271": {
+    "nombre": "Ángel Jiménez",
+    "codigo": "FDMOAF",
+    "email": "",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271295": {
+    "nombre": "Fernando Pomares",
+    "codigo": "Y2KQZA",
+    "email": "pomares.trainer@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "271360": {
+    "nombre": "Ana Baños",
+    "codigo": "4MTBY7",
+    "email": "anabanosperez@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "271300": {
+    "nombre": "Jorge Alejandro López Gaviria",
+    "codigo": "ZPHIB0",
+    "email": "alejolopez1001@icloud.com",
+    "fecha_hasta": "31/03/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "40,00€"
+  },
+  "271362": {
+    "nombre": "Ivan Villar Gutiérrez",
+    "codigo": "QBEQ1N",
+    "email": "ivanvillargutierrez2@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "60,00€"
+  },
+  "271350": {
+    "nombre": "Andrés Pedriza Callejo",
+    "codigo": "3HQDK8",
+    "email": "pedriza_mzn@hotmail.com",
+    "fecha_hasta": "31/12/2025",
+    "tarifa_tipo": "Cuota",
+    "importe": "80,00€"
+  },
+  "271372": {
+    "nombre": "Jimena Gómez Arribas",
+    "codigo": "TWXZ4G",
+    "email": "stselectronica@hotmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "34,00€"
+  },
+  "271382": {
+    "nombre": "Ángel Cubo Mayo",
+    "codigo": "KCDHHM",
+    "email": "acubom@live.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "50,00€"
+  },
+  "271374": {
+    "nombre": "Gonzalo Agudo",
+    "codigo": "DCBGF1",
+    "email": "gonzaloagudovirseda@gmail.com",
+    "fecha_hasta": "",
+    "tarifa_tipo": "",
+    "importe": ""
+  },
+  "271361": {
+    "nombre": "Sara San Frutos Herrero",
+    "codigo": "RADSI2",
+    "email": "sarisanf@gmail.com",
+    "fecha_hasta": "30/04/2026",
+    "tarifa_tipo": "Cuota",
+    "importe": "30,00€"
+  }
+}
