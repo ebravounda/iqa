@@ -1,0 +1,274 @@
+{
+  "plans": [
+    {
+      "ismygym_id": "32309",
+      "name": "CAPOERIA",
+      "description": "1 día",
+      "price": 25.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32319",
+      "name": "BONO 10 SESIONES",
+      "description": "10 sesiones",
+      "price": 60.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32299",
+      "name": "JIU JITSU",
+      "description": "2 dias",
+      "price": 60.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32817",
+      "name": "CAPOEIRA ADULTO",
+      "description": "CAPOERIA ADULTO",
+      "price": 45.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32886",
+      "name": "BOXEO & KICKBOXING",
+      "description": "BOXEO & KICKBOXING",
+      "price": 50.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32296",
+      "name": "KICK BOXING INFANTIL 3 MESES",
+      "description": "2 dias",
+      "price": 92.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32818",
+      "name": "TRIMESTRE CAPOEIRA ADULTO",
+      "description": "TRIMESTRE CAPOEIRA ADULTO",
+      "price": 135.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32887",
+      "name": "TRIMESTRE KICKBOXING & SALA FITNESS",
+      "description": "TRIMESTRE KICKBOXING & SALA FITNESS",
+      "price": 135.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32704",
+      "name": "BOXEO + SALA FITNESS",
+      "description": "",
+      "price": 50.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32451",
+      "name": "PADRE BOXEO MAS 2 HIJOS KICK",
+      "description": "",
+      "price": 96.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32703",
+      "name": "KICKBOXING + SALA",
+      "description": "",
+      "price": 50.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32585",
+      "name": "KICKBOXING INFANTIL 1 DÍA",
+      "description": "",
+      "price": 20.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32819",
+      "name": "TRIMESTRE CAPOEIRA 2 DÍAS",
+      "description": "TRIMESTRE CAPOEIRA ADULTO 2 DÍAS",
+      "price": 120.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "33033",
+      "name": "BOXEO + SALA FITNESS UNIVERSIDAD",
+      "description": "",
+      "price": 42.5,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32647",
+      "name": "TRIMESTRE CAPOEIRA INFANTIL",
+      "description": "",
+      "price": 105.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32308",
+      "name": "SALA FITNESS",
+      "description": "General",
+      "price": 30.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32298",
+      "name": "BOXEO FIGHT-CLUB INFANTIL",
+      "description": "",
+      "price": 34.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32594",
+      "name": "CAPOEIRA TRIMESTRE",
+      "description": "",
+      "price": 105.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32503",
+      "name": "KICKBOXING INFANTIL",
+      "description": "",
+      "price": 0.0,
+      "inscripcion": "34",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32295",
+      "name": "KICK BOXING ADULTO 3 MESES",
+      "description": "",
+      "price": 105.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32294",
+      "name": "KICK BOXING ADULTO",
+      "description": "",
+      "price": 40.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32467",
+      "name": "PADRE MAS HIJO +15",
+      "description": "",
+      "price": 70.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32469",
+      "name": "CAPOERIA 2 DIAS NIÑO",
+      "description": "",
+      "price": 40.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32317",
+      "name": "2 ACTIVIDADES SALA+BOXEO Y KICKBOXING",
+      "description": "2 tarifas",
+      "price": 55.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32949",
+      "name": "taekwondo y capoeira trimestre",
+      "description": "taekwondo y capoeira trimestre",
+      "price": 210.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota trimestral",
+      "forma_pago": "En local"
+    },
+    {
+      "ismygym_id": "32297",
+      "name": "BOXEO FIGHT-CLUB ADULTO",
+      "description": "",
+      "price": 40.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32480",
+      "name": "JIUJITU+SALA+ACTIVIDAD",
+      "description": "",
+      "price": 80.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Suscripción tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32450",
+      "name": "PADRE MAS HIJO/A UNA ACTIVIDAD",
+      "description": "",
+      "price": 80.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32470",
+      "name": "TAEKWONDO ADULTO",
+      "description": "",
+      "price": 40.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    },
+    {
+      "ismygym_id": "32468",
+      "name": "PADRE MAS HIJO -15 AÑOS",
+      "description": "",
+      "price": 65.0,
+      "inscripcion": "0",
+      "tipo_cuota": "Cuota mensual",
+      "forma_pago": "Tarjeta bancaria"
+    }
+  ]
+}

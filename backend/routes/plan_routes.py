@@ -105,3 +105,83 @@ async def get_expiring_memberships(days: int = 10, admin: dict = Depends(get_cur
             m["member"] = member
             expiring.append(m)
     return expiring
+
+
+@router.post("/plans/import")
+async def import_plans(data: dict, admin: dict = Depends(get_current_admin)):
+    """Import plans from scraped IsMyGym data"""
+    from auth import check_role
+    check_role(admin, ["super_admin"])
+
+    gym_id = data.get("gym_id")
+    plans_data = data.get("plans", [])
+
+    if not gym_id:
+        raise HTTPException(status_code=400, detail="gym_id requerido")
+    if not plans_data:
+        raise HTTPException(status_code=400, detail="No hay planes para importar")
+
+    gym = await db.gyms.find_one({"id": gym_id})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+
+    imported = 0
+    skipped = 0
+
+    for p in plans_data:
+        name = p.get("name", "").strip()
+        if not name:
+            continue
+
+        existing = await db.plans.find_one({"gym_id": gym_id, "name": name, "active": True})
+        if existing:
+            skipped += 1
+            continue
+
+        # Determine duration from tipo_cuota
+        tipo = p.get("tipo_cuota", "mensual").lower()
+        if "trimestral" in tipo or "trimestre" in name.lower():
+            duration_days = 90
+        elif "bimensual" in tipo:
+            duration_days = 60
+        elif "cuatrimestral" in tipo:
+            duration_days = 120
+        elif "anual" in tipo:
+            duration_days = 365
+        elif "10 sesiones" in name.lower() or "bono" in name.lower():
+            duration_days = 90
+        else:
+            duration_days = 30
+
+        price = 0.0
+        cuota_str = str(p.get("price", "0")).replace("€", "").replace(",", ".").strip()
+        try:
+            price = float(cuota_str)
+        except ValueError:
+            pass
+
+        plan_dict = {
+            "id": str(uuid.uuid4()),
+            "gym_id": gym_id,
+            "name": name,
+            "description": p.get("description", ""),
+            "price": price,
+            "duration_days": duration_days,
+            "access_type": "unlimited",
+            "active": True,
+            "imported": True,
+            "import_source": "ismygym",
+            "ismygym_id": p.get("ismygym_id"),
+            "created_at": datetime.now(timezone.utc).isoformat()
+        }
+
+        await db.plans.insert_one(plan_dict)
+        plan_dict.pop("_id", None)
+        imported += 1
+
+    return {
+        "success": True,
+        "imported": imported,
+        "skipped": skipped,
+        "message": f"Importacion completada: {imported} planes importados, {skipped} omitidos (duplicados)"
+    }

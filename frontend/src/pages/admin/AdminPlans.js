@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import { getPlans, createPlan, deletePlan, updatePlan, getGyms } from '../../lib/api';
+import { getPlans, createPlan, deletePlan, updatePlan, getGyms, importPlans } from '../../lib/api';
 import { formatCurrency } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
-import { Plus, Trash2, Calendar, Clock, Building2, ChevronDown, ChevronRight, Pencil, DollarSign } from 'lucide-react';
+import { Plus, Trash2, Calendar, Clock, Building2, ChevronDown, ChevronRight, Pencil, DollarSign, Upload, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 export default function AdminPlans() {
@@ -22,6 +22,13 @@ export default function AdminPlans() {
   const [gyms, setGyms] = useState([]);
   const [collapsedGyms, setCollapsedGyms] = useState({});
   const [editPlan, setEditPlan] = useState(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importGymId, setImportGymId] = useState('');
+  const [importing, setImporting] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const [importPreview, setImportPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   useEffect(() => {
     fetchPlans();
@@ -124,6 +131,14 @@ export default function AdminPlans() {
           <h1 className="text-2xl font-black tracking-tight">{labels.plans} de {labels.membership}</h1>
           <p style={{ color: 'var(--text-secondary)' }} className="text-sm">{plans.length} {labels.plans.toLowerCase()} en {Object.keys(plansByGym).length} negocio(s)</p>
         </div>
+        <div className="flex gap-2">
+        {isSuperAdmin && (
+          <Button variant="outline" className="border-emerald-700 text-emerald-400 hover:bg-emerald-900/30"
+            onClick={() => { setShowImportModal(true); setImportResult(null); setImportFile(null); setImportPreview(null); }}
+            data-testid="import-plans-btn">
+            <Upload size={16} className="mr-2" /> Importar Tarifas
+          </Button>
+        )}
         <Dialog open={showCreateModal} onOpenChange={(v) => { setShowCreateModal(v); if (!v) setEditPlan(null); }}>
           <DialogTrigger asChild>
             <Button className="btn-gym-primary" data-testid="create-plan-btn" onClick={() => { setEditPlan(null); setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '' }); }}>
@@ -183,6 +198,7 @@ export default function AdminPlans() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {loading ? (
@@ -259,6 +275,119 @@ export default function AdminPlans() {
           ))}
         </div>
       )}
+
+      {/* Import Plans Modal */}
+      <Dialog open={showImportModal} onOpenChange={setShowImportModal}>
+      <DialogContent style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-primary)' }} className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FileSpreadsheet size={18} /> Importar Tarifas desde JSON
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 mt-4">
+          <div>
+            <label className="text-sm mb-1 block" style={{ color: 'var(--text-secondary)' }}>Gimnasio destino</label>
+            <Select value={importGymId || "none"} onValueChange={(v) => setImportGymId(v === "none" ? "" : v)}>
+              <SelectTrigger style={{ background: 'var(--bg-tertiary)', borderColor: 'var(--border-secondary)' }} data-testid="import-plan-gym-select">
+                <SelectValue placeholder="Seleccionar gimnasio" />
+              </SelectTrigger>
+              <SelectContent style={{ background: 'var(--bg-secondary)', borderColor: 'var(--border-secondary)' }}>
+                <SelectItem value="none">Seleccionar...</SelectItem>
+                {gyms.map((g) => <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <label className="text-sm mb-2 block" style={{ color: 'var(--text-secondary)' }}>Archivo JSON de tarifas</label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={(e) => {
+                const f = e.target.files[0];
+                setImportFile(f);
+                if (f) {
+                  const reader = new FileReader();
+                  reader.onload = (ev) => {
+                    try {
+                      const data = JSON.parse(ev.target.result);
+                      setImportPreview(data.plans || []);
+                    } catch { setImportPreview(null); toast.error('JSON invalido'); }
+                  };
+                  reader.readAsText(f);
+                }
+              }}
+              className="hidden"
+              data-testid="import-plan-file"
+            />
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="border-2 border-dashed rounded-xl p-6 text-center cursor-pointer hover:border-zinc-500 transition-colors"
+              style={{ borderColor: 'var(--border-secondary)' }}
+            >
+              {importFile ? (
+                <div className="flex items-center justify-center gap-3">
+                  <FileSpreadsheet size={24} className="text-emerald-400" />
+                  <div className="text-left">
+                    <p className="font-medium">{importFile.name}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>{importPreview?.length || 0} tarifas encontradas</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <Upload size={32} className="mx-auto mb-2" style={{ color: 'var(--text-muted)' }} />
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Haz clic para seleccionar archivo</p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>Formato: .json (generado por scraping)</p>
+                </>
+              )}
+            </div>
+          </div>
+
+          {importPreview && importPreview.length > 0 && (
+            <div className="max-h-40 overflow-y-auto rounded-lg p-3" style={{ background: 'var(--bg-tertiary)' }}>
+              <p className="text-xs font-bold mb-2" style={{ color: 'var(--text-secondary)' }}>Vista previa ({importPreview.length} tarifas):</p>
+              {importPreview.map((p, i) => (
+                <div key={i} className="flex justify-between text-xs py-1 border-b" style={{ borderColor: 'var(--border-primary)' }}>
+                  <span>{p.name}</span>
+                  <span style={{ color: 'var(--gym-primary)' }}>{p.price}€ / {p.tipo_cuota || 'mensual'}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {importResult && (
+            <div className={`p-4 rounded-lg border ${importResult.success ? 'bg-emerald-900/20 border-emerald-700' : 'bg-red-900/20 border-red-700'}`}>
+              <p className="font-medium text-sm">{importResult.message}</p>
+            </div>
+          )}
+
+          <Button 
+            onClick={async () => {
+              if (!importPreview || !importGymId) { toast.error('Selecciona gym y archivo'); return; }
+              setImporting(true); setImportResult(null);
+              try {
+                const res = await importPlans({ gym_id: importGymId, plans: importPreview });
+                setImportResult(res.data);
+                toast.success(res.data.message);
+                fetchPlans();
+              } catch (error) {
+                toast.error(error.response?.data?.detail || 'Error');
+              } finally { setImporting(false); }
+            }}
+            disabled={importing || !importPreview || !importGymId}
+            className="w-full btn-gym-primary"
+            data-testid="import-plans-submit"
+          >
+            {importing ? (
+              <><Loader2 size={16} className="mr-2 animate-spin" /> Importando...</>
+            ) : (
+              <><Upload size={16} className="mr-2" /> Importar {importPreview?.length || 0} Tarifas</>
+            )}
+          </Button>
+        </div>
+      </DialogContent>
+      </Dialog>
     </div>
   );
 }

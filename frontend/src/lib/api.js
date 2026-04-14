@@ -61,6 +61,7 @@ export const getPlans = (gymId) => {
 export const getPlansPublic = (gymId) => axios.get(`${API}/plans/public/${gymId}`);
 export const createPlan = (data) => axios.post(`${API}/plans`, data);
 export const deletePlan = (id) => axios.delete(`${API}/plans/${id}`);
+export const importPlans = (data) => axios.post(`${API}/plans/import`, data);
 
 // Memberships
 export const getMemberships = (gymId, memberId) => {
