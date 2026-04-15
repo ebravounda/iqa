@@ -32,6 +32,13 @@ def _pad_to_block(data: bytes, block_size: int = 8) -> bytes:
 def _encrypt_3des(order_number: str, secret_key_b64: str) -> bytes:
     """Derive transaction key using 3DES(order_number, merchant_key)"""
     key_bytes = base64.b64decode(secret_key_b64)
+    # Redsys keys may be 8, 16, or 24 bytes - pad to 24 for 3DES
+    if len(key_bytes) == 8:
+        key_bytes = key_bytes * 3
+    elif len(key_bytes) == 12:
+        key_bytes = key_bytes + key_bytes[:12]
+    elif len(key_bytes) == 16:
+        key_bytes = key_bytes + key_bytes[:8]
     order_bytes = _pad_to_block(order_number.encode('utf-8'))
     cipher = DES3.new(key_bytes, DES3.MODE_CBC, iv=b'\x00' * 8)
     return cipher.encrypt(order_bytes)
