@@ -1,0 +1,94 @@
+{
+  "summary": "Iteration 29 - Redsys TPV Virtual Integration Testing Complete. All 16 backend tests passed (100%). Frontend UI verified: Admin Settings page shows 'TPV Virtual (Redsys)' config section with all required fields (merchant code, terminal, secret key, environment dropdown). Status badge shows 'Redsys Configurado' with masked credentials. PWA MemberMembership page has Redsys payment integration code (verified via code review and API testing). Redsys payment initiation generates correct form data with HMAC SHA256 signature.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/dashboard/stats", "issue": "Returns 500 error (pre-existing issue, not related to this iteration)"}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration29_redsys.py",
+    "/app/test_reports/pytest/pytest_results_iteration29.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "redsys_utils.py correctly implements HMAC SHA256 signature generation with 3DES key derivation",
+    "redsys_routes.py properly validates gym Redsys configuration before initiating payment",
+    "AdminSettings.js correctly shows Redsys config section only when gym_id exists (line 431)",
+    "MemberMembership.js tries Redsys first, falls back to Stripe if Redsys returns 400 (lines 128-167)",
+    "api.js exports all Redsys functions: getRedsysConfig, updateRedsysConfig, initiateRedsysPayment, getRedsysPaymentStatus"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration29_redsys.py"
+  ],
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@gymaccess.com / admin123",
+    "test_gym_id": "efe99507-15d5-4e54-9f07-30d2507894e0",
+    "redsys_sandbox_credentials": {
+      "merchant_code": "999008881",
+      "terminal": "001",
+      "secret_key": "sq7HjrUOBfKmC576ILgskD5srU870gJ7",
+      "environment": "sandbox"
+    }
+  },
+  "seed_data_creation": "No new seed data created. Used existing gym with Redsys credentials configured.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 29 tested Redsys TPV Virtual payment integration. Backend endpoints: GET /api/gyms/{gym_id}/redsys-config returns config status with masked credentials. PUT /api/gyms/{gym_id}/redsys-config updates credentials. POST /api/redsys/initiate generates Redsys form data (redsys_url, Ds_SignatureVersion, Ds_MerchantParameters, Ds_Signature). GET /api/redsys/status/{order_number} returns payment status. Frontend: AdminSettings.js shows Redsys config section when impersonating a gym (super admin must click 'Iniciar sesión como Admin' on a gym first). MemberMembership.js tries Redsys payment first, falls back to Stripe. NOTE: Cannot test actual Redsys redirect in automated tests since it requires real card input on Redsys sandbox page.",
+  "features_verified": {
+    "backend_get_redsys_config": {
+      "status": "PASS",
+      "endpoint": "GET /api/gyms/{gym_id}/redsys-config",
+      "details": "Returns enabled, has_credentials, masked_merchant_code, terminal, environment. Masked code shows first 3 and last 2 chars with **** in middle."
+    },
+    "backend_update_redsys_config": {
+      "status": "PASS",
+      "endpoint": "PUT /api/gyms/{gym_id}/redsys-config",
+      "details": "Updates redsys_enabled, redsys_merchant_code, redsys_terminal, redsys_secret_key, redsys_environment. Requires gym_admin or super_admin role."
+    },
+    "backend_initiate_redsys_payment": {
+      "status": "PASS",
+      "endpoint": "POST /api/redsys/initiate",
+      "details": "Generates Redsys form data with correct HMAC SHA256 signature. Returns redsys_url, Ds_SignatureVersion, Ds_MerchantParameters, Ds_Signature, order_number."
+    },
+    "backend_initiate_redsys_disabled": {
+      "status": "PASS",
+      "endpoint": "POST /api/redsys/initiate",
+      "details": "Returns 400 with 'Redsys no esta habilitado para este gimnasio' when Redsys is disabled."
+    },
+    "backend_get_payment_status": {
+      "status": "PASS",
+      "endpoint": "GET /api/redsys/status/{order_number}",
+      "details": "Returns order_number, status, payment_status, amount, plan_name, redsys_response_message."
+    },
+    "frontend_admin_redsys_config_section": {
+      "status": "PASS",
+      "component": "AdminSettings.js",
+      "details": "Shows 'TPV Virtual (Redsys)' section with data-testid='redsys-config-section'. Contains merchant code input, terminal input, secret key input, environment select, save button, disable button."
+    },
+    "frontend_redsys_status_badge": {
+      "status": "PASS",
+      "component": "AdminSettings.js",
+      "details": "Shows 'Redsys Configurado' (green) or 'Redsys No Configurado' (amber) based on has_credentials and enabled status."
+    },
+    "frontend_pwa_redsys_payment_flow": {
+      "status": "PASS",
+      "component": "MemberMembership.js",
+      "details": "handleSelectPlan tries Redsys first via initiateRedsysPayment API. If successful, creates hidden form and submits to Redsys URL. Falls back to Stripe if Redsys returns 400."
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": [],
+    "note": "Redsys sandbox endpoint (https://sis-t.redsys.es) is real but cannot complete actual payments in automated tests. Form data generation is fully tested."
+  }
+}

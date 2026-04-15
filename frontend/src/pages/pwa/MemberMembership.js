@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { getPlansPublic, createCheckout, getPaymentStatus } from '../../lib/api';
+import { getPlansPublic, createCheckout, getPaymentStatus, initiateRedsysPayment, getRedsysPaymentStatus } from '../../lib/api';
 import { formatCurrency, formatDate, getDaysRemaining, getMembershipStatus } from '../../lib/utils';
 import { Button } from '../../components/ui/button';
 import { motion } from 'framer-motion';
@@ -22,10 +22,17 @@ export default function MemberMembership() {
   useEffect(() => {
     fetchPlans();
     
-    // Check for payment success
+    // Check for Stripe payment success
     const sessionId = searchParams.get('session_id');
     if (sessionId) {
       checkPaymentStatus(sessionId);
+    }
+
+    // Check for Redsys payment result
+    const redsysResult = searchParams.get('redsys_result');
+    const redsysOrder = searchParams.get('order');
+    if (redsysResult && redsysOrder) {
+      checkRedsysResult(redsysResult, redsysOrder);
     }
   }, [searchParams]);
 
@@ -83,9 +90,75 @@ export default function MemberMembership() {
     poll();
   };
 
+  const checkRedsysResult = async (result, orderNumber) => {
+    setProcessingPayment(true);
+    if (result === 'ok') {
+      // Poll for confirmation from backend notification
+      let attempts = 0;
+      const poll = async () => {
+        try {
+          const res = await getRedsysPaymentStatus(orderNumber);
+          if (res.data.payment_status === 'paid') {
+            toast.success('Pago exitoso! Tu membresia ha sido activada');
+            await refreshMemberData();
+            navigate('/app/membership', { replace: true });
+            setProcessingPayment(false);
+            return;
+          }
+          attempts++;
+          if (attempts < 10) {
+            setTimeout(poll, 2000);
+          } else {
+            toast.success('Pago procesado. Tu membresia se activara en unos minutos.');
+            setProcessingPayment(false);
+            navigate('/app/membership', { replace: true });
+          }
+        } catch {
+          setProcessingPayment(false);
+        }
+      };
+      poll();
+    } else {
+      toast.error('El pago no se ha completado. Intentalo de nuevo.');
+      setProcessingPayment(false);
+      navigate('/app/membership', { replace: true });
+    }
+  };
+
   const handleSelectPlan = async (planId) => {
     try {
       setProcessingPayment(true);
+      // Try Redsys first (if gym has it configured)
+      try {
+        const redsysRes = await initiateRedsysPayment({ member_id: member?.id, plan_id: planId, gym_id: gym?.id });
+        if (redsysRes.data?.redsys_url) {
+          // Create form and submit to Redsys
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = redsysRes.data.redsys_url;
+          const fields = {
+            'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
+            'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
+            'Ds_Signature': redsysRes.data.Ds_Signature,
+          };
+          Object.entries(fields).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+          });
+          document.body.appendChild(form);
+          form.submit();
+          return;
+        }
+      } catch (redsysErr) {
+        // Redsys not available for this gym, fall back to Stripe
+        if (redsysErr.response?.status !== 400) {
+          throw redsysErr;
+        }
+      }
+      // Fallback to Stripe
       const response = await createCheckout(planId);
       window.location.href = response.data.url;
     } catch (error) {

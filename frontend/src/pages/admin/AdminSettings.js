@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices, getMySubscription, getAvailableSaaSPlans, subscribeSaaSPlan } from '../../lib/api';
+import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices, getMySubscription, getAvailableSaaSPlans, subscribeSaaSPlan, getRedsysConfig, updateRedsysConfig } from '../../lib/api';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -57,6 +57,12 @@ export default function AdminSettings() {
   const [showMpKey, setShowMpKey] = useState(false);
   const [savingMp, setSavingMp] = useState(false);
 
+  // Redsys TPV config
+  const [redsysData, setRedsysData] = useState({ redsys_merchant_code: '', redsys_terminal: '001', redsys_secret_key: '', redsys_environment: 'sandbox' });
+  const [redsysStatus, setRedsysStatus] = useState({ enabled: false, has_credentials: false, masked_merchant_code: '', terminal: '', environment: 'sandbox' });
+  const [showRedsysKey, setShowRedsysKey] = useState(false);
+  const [savingRedsys, setSavingRedsys] = useState(false);
+
   // Currency
   const [gymCurrency, setGymCurrency] = useState('EUR');
   const [maxDevices, setMaxDevices] = useState(2);
@@ -79,6 +85,7 @@ export default function AdminSettings() {
       fetchGym();
       fetchStripeConfig();
       fetchMpConfig();
+      fetchRedsysConfig();
       fetchSubscription();
     } else {
       setLoading(false);
@@ -194,6 +201,44 @@ export default function AdminSettings() {
       await updateGym(admin.gym_id, { currency: gymCurrency });
       toast.success('Moneda actualizada');
     } catch (error) { toast.error('Error al guardar moneda'); }
+  };
+
+  const fetchRedsysConfig = async () => {
+    try {
+      const response = await getRedsysConfig(admin.gym_id);
+      setRedsysStatus(response.data);
+      setRedsysData(prev => ({ ...prev, redsys_terminal: response.data.terminal || '001', redsys_environment: response.data.environment || 'sandbox' }));
+    } catch (error) {
+      console.error('Error fetching Redsys config:', error);
+    }
+  };
+
+  const handleSaveRedsys = async () => {
+    if (!redsysData.redsys_merchant_code && !redsysStatus.has_credentials) {
+      toast.error('Ingresa el codigo de comercio');
+      return;
+    }
+    setSavingRedsys(true);
+    try {
+      const payload = { redsys_enabled: true, redsys_environment: redsysData.redsys_environment };
+      if (redsysData.redsys_merchant_code) payload.redsys_merchant_code = redsysData.redsys_merchant_code;
+      if (redsysData.redsys_terminal) payload.redsys_terminal = redsysData.redsys_terminal;
+      if (redsysData.redsys_secret_key) payload.redsys_secret_key = redsysData.redsys_secret_key;
+      await updateRedsysConfig(admin.gym_id, payload);
+      toast.success('Configuracion de Redsys guardada');
+      setRedsysData(prev => ({ ...prev, redsys_merchant_code: '', redsys_secret_key: '' }));
+      fetchRedsysConfig();
+    } catch (error) {
+      toast.error('Error al guardar Redsys');
+    } finally { setSavingRedsys(false); }
+  };
+
+  const handleDisableRedsys = async () => {
+    try {
+      await updateRedsysConfig(admin.gym_id, { redsys_enabled: false });
+      toast.success('Redsys deshabilitado');
+      fetchRedsysConfig();
+    } catch (error) { toast.error('Error'); }
   };
 
   const handleSaveAccount = async () => {
@@ -464,6 +509,105 @@ export default function AdminSettings() {
           <Button onClick={handleSaveStripe} disabled={savingStripe} className="btn-gym-primary" data-testid="save-stripe-btn">
             <CreditCard size={18} className="mr-2" />
             {savingStripe ? 'Guardando...' : 'Guardar Configuración de Pagos'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Redsys TPV Virtual Configuration */}
+      <div className="stat-card border-2 border-zinc-700/50" data-testid="redsys-config-section">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <CreditCard size={20} className="text-red-400" />
+            <h3 className="font-bold text-lg">TPV Virtual (Redsys)</h3>
+          </div>
+          {redsysStatus.enabled && (
+            <button onClick={handleDisableRedsys} className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded-lg border border-red-500/30 hover:bg-red-500/10 transition-colors" data-testid="redsys-disable-btn">
+              Deshabilitar
+            </button>
+          )}
+        </div>
+
+        <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-zinc-800/50">
+          {redsysStatus.enabled && redsysStatus.has_credentials ? (
+            <>
+              <CheckCircle size={20} className="text-emerald-500 shrink-0" />
+              <div>
+                <p className="font-medium text-emerald-400">Redsys Configurado</p>
+                <p className="text-xs text-zinc-500">Comercio: {redsysStatus.masked_merchant_code} · Terminal: {redsysStatus.terminal} · {redsysStatus.environment === 'production' ? 'Produccion' : 'Sandbox'}</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <AlertTriangle size={20} className="text-amber-500 shrink-0" />
+              <div>
+                <p className="font-medium text-amber-400">Redsys No Configurado</p>
+                <p className="text-xs text-zinc-500">Configura las credenciales del TPV virtual de tu banco</p>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm text-zinc-400 mb-2 block">
+              Codigo de Comercio (FUC) {redsysStatus.has_credentials && '(dejar vacio para mantener)'}
+            </label>
+            <Input
+              value={redsysData.redsys_merchant_code}
+              onChange={(e) => setRedsysData({ ...redsysData, redsys_merchant_code: e.target.value })}
+              placeholder={redsysStatus.has_credentials ? 'Codigo actual guardado' : '999008881'}
+              className="input-dark"
+              data-testid="redsys-merchant-code-input"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-zinc-400 mb-2 block">Terminal</label>
+            <Input
+              value={redsysData.redsys_terminal}
+              onChange={(e) => setRedsysData({ ...redsysData, redsys_terminal: e.target.value })}
+              placeholder="001"
+              className="input-dark w-[120px]"
+              data-testid="redsys-terminal-input"
+            />
+          </div>
+
+          <div>
+            <label className="text-sm text-zinc-400 mb-2 block">
+              Clave Secreta (SHA-256) {redsysStatus.has_credentials && '(dejar vacio para mantener)'}
+            </label>
+            <div className="relative">
+              <Input
+                type={showRedsysKey ? 'text' : 'password'}
+                value={redsysData.redsys_secret_key}
+                onChange={(e) => setRedsysData({ ...redsysData, redsys_secret_key: e.target.value })}
+                placeholder={redsysStatus.has_credentials ? 'Clave actual guardada' : 'Clave proporcionada por tu banco'}
+                className="input-dark pr-10"
+                data-testid="redsys-secret-key-input"
+              />
+              <button type="button" onClick={() => setShowRedsysKey(!showRedsysKey)} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300">
+                {showRedsysKey ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500 mt-1">La clave HMAC SHA-256 que te proporciona tu entidad bancaria</p>
+          </div>
+
+          <div>
+            <label className="text-sm text-zinc-400 mb-2 block">Entorno</label>
+            <Select value={redsysData.redsys_environment} onValueChange={(v) => setRedsysData({ ...redsysData, redsys_environment: v })}>
+              <SelectTrigger className="w-[220px] bg-zinc-800 border-zinc-700" data-testid="redsys-environment-select">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-700">
+                <SelectItem value="sandbox">Sandbox (Pruebas)</SelectItem>
+                <SelectItem value="production">Produccion (Real)</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button onClick={handleSaveRedsys} disabled={savingRedsys} className="btn-gym-primary" data-testid="save-redsys-btn">
+            <CreditCard size={18} className="mr-2" />
+            {savingRedsys ? 'Guardando...' : 'Activar y Guardar Redsys'}
           </Button>
         </div>
       </div>

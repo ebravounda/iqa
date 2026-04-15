@@ -54,6 +54,10 @@ export const importMembers = (formData) => axios.post(`${API}/members/import`, f
 export const assignMembershipsBulk = (data) => axios.post(`${API}/members/assign-memberships-bulk`, data);
 export const updateMemberMembership = (memberId, data) => axios.put(`${API}/members/${memberId}/membership`, data);
 export const getMembershipLogs = (memberId) => axios.get(`${API}/members/${memberId}/membership-logs`);
+export const getRedsysConfig = (gymId) => axios.get(`${API}/gyms/${gymId}/redsys-config`);
+export const updateRedsysConfig = (gymId, data) => axios.put(`${API}/gyms/${gymId}/redsys-config`, data);
+export const initiateRedsysPayment = (data) => axios.post(`${API}/redsys/initiate`, data);
+export const getRedsysPaymentStatus = (orderNumber) => axios.get(`${API}/redsys/status/${orderNumber}`);
 
 // Plans
 export const getPlans = (gymId) => {
