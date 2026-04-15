@@ -155,7 +155,7 @@ async def stripe_webhook(request: Request):
 
 @router.get("/gyms/{gym_id}/stripe-config")
 async def get_stripe_config(gym_id: str, admin: dict = Depends(get_current_admin)):
-    if admin["role"] != "super_admin":
+    if admin["role"] != "super_admin" and admin.get("original_role") != "super_admin":
         raise HTTPException(status_code=403, detail="Solo el super admin puede ver la configuracion de Stripe")
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
@@ -169,7 +169,7 @@ async def get_stripe_config(gym_id: str, admin: dict = Depends(get_current_admin
 
 @router.put("/gyms/{gym_id}/stripe-config")
 async def update_stripe_config(gym_id: str, body: dict, admin: dict = Depends(get_current_admin)):
-    if admin["role"] != "super_admin":
+    if admin["role"] != "super_admin" and admin.get("original_role") != "super_admin":
         raise HTTPException(status_code=403, detail="Solo el super admin puede configurar Stripe")
     update_data = {}
     if "stripe_enabled" in body and body["stripe_enabled"] is False:
