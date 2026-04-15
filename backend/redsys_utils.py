@@ -16,6 +16,23 @@ def generate_order_number() -> str:
     return f"{ts}{suffix}"
 
 
+def _ensure_valid_key(secret_key_b64: str) -> str:
+    """Ensure the secret key decodes to a valid 3DES key length (16 or 24 bytes)"""
+    import base64
+    decoded = base64.b64decode(secret_key_b64)
+    if len(decoded) in (16, 24):
+        return secret_key_b64
+    if len(decoded) == 12:
+        padded = decoded * 2  # 12 -> 24 bytes
+        return base64.b64encode(padded).decode()
+    if len(decoded) == 8:
+        padded = decoded * 3  # 8 -> 24 bytes
+        return base64.b64encode(padded).decode()
+    # Generic: repeat until >= 24, then trim
+    padded = (decoded * 3)[:24]
+    return base64.b64encode(padded).decode()
+
+
 def create_redsys_form_data(
     secret_key: str,
     merchant_code: str,

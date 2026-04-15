@@ -38,10 +38,12 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
 - [x] Gym logo displayed correctly in PWA Layout (relative URL fix + object-contain for wide logos)
 - [x] Gym logo displayed in Admin Layout sidebar and mobile header
 - [x] "Historial de cambios" section in edit expiration modal showing who/when/what changed
-- [x] Redsys TPV Virtual integration - full payment flow (initiate, callback, status)
-- [x] Per-gym Redsys configuration (merchant code, terminal, secret key, environment)
-- [x] Admin Settings: Redsys config section with enable/disable
-- [x] PWA: Redsys payment when selecting plan (with Stripe fallback)
+- [x] Redsys TPV Virtual integration - full payment flow (using official redsys library v0.3.1)
+- [x] Per-gym Redsys configuration (merchant code, terminal, secret key SHA-256, environment)
+- [x] Payment gateway selector (Ninguna/Redsys/Stripe/MercadoPago) - Super Admin only
+- [x] Stripe and Redsys config restricted to Super Admin only (gym admin cannot see)
+- [x] Fixed dashboard occupancy widget disappearing (Promise.all → Promise.allSettled + expiring memberships timezone bug)
+- [x] Redsys tested and working in production (La Fabrika - Ruralvía bank)
 
 ## Pending / Backlog
 
