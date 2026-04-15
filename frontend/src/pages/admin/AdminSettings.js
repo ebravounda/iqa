@@ -233,6 +233,8 @@ export default function AdminSettings() {
       toast.success('Configuracion de Redsys guardada');
       setRedsysData(prev => ({ ...prev, redsys_merchant_code: '', redsys_secret_key: '' }));
       fetchRedsysConfig();
+      // Auto-activate Redsys as payment gateway
+      try { await setPaymentGateway(admin.gym_id, 'redsys'); fetchGatewayInfo(); } catch {}
     } catch (error) {
       toast.error('Error al guardar Redsys');
     } finally { setSavingRedsys(false); }
@@ -335,6 +337,10 @@ export default function AdminSettings() {
       toast.success('Configuración de pagos guardada');
       setStripeData(prev => ({ ...prev, stripe_secret_key: '' }));
       fetchStripeConfig();
+      // Auto-activate Stripe as payment gateway
+      if (payload.stripe_secret_key) {
+        try { await setPaymentGateway(admin.gym_id, 'stripe'); fetchGatewayInfo(); } catch {}
+      }
     } catch (error) {
       toast.error('Error al guardar configuración de pagos');
     } finally {
