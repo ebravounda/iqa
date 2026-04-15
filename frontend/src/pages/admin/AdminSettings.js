@@ -513,7 +513,8 @@ export default function AdminSettings() {
         </div>
       </div>
 
-      {/* Redsys TPV Virtual Configuration */}
+      {/* Redsys TPV Virtual Configuration - Solo Super Admin */}
+      {isSuperAdmin && (
       <div className="stat-card border-2 border-zinc-700/50" data-testid="redsys-config-section">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -611,6 +612,7 @@ export default function AdminSettings() {
           </Button>
         </div>
       </div>
+      )}
 
       {/* Currency Configuration */}
       <div className="stat-card border-2 border-zinc-700/50">

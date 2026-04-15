@@ -47,8 +47,8 @@ async def get_redsys_config(gym_id: str, admin: dict = Depends(get_current_admin
 
 @router.put("/gyms/{gym_id}/redsys-config")
 async def update_redsys_config(gym_id: str, body: dict, admin: dict = Depends(get_current_admin)):
-    """Update Redsys configuration for a gym. Only gym_admin or super_admin."""
-    check_role(admin, ["super_admin", "gym_admin"])
+    """Update Redsys configuration for a gym. Only super_admin."""
+    check_role(admin, ["super_admin"])
 
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
