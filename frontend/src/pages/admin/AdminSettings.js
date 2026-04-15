@@ -430,7 +430,7 @@ export default function AdminSettings() {
 
       {admin?.gym_id && (<>
       {/* Stripe / Payment Gateway Configuration - Solo Super Admin */}
-      {isSuperAdmin && (
+      {admin?.role === 'super_admin' && (
       <div className="stat-card border-2 border-zinc-700/50">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
@@ -530,7 +530,7 @@ export default function AdminSettings() {
       )}
 
       {/* Redsys TPV Virtual Configuration - Solo Super Admin */}
-      {isSuperAdmin && (
+      {admin?.role === 'super_admin' && (
       <div className="stat-card border-2 border-zinc-700/50" data-testid="redsys-config-section">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-2">
