@@ -58,6 +58,11 @@ export default function AdminDevices() {
     try {
       const gymRes = await getGym(gymId);
       setGym(gymRes.data);
+      // Reload devices for this gym
+      const devicesRes = await getDevices(gymId);
+      const res = devicesRes.data;
+      setDevices(res.active || res);
+      setInactiveDevices(res.inactive || []);
     } catch (error) {
       console.error('Error fetching gym:', error);
     }
@@ -117,16 +122,30 @@ export default function AdminDevices() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Dispositivos Raspberry Pi</h1>
-          <p className="text-zinc-400 text-sm">{devices.length} dispositivos registrados</p>
+          <p className="text-zinc-400 text-sm">{devices.length} dispositivos registrados{gym ? ` - ${gym.name}` : ''}</p>
         </div>
         
-        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
-          <DialogTrigger asChild>
-            <Button className="btn-gym-primary" data-testid="add-device-btn">
-              <Plus size={20} className="mr-2" />
-              Agregar Dispositivo
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-3">
+          {isSuperAdmin && gyms.length > 0 && (
+            <Select value={newDevice.gym_id} onValueChange={handleGymChange}>
+              <SelectTrigger className="w-[220px] bg-zinc-800 border-zinc-700" data-testid="gym-selector">
+                <SelectValue placeholder="Seleccionar gimnasio" />
+              </SelectTrigger>
+              <SelectContent className="bg-zinc-900 border-zinc-700">
+                {gyms.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        
+          <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+            <DialogTrigger asChild>
+              <Button className="btn-gym-primary" data-testid="add-device-btn">
+                <Plus size={20} className="mr-2" />
+                Agregar Dispositivo
+              </Button>
+            </DialogTrigger>
           <DialogContent className="bg-zinc-900 border-zinc-800">
             <DialogHeader>
               <DialogTitle>Registrar Nuevo Dispositivo</DialogTitle>
@@ -172,7 +191,8 @@ export default function AdminDevices() {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       {/* API Token Card */}
