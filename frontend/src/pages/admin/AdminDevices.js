@@ -11,6 +11,7 @@ import { toast } from 'sonner';
 
 export default function AdminDevices() {
   const { admin, isSuperAdmin } = useAuth();
+  const isSA = isSuperAdmin || admin?.role === 'super_admin' || admin?.original_role === 'super_admin';
   const [devices, setDevices] = useState([]);
   const [inactiveDevices, setInactiveDevices] = useState([]);
   const [gym, setGym] = useState(null);
@@ -28,16 +29,25 @@ export default function AdminDevices() {
     try {
       const gymId = admin?.gym_id;
       const [devicesRes] = await Promise.all([
-        getDevices(isSuperAdmin ? null : gymId)
+        getDevices(isSA ? null : gymId)
       ]);
       const res = devicesRes.data;
       setDevices(res.active || res);
       setInactiveDevices(res.inactive || []);
       
-      if (isSuperAdmin) {
+      if (isSA) {
         const gymsRes = await getGyms();
         setGyms(gymsRes.data);
-        if (gymsRes.data.length > 0 && !newDevice.gym_id) {
+        if (gymId) {
+          // Impersonating - load that gym
+          setNewDevice(prev => ({ ...prev, gym_id: gymId }));
+          const gymRes = await getGym(gymId);
+          setGym(gymRes.data);
+          const devFiltered = await getDevices(gymId);
+          const resF = devFiltered.data;
+          setDevices(resF.active || resF);
+          setInactiveDevices(resF.inactive || []);
+        } else if (gymsRes.data.length > 0 && !newDevice.gym_id) {
           setNewDevice(prev => ({ ...prev, gym_id: gymsRes.data[0].id }));
           const gymRes = await getGym(gymsRes.data[0].id);
           setGym(gymRes.data);
@@ -126,7 +136,7 @@ export default function AdminDevices() {
         </div>
         
         <div className="flex items-center gap-3">
-          {isSuperAdmin && gyms.length > 0 && (
+          {isSA && gyms.length > 0 && (
             <Select value={newDevice.gym_id} onValueChange={handleGymChange}>
               <SelectTrigger className="w-[220px] bg-zinc-800 border-zinc-700" data-testid="gym-selector">
                 <SelectValue placeholder="Seleccionar gimnasio" />
@@ -151,7 +161,7 @@ export default function AdminDevices() {
               <DialogTitle>Registrar Nuevo Dispositivo</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 mt-4">
-              {isSuperAdmin && (
+              {isSA && (
                 <div>
                   <label className="text-sm text-zinc-400 mb-1 block">Gimnasio</label>
                   <Select value={newDevice.gym_id} onValueChange={handleGymChange}>
@@ -333,7 +343,7 @@ export default function AdminDevices() {
       )}
 
       {/* Setup Instructions - Solo Super Admin */}
-      {isSuperAdmin && (
+      {isSA && (
       <div className="stat-card">
         <h3 className="font-bold text-lg mb-4">Guia de Configuracion - Raspberry Pi 3B+</h3>
         <div className="space-y-5 text-sm text-zinc-400">
