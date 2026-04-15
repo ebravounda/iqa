@@ -345,7 +345,7 @@ export default function AdminDevices() {
       {/* Setup Instructions - Solo Super Admin */}
       {isSA && (
       <div className="stat-card">
-        <h3 className="font-bold text-lg mb-4">Guia de Configuracion - Raspberry Pi 3B+</h3>
+        <h3 className="font-bold text-lg mb-4">Guia de Configuracion - Raspberry Pi</h3>
         <div className="space-y-5 text-sm text-zinc-400">
           
           <div className="flex gap-4">
@@ -354,9 +354,9 @@ export default function AdminDevices() {
               <p className="font-medium text-white mb-2">Instalar Raspberry Pi OS en la MicroSD</p>
               <p className="mb-2">Descarga <a href="https://www.raspberrypi.com/software/" target="_blank" rel="noreferrer" className="text-emerald-400 underline">Raspberry Pi Imager</a> en tu PC.</p>
               <div className="bg-zinc-800/50 p-3 rounded-lg space-y-1 text-xs">
-                <p>Dispositivo: <span className="text-white">Raspberry Pi 3</span></p>
+                <p>Dispositivo: <span className="text-white">Raspberry Pi 3/4/5</span></p>
                 <p>Sistema: <span className="text-white">Raspberry Pi OS Lite (64-bit)</span></p>
-                <p>Click engranaje (⚙): Hostname: <span className="text-white">gymaccess</span>, SSH: <span className="text-white">activado</span>, Usuario: <span className="text-white">pi</span></p>
+                <p>Click engranaje: Hostname: <span className="text-white">gymaccess</span>, SSH: <span className="text-white">activado</span>, Usuario: <span className="text-white">pi</span>, WiFi: configurar</p>
               </div>
             </div>
           </div>
@@ -366,10 +366,10 @@ export default function AdminDevices() {
             <div className="flex-1">
               <p className="font-medium text-white mb-2">Conexiones de los reles (GPIO)</p>
               <div className="bg-zinc-800/50 p-3 rounded-lg font-mono text-xs space-y-1">
-                <p><span className="text-red-400">Pin 2  (5V)</span>     &rarr; VCC del modulo rele</p>
-                <p><span className="text-zinc-300">Pin 6  (GND)</span>    &rarr; GND del modulo rele</p>
-                <p><span className="text-emerald-400">Pin 11 (GPIO17)</span> &rarr; IN1 (Torno ENTRADA)</p>
-                <p><span className="text-blue-400">Pin 13 (GPIO27)</span> &rarr; IN2 (Torno SALIDA)</p>
+                <p><span className="text-red-400">Pin 2  (5V)</span>      &rarr; VCC del modulo rele</p>
+                <p><span className="text-zinc-300">Pin 6  (GND)</span>     &rarr; GND del modulo rele</p>
+                <p><span className="text-emerald-400">Pin 32 (GPIO12)</span>  &rarr; IN1 (Torno ENTRADA)</p>
+                <p><span className="text-blue-400">Pin 36 (GPIO16)</span>  &rarr; IN2 (Torno SALIDA)</p>
               </div>
               <p className="mt-2 text-xs">Usa terminales <span className="text-white">NO</span> (Normally Open) y <span className="text-white">COM</span> del rele hacia el torno.</p>
             </div>
@@ -378,11 +378,12 @@ export default function AdminDevices() {
           <div className="flex gap-4">
             <span className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold">3</span>
             <div className="flex-1">
-              <p className="font-medium text-white mb-2">Conectar por SSH desde tu PC</p>
-              <p className="mb-2">Inserta la MicroSD, conecta ethernet y alimentacion. Espera 2 minutos.</p>
+              <p className="font-medium text-white mb-2">Conectar por SSH</p>
+              <p className="mb-2">Inserta la MicroSD, conecta ethernet/WiFi y alimentacion. Espera 2 minutos.</p>
               <code className="block bg-zinc-800 p-3 rounded-lg text-xs text-emerald-400">
                 ssh pi@gymaccess.local
               </code>
+              <p className="mt-2 text-xs text-zinc-500">Si no resuelve, usa la IP directa: ssh pi@192.168.1.X</p>
             </div>
           </div>
 
@@ -392,10 +393,13 @@ export default function AdminDevices() {
               <p className="font-medium text-white mb-2">Instalar dependencias</p>
               <div className="bg-zinc-800 p-3 rounded-lg text-xs space-y-2 font-mono">
                 <p className="text-emerald-400">sudo apt update && sudo apt upgrade -y</p>
-                <p className="text-emerald-400">sudo apt install -y python3-pip python3-venv python3-rpi.gpio</p>
+                <p className="text-emerald-400">sudo apt install -y python3-pip python3-venv python3-lgpio swig</p>
                 <p className="text-emerald-400">python3 -m venv ~/gymaccess-env</p>
                 <p className="text-emerald-400">source ~/gymaccess-env/bin/activate</p>
-                <p className="text-emerald-400">pip install requests python-dotenv</p>
+                <p className="text-emerald-400">pip install requests python-dotenv evdev gpiozero</p>
+                <p className="text-zinc-500"># Enlazar lgpio del sistema al venv:</p>
+                <p className="text-emerald-400">ln -s /usr/lib/python3/dist-packages/lgpio* ~/gymaccess-env/lib/python3.*/site-packages/</p>
+                <p className="text-emerald-400">ln -s /usr/lib/python3/dist-packages/_lgpio* ~/gymaccess-env/lib/python3.*/site-packages/</p>
               </div>
             </div>
           </div>
@@ -403,11 +407,12 @@ export default function AdminDevices() {
           <div className="flex gap-4">
             <span className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold">5</span>
             <div className="flex-1">
-              <p className="font-medium text-white mb-2">Descargar el script de control de acceso</p>
+              <p className="font-medium text-white mb-2">Crear el script de control de acceso</p>
               <div className="bg-zinc-800 p-3 rounded-lg text-xs space-y-2 font-mono">
                 <p className="text-emerald-400">mkdir -p ~/gymaccess && cd ~/gymaccess</p>
-                <p className="text-emerald-400">curl -o access_control.py "https://raw.githubusercontent.com/ebravounda/rams/main/raspberry_access_control.py"</p>
+                <p className="text-emerald-400">nano access_control.py</p>
               </div>
+              <p className="mt-2">Pega el contenido del script de control de acceso v2.1 (solicitar a soporte).</p>
             </div>
           </div>
 
@@ -415,7 +420,7 @@ export default function AdminDevices() {
             <span className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold">6</span>
             <div className="flex-1">
               <p className="font-medium text-white mb-2">Configurar Token y Device ID</p>
-              <p className="mb-2">Copia el <span className="text-white">Token de API</span> y el <span className="text-white">Device ID</span> del dispositivo creado arriba.</p>
+              <p className="mb-2">Copia el <span className="text-white">Token de API</span> del gym y el <span className="text-white">Device ID</span> del dispositivo creado arriba.</p>
               {gym?.api_token && (
                 <div className="flex items-center gap-2 mb-2">
                   <span className="text-xs">Token API:</span>
@@ -427,14 +432,15 @@ export default function AdminDevices() {
                 </div>
               )}
               <div className="bg-zinc-800 p-3 rounded-lg text-xs font-mono">
-                <p className="text-zinc-500 mb-1"># Ejecuta en la Raspberry:</p>
-                <p className="text-emerald-400">cat &gt; ~/gymaccess/.env &lt;&lt; 'EOF'</p>
+                <p className="text-zinc-500 mb-1"># Crear archivo .env en la Raspberry:</p>
+                <p className="text-emerald-400">nano ~/gymaccess/.env</p>
+                <p className="text-zinc-500 mt-2"># Contenido:</p>
                 <p className="text-amber-400">GYMACCESS_SERVER_URL=https://c.ingresoqr.com</p>
-                <p className="text-amber-400">GYMACCESS_GYM_TOKEN=<span className="text-white">PEGA_TU_TOKEN</span></p>
+                <p className="text-amber-400">GYMACCESS_GYM_TOKEN=<span className="text-white">PEGA_TU_TOKEN_DEL_GYM</span></p>
                 <p className="text-amber-400">GYMACCESS_DEVICE_ID=<span className="text-white">PEGA_TU_DEVICE_ID</span></p>
                 <p className="text-amber-400">GYMACCESS_QR_MODE=usb</p>
-                <p className="text-emerald-400">EOF</p>
               </div>
+              <p className="mt-2 text-xs text-red-400">IMPORTANTE: Cada gym tiene su propio Token. No reutilices tokens entre gyms.</p>
             </div>
           </div>
 
@@ -443,45 +449,47 @@ export default function AdminDevices() {
             <div className="flex-1">
               <p className="font-medium text-white mb-2">Probar el sistema</p>
               <div className="bg-zinc-800 p-3 rounded-lg text-xs font-mono">
-                <p className="text-emerald-400">cd ~/gymaccess && source ~/gymaccess-env/bin/activate</p>
-                <p className="text-emerald-400">python3 access_control.py</p>
+                <p className="text-emerald-400">sudo touch /var/log/gymaccess.log && sudo chown pi:pi /var/log/gymaccess.log</p>
+                <p className="text-emerald-400">sudo ~/gymaccess-env/bin/python3 ~/gymaccess/access_control.py</p>
               </div>
-              <p className="mt-2">Escanea un QR de un socio con el lector USB. Debe mostrar "Bienvenido" y activar el rele.</p>
+              <p className="mt-2">Debe mostrar "GPIO: ACTIVO" y "HEARTBEAT OK". Escanea un QR de un socio con el lector USB.</p>
             </div>
           </div>
 
           <div className="flex gap-4">
             <span className="flex-shrink-0 w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold">8</span>
             <div className="flex-1">
-              <p className="font-medium text-white mb-2">Arranque automatico (para que funcione al encender)</p>
+              <p className="font-medium text-white mb-2">Arranque automatico (servicio systemd)</p>
               <div className="bg-zinc-800 p-3 rounded-lg text-xs font-mono space-y-2">
                 <p className="text-zinc-500"># Crear servicio:</p>
                 <p className="text-emerald-400">sudo bash -c 'cat &gt; /etc/systemd/system/gymaccess.service &lt;&lt; EOF</p>
                 <p className="text-amber-400">[Unit]</p>
-                <p className="text-amber-400">Description=IngresoQR Control</p>
+                <p className="text-amber-400">Description=IngresoQR Access Control</p>
                 <p className="text-amber-400">After=network.target</p>
                 <p className="text-amber-400">[Service]</p>
-                <p className="text-amber-400">Type=simple</p>
-                <p className="text-amber-400">User=pi</p>
-                <p className="text-amber-400">WorkingDirectory=/home/pi/gymaccess</p>
-                <p className="text-amber-400">Environment=PATH=/home/pi/gymaccess-env/bin</p>
                 <p className="text-amber-400">ExecStart=/home/pi/gymaccess-env/bin/python3 /home/pi/gymaccess/access_control.py</p>
+                <p className="text-amber-400">WorkingDirectory=/home/pi/gymaccess</p>
+                <p className="text-amber-400">User=root</p>
                 <p className="text-amber-400">Restart=always</p>
+                <p className="text-amber-400">RestartSec=5</p>
                 <p className="text-amber-400">[Install]</p>
                 <p className="text-amber-400">WantedBy=multi-user.target</p>
                 <p className="text-emerald-400">EOF'</p>
-                <p className="text-zinc-500 mt-2"># Activar:</p>
+                <p className="text-zinc-500 mt-2"># Activar e iniciar:</p>
                 <p className="text-emerald-400">sudo systemctl daemon-reload</p>
-                <p className="text-emerald-400">sudo systemctl enable gymaccess</p>
-                <p className="text-emerald-400">sudo systemctl start gymaccess</p>
+                <p className="text-emerald-400">sudo systemctl enable gymaccess.service</p>
+                <p className="text-emerald-400">sudo systemctl start gymaccess.service</p>
+                <p className="text-emerald-400">sudo systemctl status gymaccess.service</p>
               </div>
             </div>
           </div>
 
           <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
-            <p className="text-emerald-400 font-medium">Listo! La Raspberry arrancara automaticamente y controlara el torno.</p>
-            <p className="text-xs mt-1">Comandos utiles: <code className="bg-zinc-800 px-1 rounded">sudo systemctl status gymaccess</code> | <code className="bg-zinc-800 px-1 rounded">sudo journalctl -u gymaccess -f</code></p>
+            <p className="text-emerald-400 font-medium">Listo! La Raspberry arrancara automaticamente al encender y controlara el torno.</p>
+            <p className="text-xs text-zinc-400 mt-1">El dispositivo aparecera como "Online" en el panel y enviara heartbeat cada 60 segundos.</p>
+            <p className="text-xs text-zinc-500 mt-1">Comandos utiles: <code className="bg-zinc-800 px-1 rounded">sudo systemctl status gymaccess</code> | <code className="bg-zinc-800 px-1 rounded">sudo journalctl -u gymaccess -f</code></p>
           </div>
+
         </div>
       </div>
       )}
