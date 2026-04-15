@@ -35,15 +35,18 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
 - [x] membership_edit permission for gym managers
 - [x] Audit logging in membership_logs collection
 - [x] GET /api/members/{member_id}/membership-logs endpoint - fetch change history
-- [x] Gym logo displayed correctly in PWA Layout (relative URL fix)
+- [x] Gym logo displayed correctly in PWA Layout (relative URL fix + object-contain for wide logos)
 - [x] Gym logo displayed in Admin Layout sidebar and mobile header
 - [x] "Historial de cambios" section in edit expiration modal showing who/when/what changed
+- [x] Redsys TPV Virtual integration - full payment flow (initiate, callback, status)
+- [x] Per-gym Redsys configuration (merchant code, terminal, secret key, environment)
+- [x] Admin Settings: Redsys config section with enable/disable
+- [x] PWA: Redsys payment when selecting plan (with Stripe fallback)
 
 ## Pending / Backlog
 
 ### P1 - High Priority
 - Facial Recognition Integration (face_recognition Python library)
-- Redsys Payment Gateway (Spanish alternative to Stripe)
 - VeriFactu Compliance (Spanish electronic invoicing for POS)
 - Class check-in / attendance tracking (QR check-in via PWA)
 
