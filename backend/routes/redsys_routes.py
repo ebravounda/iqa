@@ -148,6 +148,8 @@ async def initiate_redsys_payment(body: dict, request: Request):
         url_ko=url_ko,
     )
 
+    logger.info(f"Redsys initiate: order={order_number} plan={plan.get('name')} price={plan.get('price')} amount_cents={amount_cents} merchant={merchant_code} terminal={terminal} env={'sandbox' if is_sandbox else 'production'}")
+
     signature = sign_request(merchant_params_b64, order_number, secret_key)
 
     # Save pending payment
