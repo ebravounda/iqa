@@ -175,7 +175,7 @@ export const AdminLayout = ({ children }) => {
           </button>
           <div className="flex items-center gap-2">
             {gymLogoUrl ? (
-              <img src={gymLogoUrl} alt={gymData?.name || 'Gym'} className="w-8 h-8 rounded-lg object-cover" data-testid="admin-mobile-logo" />
+              <img src={gymLogoUrl} alt={gymData?.name || 'Gym'} className="h-8 max-w-[120px] object-contain" data-testid="admin-mobile-logo" />
             ) : (
               <QrCode size={24} style={{ color: 'var(--gym-primary)' }} />
             )}
@@ -199,7 +199,7 @@ export const AdminLayout = ({ children }) => {
         <div className="p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {gymLogoUrl ? (
-              <img src={gymLogoUrl} alt={gymData?.name || 'Gym'} className="w-10 h-10 rounded-xl object-cover" data-testid="admin-sidebar-logo" />
+              <img src={gymLogoUrl} alt={gymData?.name || 'Gym'} className="h-10 max-w-[140px] object-contain" data-testid="admin-sidebar-logo" />
             ) : (
               <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'var(--gym-primary)' }}>
                 <QrCode size={22} className="text-black" />

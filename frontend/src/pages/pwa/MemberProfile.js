@@ -186,7 +186,7 @@ export default function MemberProfile() {
             <img 
               src={gym.logo_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${gym.logo_url}` : gym.logo_url} 
               alt={gym.name}
-              className="w-14 h-14 rounded-xl object-cover"
+              className="h-14 max-w-[140px] object-contain"
             />
           ) : (
             <div 

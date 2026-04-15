@@ -145,7 +145,7 @@ export default function KioskPage() {
         {/* Gym Header */}
         <div className="text-center mb-10">
           {gym.logo_url ? (
-            <img src={gym.logo_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${gym.logo_url}` : gym.logo_url} alt={gym.name} className="w-24 h-24 rounded-3xl mx-auto mb-4 object-cover" />
+            <img src={gym.logo_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${gym.logo_url}` : gym.logo_url} alt={gym.name} className="h-24 max-w-[200px] mx-auto mb-4 object-contain" />
           ) : (
             <div className="w-24 h-24 rounded-3xl mx-auto mb-4 flex items-center justify-center font-black text-4xl"
               style={{ backgroundColor: 'var(--gym-primary)', color: '#000' }}>

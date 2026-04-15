@@ -433,7 +433,7 @@ export default function MemberHome() {
 
             <div className="text-center mb-8">
               {gym?.logo_url ? (
-                <img src={gym.logo_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${gym.logo_url}` : gym.logo_url} alt={gym?.name} className="w-16 h-16 rounded-xl mx-auto mb-4 object-cover" />
+                <img src={gym.logo_url.startsWith('/') ? `${process.env.REACT_APP_BACKEND_URL}${gym.logo_url}` : gym.logo_url} alt={gym?.name} className="h-16 max-w-[160px] mx-auto mb-4 object-contain" />
               ) : (
                 <div 
                   className="w-16 h-16 rounded-xl mx-auto mb-4 flex items-center justify-center font-black text-2xl"
