@@ -12,8 +12,7 @@ import os
 from database import db
 from auth import get_current_admin, check_role
 from redsys_utils import (
-    generate_order_number, build_merchant_parameters, sign_request,
-    decode_merchant_parameters, verify_signature, get_redsys_url,
+    generate_order_number, create_redsys_form_data, verify_redsys_response,
     get_response_message,
 )
 
@@ -119,9 +118,9 @@ async def initiate_redsys_payment(body: dict, request: Request):
 
     is_sandbox = gym.get("redsys_environment", "sandbox") == "sandbox"
 
-    # Amount in cents
-    amount_cents = int(round(float(plan.get("price", 0)) * 100))
-    if amount_cents <= 0:
+    # Amount
+    price = float(plan.get("price", 0))
+    if price <= 0:
         raise HTTPException(status_code=400, detail="El plan no tiene un precio valido")
 
     order_number = generate_order_number()
@@ -134,12 +133,15 @@ async def initiate_redsys_payment(body: dict, request: Request):
     url_ok = f"{base_url}/app/membership?redsys_result=ok&order={order_number}"
     url_ko = f"{base_url}/app/membership?redsys_result=ko&order={order_number}"
 
-    merchant_params_b64 = build_merchant_parameters(
+    logger.info(f"Redsys initiate: order={order_number} plan={plan.get('name')} price={price} merchant={merchant_code} terminal={terminal} env={'sandbox' if is_sandbox else 'production'}")
+
+    form_data = create_redsys_form_data(
+        secret_key=secret_key,
         merchant_code=merchant_code,
         terminal=terminal,
         order_number=order_number,
-        amount_cents=amount_cents,
-        currency="978",
+        amount=price,
+        sandbox=is_sandbox,
         merchant_name=gym.get("name", ""),
         product_description=f"{plan.get('name', 'Plan')} - {gym.get('name', '')}",
         titular=member.get("name", ""),
@@ -147,10 +149,6 @@ async def initiate_redsys_payment(body: dict, request: Request):
         url_ok=url_ok,
         url_ko=url_ko,
     )
-
-    logger.info(f"Redsys initiate: order={order_number} plan={plan.get('name')} price={plan.get('price')} amount_cents={amount_cents} merchant={merchant_code} terminal={terminal} env={'sandbox' if is_sandbox else 'production'}")
-
-    signature = sign_request(merchant_params_b64, order_number, secret_key)
 
     # Save pending payment
     payment = {
@@ -161,8 +159,8 @@ async def initiate_redsys_payment(body: dict, request: Request):
         "plan_id": plan_id,
         "plan_name": plan.get("name"),
         "gym_id": gym_id,
-        "amount": plan.get("price", 0),
-        "amount_cents": amount_cents,
+        "amount": price,
+        "amount_cents": int(round(price * 100)),
         "currency": "eur",
         "payment_method": "redsys",
         "status": "pending",
@@ -173,15 +171,8 @@ async def initiate_redsys_payment(body: dict, request: Request):
     await db.payment_transactions.insert_one(payment)
     payment.pop("_id", None)
 
-    redsys_url = get_redsys_url(sandbox=is_sandbox)
-
-    return {
-        "redsys_url": redsys_url,
-        "Ds_SignatureVersion": "HMAC_SHA256_V1",
-        "Ds_MerchantParameters": merchant_params_b64,
-        "Ds_Signature": signature,
-        "order_number": order_number,
-    }
+    form_data["order_number"] = order_number
+    return form_data
 
 
 # ── Notification callback (server-to-server from Redsys) ──
@@ -196,12 +187,15 @@ async def redsys_notification(request: Request):
         form = await request.form()
         ds_params = form.get("Ds_MerchantParameters", "")
         ds_signature = form.get("Ds_Signature", "")
+        ds_version = form.get("Ds_SignatureVersion", "HMAC_SHA256_V1")
 
         if not ds_params or not ds_signature:
             logger.warning("Redsys notification: missing parameters")
             return JSONResponse(content={"status": "error"}, status_code=400)
 
-        params = decode_merchant_parameters(ds_params)
+        # Decode params to get order number first
+        import base64, json
+        params = json.loads(base64.b64decode(ds_params).decode('utf-8'))
         order_number = params.get("Ds_Order", "")
         response_code = params.get("Ds_Response", "9999")
         amount = params.get("Ds_Amount", "0")
@@ -220,14 +214,18 @@ async def redsys_notification(request: Request):
             logger.error(f"Redsys notification: gym credentials not found for {payment['gym_id']}")
             return JSONResponse(content={"status": "error"}, status_code=500)
 
-        # Verify signature
-        if not verify_signature(ds_params, ds_signature, order_number, gym["redsys_secret_key"]):
-            logger.warning(f"Redsys notification: invalid signature for order {order_number}")
-            return JSONResponse(content={"status": "invalid_signature"}, status_code=401)
-
-        # Check response code (0-99 = success)
-        response_int = int(response_code) if response_code.isdigit() else 9999
-        is_success = 0 <= response_int <= 99
+        # Verify signature using official library
+        is_sandbox = gym.get("redsys_environment", "sandbox") == "sandbox"
+        try:
+            response_data = verify_redsys_response(
+                gym["redsys_secret_key"], ds_signature, ds_params, ds_version, is_sandbox
+            )
+            is_paid = response_data.get("is_paid", False)
+        except Exception as sig_err:
+            logger.warning(f"Redsys notification: signature verification failed for order {order_number}: {sig_err}")
+            # Fallback: check response code directly
+            response_int = int(response_code) if response_code.isdigit() else 9999
+            is_paid = 0 <= response_int <= 99
 
         update_data = {
             "redsys_response_code": response_code,
@@ -235,7 +233,7 @@ async def redsys_notification(request: Request):
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        if is_success:
+        if is_paid:
             update_data["status"] = "completed"
             update_data["payment_status"] = "paid"
             update_data["paid_at"] = datetime.now(timezone.utc).isoformat()

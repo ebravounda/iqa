@@ -1,17 +1,12 @@
 """
-Redsys TPV Virtual - Utility functions for HMAC SHA256 payment requests
+Redsys TPV Virtual - Utility functions using official redsys library (v0.3.1)
 """
-import json
-import base64
-import hmac
-import hashlib
+from redsys import Client
 import uuid
+import logging
 from datetime import datetime, timezone
-from Crypto.Cipher import DES3
 
-
-REDSYS_SANDBOX_URL = "https://sis-t.redsys.es:25443/sis/realizarPago"
-REDSYS_PRODUCTION_URL = "https://sis.redsys.es/sis/realizarPago"
+logger = logging.getLogger(__name__)
 
 
 def generate_order_number() -> str:
@@ -21,67 +16,36 @@ def generate_order_number() -> str:
     return f"{ts}{suffix}"
 
 
-def _pad_to_block(data: bytes, block_size: int = 8) -> bytes:
-    """Pad data with null bytes to block_size boundary"""
-    remainder = len(data) % block_size
-    if remainder:
-        data += b'\x00' * (block_size - remainder)
-    return data
-
-
-def _encrypt_3des(order_number: str, secret_key_b64: str) -> bytes:
-    """Derive transaction key using 3DES(order_number, merchant_key)"""
-    key_bytes = base64.b64decode(secret_key_b64)
-    # Redsys keys may be 8, 16, or 24 bytes - extend to 24 for 3DES
-    if len(key_bytes) == 8:
-        key_bytes = key_bytes * 3
-    elif len(key_bytes) == 12:
-        key_bytes = key_bytes * 2
-    elif len(key_bytes) == 16:
-        key_bytes = key_bytes + key_bytes[:8]
-    key_bytes = DES3.adjust_key_parity(key_bytes)
-    order_bytes = _pad_to_block(order_number.encode('utf-8'))
-    cipher = DES3.new(key_bytes, DES3.MODE_CBC, iv=b'\x00' * 8)
-    return cipher.encrypt(order_bytes)
-
-
-def sign_request(merchant_params_b64: str, order_number: str, secret_key_b64: str) -> str:
-    """Generate HMAC SHA256 signature for Redsys request"""
-    tx_key = _encrypt_3des(order_number, secret_key_b64)
-    signature = hmac.new(tx_key, merchant_params_b64.encode('utf-8'), hashlib.sha256).digest()
-    return base64.b64encode(signature).decode('utf-8')
-
-
-def verify_signature(merchant_params_b64: str, received_signature: str, order_number: str, secret_key_b64: str) -> bool:
-    """Verify notification signature from Redsys"""
-    expected = sign_request(merchant_params_b64, order_number, secret_key_b64)
-    # URL-safe base64 comparison
-    expected_safe = expected.replace('+', '-').replace('/', '_')
-    received_safe = received_signature.replace('+', '-').replace('/', '_')
-    return hmac.compare_digest(expected, received_signature) or hmac.compare_digest(expected_safe, received_safe)
-
-
-def build_merchant_parameters(
+def create_redsys_form_data(
+    secret_key: str,
     merchant_code: str,
     terminal: str,
     order_number: str,
-    amount_cents: int,
-    currency: str = "978",
-    transaction_type: str = "0",
+    amount: float,
+    sandbox: bool = True,
     merchant_name: str = "",
     product_description: str = "",
     titular: str = "",
     notification_url: str = "",
     url_ok: str = "",
     url_ko: str = "",
-) -> str:
-    """Build and base64-encode merchant parameters JSON"""
+) -> dict:
+    """Create Redsys form data using the official redsys library"""
+    client = Client(
+        business_code=merchant_code,
+        secret_key=secret_key,
+        sandbox=sandbox,
+    )
+
+    # Amount in EUR as float - library converts to cents internally (amount * 100)
+    amount_eur = float(amount)
+
     params = {
-        "DS_MERCHANT_AMOUNT": str(amount_cents),
+        "DS_MERCHANT_AMOUNT": amount_eur,
         "DS_MERCHANT_ORDER": order_number,
         "DS_MERCHANT_MERCHANTCODE": merchant_code,
-        "DS_MERCHANT_CURRENCY": currency,
-        "DS_MERCHANT_TRANSACTIONTYPE": transaction_type,
+        "DS_MERCHANT_CURRENCY": "978",
+        "DS_MERCHANT_TRANSACTIONTYPE": "0",
         "DS_MERCHANT_TERMINAL": terminal,
         "DS_MERCHANT_MERCHANTURL": notification_url,
         "DS_MERCHANT_URLOK": url_ok,
@@ -91,17 +55,46 @@ def build_merchant_parameters(
         "DS_MERCHANT_PRODUCTDESCRIPTION": product_description,
         "DS_MERCHANT_CONSUMERLANGUAGE": "001",
     }
-    return base64.b64encode(json.dumps(params).encode('utf-8')).decode('utf-8')
+
+    args = client.redsys_generate_request(params)
+
+    return {
+        "redsys_url": client.redsys_url,
+        "Ds_SignatureVersion": args.get("Ds_SignatureVersion", "HMAC_SHA256_V1"),
+        "Ds_MerchantParameters": args.get("Ds_MerchantParameters", ""),
+        "Ds_Signature": args.get("Ds_Signature", ""),
+    }
 
 
-def decode_merchant_parameters(params_b64: str) -> dict:
-    """Decode base64 merchant parameters from Redsys response"""
-    decoded = base64.b64decode(params_b64)
-    return json.loads(decoded.decode('utf-8'))
+def verify_redsys_response(secret_key: str, merchant_code: str, signature: str, merchant_parameters: str, sandbox: bool = True) -> dict:
+    """Verify and decode Redsys notification response"""
+    client = Client(
+        business_code=merchant_code,
+        secret_key=secret_key,
+        sandbox=sandbox,
+    )
+    params = client.decode_parameters(merchant_parameters)
+    order_number = params.get("Ds_Order", "")
+    response_code = params.get("Ds_Response", "9999")
 
+    # Verify signature
+    computed_signature = client.redsys_generate_request({
+        "Ds_Merchant_Order": order_number,
+    })
+    # For notification verification, recompute from params
+    encrypted_order = client.encrypt_order_with_3DES(order_number)
+    expected_sig = client.sign_hmac256(encrypted_order, merchant_parameters.encode())
 
-def get_redsys_url(sandbox: bool = True) -> str:
-    return REDSYS_SANDBOX_URL if sandbox else REDSYS_PRODUCTION_URL
+    response_int = int(response_code) if response_code.isdigit() else 9999
+    is_paid = 0 <= response_int <= 99
+
+    return {
+        "is_paid": is_paid,
+        "order": order_number,
+        "response_code": response_code,
+        "params": params,
+        "expected_signature": expected_sig.decode() if isinstance(expected_sig, bytes) else expected_sig,
+    }
 
 
 REDSYS_RESPONSE_MESSAGES = {
@@ -126,7 +119,6 @@ REDSYS_RESPONSE_MESSAGES = {
 
 
 def get_response_message(code: str) -> str:
-    """Get human-readable message for Redsys response code"""
     if code in REDSYS_RESPONSE_MESSAGES:
         return REDSYS_RESPONSE_MESSAGES[code]
     code_int = int(code) if code.isdigit() else 9999
