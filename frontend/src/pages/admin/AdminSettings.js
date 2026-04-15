@@ -429,11 +429,26 @@ export default function AdminSettings() {
       )}
 
       {admin?.gym_id && (<>
-      {/* Stripe / Payment Gateway Configuration */}
+      {/* Stripe / Payment Gateway Configuration - Solo Super Admin */}
+      {isSuperAdmin && (
       <div className="stat-card border-2 border-zinc-700/50">
-        <div className="flex items-center gap-2 mb-6">
-          <CreditCard size={20} className="text-blue-400" />
-          <h3 className="font-bold text-lg">Pasarela de Pagos (Stripe)</h3>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-2">
+            <CreditCard size={20} className="text-blue-400" />
+            <h3 className="font-bold text-lg">Pasarela de Pagos (Stripe)</h3>
+          </div>
+          {stripeStatus.has_stripe_key && (
+            <button onClick={async () => {
+              if (!window.confirm('Desactivar Stripe para este gimnasio?')) return;
+              try {
+                await updateStripeConfig(admin.gym_id, { stripe_secret_key: '__REMOVE__', stripe_enabled: false });
+                toast.success('Stripe desactivado');
+                fetchStripeConfig();
+              } catch { toast.error('Error'); }
+            }} className="text-xs text-red-400 hover:text-red-300 px-3 py-1 rounded-lg border border-red-500/30 hover:bg-red-500/10 transition-colors" data-testid="stripe-disable-btn">
+              Desactivar
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-3 mb-6 p-3 rounded-xl bg-zinc-800/50">
@@ -512,6 +527,7 @@ export default function AdminSettings() {
           </Button>
         </div>
       </div>
+      )}
 
       {/* Redsys TPV Virtual Configuration - Solo Super Admin */}
       {isSuperAdmin && (

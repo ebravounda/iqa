@@ -155,8 +155,8 @@ async def stripe_webhook(request: Request):
 
 @router.get("/gyms/{gym_id}/stripe-config")
 async def get_stripe_config(gym_id: str, admin: dict = Depends(get_current_admin)):
-    if admin["role"] not in ["super_admin", "gym_admin"] or (admin["role"] == "gym_admin" and admin.get("gym_id") != gym_id):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo el super admin puede ver la configuracion de Stripe")
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
         raise HTTPException(status_code=404, detail="Gym not found")
@@ -169,11 +169,16 @@ async def get_stripe_config(gym_id: str, admin: dict = Depends(get_current_admin
 
 @router.put("/gyms/{gym_id}/stripe-config")
 async def update_stripe_config(gym_id: str, body: dict, admin: dict = Depends(get_current_admin)):
-    if admin["role"] not in ["super_admin", "gym_admin"] or (admin["role"] == "gym_admin" and admin.get("gym_id") != gym_id):
-        raise HTTPException(status_code=403, detail="Access denied")
+    if admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo el super admin puede configurar Stripe")
     update_data = {}
-    if "stripe_secret_key" in body and body["stripe_secret_key"]:
+    if "stripe_enabled" in body and body["stripe_enabled"] is False:
+        # Disable Stripe
+        update_data["stripe_secret_key"] = None
+        update_data["stripe_enabled"] = False
+    elif "stripe_secret_key" in body and body["stripe_secret_key"] and body["stripe_secret_key"] != "__REMOVE__":
         update_data["stripe_secret_key"] = body["stripe_secret_key"]
+        update_data["stripe_enabled"] = True
     if "stripe_currency" in body:
         update_data["stripe_currency"] = body["stripe_currency"]
     if not update_data:
