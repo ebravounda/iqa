@@ -58,6 +58,8 @@ export const getRedsysConfig = (gymId) => axios.get(`${API}/gyms/${gymId}/redsys
 export const updateRedsysConfig = (gymId, data) => axios.put(`${API}/gyms/${gymId}/redsys-config`, data);
 export const initiateRedsysPayment = (data) => axios.post(`${API}/redsys/initiate`, data);
 export const getRedsysPaymentStatus = (orderNumber) => axios.get(`${API}/redsys/status/${orderNumber}`);
+export const getPaymentGateway = (gymId) => axios.get(`${API}/gyms/${gymId}/payment-gateway`);
+export const setPaymentGateway = (gymId, gateway) => axios.put(`${API}/gyms/${gymId}/payment-gateway`, { gateway });
 
 // Plans
 export const getPlans = (gymId) => {

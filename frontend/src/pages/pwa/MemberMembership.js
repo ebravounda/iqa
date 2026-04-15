@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button';
 import { motion } from 'framer-motion';
 import { CreditCard, Calendar, Clock, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
 
 export default function MemberMembership() {
   const { member, gym, membership, plan, refreshMemberData } = useAuth();
@@ -128,20 +129,22 @@ export default function MemberMembership() {
   const handleSelectPlan = async (planId) => {
     try {
       setProcessingPayment(true);
-      // Try Redsys first (if gym has it configured)
-      try {
+      // Check which gateway is active for this gym
+      const API = process.env.REACT_APP_BACKEND_URL + '/api';
+      const gwRes = await axios.get(`${API}/gyms/${gym?.id}/has-payments`);
+      const gateway = gwRes.data?.gateway || 'none';
+
+      if (gateway === 'redsys') {
         const redsysRes = await initiateRedsysPayment({ member_id: member?.id, plan_id: planId, gym_id: gym?.id });
         if (redsysRes.data?.redsys_url) {
-          // Create form and submit to Redsys
           const form = document.createElement('form');
           form.method = 'POST';
           form.action = redsysRes.data.redsys_url;
-          const fields = {
+          Object.entries({
             'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
             'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
             'Ds_Signature': redsysRes.data.Ds_Signature,
-          };
-          Object.entries(fields).forEach(([name, value]) => {
+          }).forEach(([name, value]) => {
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = name;
@@ -152,17 +155,21 @@ export default function MemberMembership() {
           form.submit();
           return;
         }
-      } catch (redsysErr) {
-        // Redsys not available for this gym, fall back to Stripe
-        if (redsysErr.response?.status !== 400) {
-          throw redsysErr;
-        }
+      } else if (gateway === 'stripe') {
+        const response = await createCheckout(planId);
+        window.location.href = response.data.url;
+        return;
+      } else if (gateway === 'mercadopago') {
+        const response = await createCheckout(planId);
+        window.location.href = response.data.url;
+        return;
+      } else {
+        toast.error('Este gimnasio no tiene pagos en linea habilitados');
+        setProcessingPayment(false);
+        return;
       }
-      // Fallback to Stripe
-      const response = await createCheckout(planId);
-      window.location.href = response.data.url;
     } catch (error) {
-      toast.error('Error al iniciar el pago');
+      toast.error(error.response?.data?.detail || 'Error al iniciar el pago');
       setProcessingPayment(false);
     }
   };

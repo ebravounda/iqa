@@ -192,8 +192,47 @@ async def gym_has_payments(gym_id: str):
     gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
     if not gym:
         return {"has_payments": False}
-    has_key = bool(gym.get("stripe_secret_key")) or bool(os.environ.get("STRIPE_API_KEY")) or bool(gym.get("mercadopago_access_token"))
-    return {"has_payments": has_key, "currency": gym.get("currency", gym.get("stripe_currency", "eur"))}
+    gateway = gym.get("active_payment_gateway", "none")
+    has_payments = gateway != "none"
+    return {"has_payments": has_payments, "gateway": gateway, "currency": gym.get("currency", gym.get("stripe_currency", "eur"))}
+
+
+@router.get("/gyms/{gym_id}/payment-gateway")
+async def get_payment_gateway(gym_id: str, admin: dict = Depends(get_current_admin)):
+    """Get active payment gateway and status of all gateways for a gym"""
+    if admin["role"] != "super_admin" and admin.get("original_role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo el super admin puede ver esta configuracion")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    return {
+        "active_gateway": gym.get("active_payment_gateway", "none"),
+        "stripe_configured": bool(gym.get("stripe_secret_key")),
+        "redsys_configured": bool(gym.get("redsys_merchant_code") and gym.get("redsys_secret_key")),
+        "mercadopago_configured": bool(gym.get("mercadopago_access_token")),
+    }
+
+
+@router.put("/gyms/{gym_id}/payment-gateway")
+async def set_payment_gateway(gym_id: str, body: dict, admin: dict = Depends(get_current_admin)):
+    """Set active payment gateway for a gym. Only super_admin."""
+    if admin["role"] != "super_admin" and admin.get("original_role") != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo el super admin puede cambiar la pasarela activa")
+    gateway = body.get("gateway", "none")
+    if gateway not in ("none", "stripe", "redsys", "mercadopago"):
+        raise HTTPException(status_code=400, detail="Pasarela no valida")
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+    # Verify credentials exist for selected gateway
+    if gateway == "stripe" and not gym.get("stripe_secret_key"):
+        raise HTTPException(status_code=400, detail="Configura las credenciales de Stripe primero")
+    if gateway == "redsys" and not (gym.get("redsys_merchant_code") and gym.get("redsys_secret_key")):
+        raise HTTPException(status_code=400, detail="Configura las credenciales de Redsys primero")
+    if gateway == "mercadopago" and not gym.get("mercadopago_access_token"):
+        raise HTTPException(status_code=400, detail="Configura las credenciales de MercadoPago primero")
+    await db.gyms.update_one({"id": gym_id}, {"$set": {"active_payment_gateway": gateway, "updated_at": datetime.now(timezone.utc).isoformat()}})
+    return {"success": True, "active_gateway": gateway}
 
 @router.get("/payments/history")
 async def get_payment_history(gym_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):

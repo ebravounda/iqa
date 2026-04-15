@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
-import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices, getMySubscription, getAvailableSaaSPlans, subscribeSaaSPlan, getRedsysConfig, updateRedsysConfig } from '../../lib/api';
+import { getGym, updateGym, getStripeConfig, updateStripeConfig, getMercadoPagoConfig, updateMercadoPagoConfig, updateMaxDevices, getMySubscription, getAvailableSaaSPlans, subscribeSaaSPlan, getRedsysConfig, updateRedsysConfig, getPaymentGateway, setPaymentGateway } from '../../lib/api';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
@@ -63,6 +63,10 @@ export default function AdminSettings() {
   const [showRedsysKey, setShowRedsysKey] = useState(false);
   const [savingRedsys, setSavingRedsys] = useState(false);
 
+  // Active payment gateway
+  const [gatewayInfo, setGatewayInfo] = useState({ active_gateway: 'none', stripe_configured: false, redsys_configured: false, mercadopago_configured: false });
+  const [savingGateway, setSavingGateway] = useState(false);
+
   // Currency
   const [gymCurrency, setGymCurrency] = useState('EUR');
   const [maxDevices, setMaxDevices] = useState(2);
@@ -86,6 +90,7 @@ export default function AdminSettings() {
       fetchStripeConfig();
       fetchMpConfig();
       fetchRedsysConfig();
+      fetchGatewayInfo();
       fetchSubscription();
     } else {
       setLoading(false);
@@ -239,6 +244,24 @@ export default function AdminSettings() {
       toast.success('Redsys deshabilitado');
       fetchRedsysConfig();
     } catch (error) { toast.error('Error'); }
+  };
+
+  const fetchGatewayInfo = async () => {
+    try {
+      const res = await getPaymentGateway(admin.gym_id);
+      setGatewayInfo(res.data);
+    } catch (error) { console.error('Error fetching gateway:', error); }
+  };
+
+  const handleSetGateway = async (gateway) => {
+    setSavingGateway(true);
+    try {
+      await setPaymentGateway(admin.gym_id, gateway);
+      toast.success(gateway === 'none' ? 'Pasarela desactivada' : `${gateway.charAt(0).toUpperCase() + gateway.slice(1)} activada`);
+      fetchGatewayInfo();
+    } catch (error) {
+      toast.error(error.response?.data?.detail || 'Error al cambiar pasarela');
+    } finally { setSavingGateway(false); }
   };
 
   const handleSaveAccount = async () => {
@@ -429,6 +452,44 @@ export default function AdminSettings() {
       )}
 
       {admin?.gym_id && (<>
+      {/* Payment Gateway Selector - Solo Super Admin */}
+      {(admin?.role === 'super_admin' || admin?.original_role === 'super_admin') && (
+      <div className="stat-card border-2 border-zinc-700/50" data-testid="gateway-selector-section">
+        <div className="flex items-center gap-2 mb-6">
+          <CreditCard size={20} style={{ color: 'var(--gym-primary)' }} />
+          <h3 className="font-bold text-lg">Pasarela de Pago Activa</h3>
+        </div>
+        <p className="text-xs text-zinc-500 mb-4">Selecciona la pasarela que usaran los socios para pagar sus membresias. Solo puede haber una activa a la vez.</p>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { key: 'none', label: 'Ninguna', color: 'zinc', desc: 'Pagos desactivados' },
+            { key: 'redsys', label: 'Redsys', color: 'red', desc: gatewayInfo.redsys_configured ? 'Credenciales OK' : 'Sin configurar' },
+            { key: 'stripe', label: 'Stripe', color: 'blue', desc: gatewayInfo.stripe_configured ? 'Credenciales OK' : 'Sin configurar' },
+            { key: 'mercadopago', label: 'MercadoPago', color: 'cyan', desc: gatewayInfo.mercadopago_configured ? 'Credenciales OK' : 'Sin configurar' },
+          ].map(gw => (
+            <button
+              key={gw.key}
+              onClick={() => handleSetGateway(gw.key)}
+              disabled={savingGateway}
+              className={`p-4 rounded-xl border-2 text-left transition-all ${
+                gatewayInfo.active_gateway === gw.key
+                  ? `border-${gw.color}-500 bg-${gw.color}-500/10`
+                  : 'border-zinc-700 hover:border-zinc-500'
+              }`}
+              style={gatewayInfo.active_gateway === gw.key ? { borderColor: gw.key === 'none' ? '#71717a' : gw.key === 'redsys' ? '#ef4444' : gw.key === 'stripe' ? '#3b82f6' : '#06b6d4', background: gw.key === 'none' ? 'rgba(113,113,122,0.1)' : gw.key === 'redsys' ? 'rgba(239,68,68,0.1)' : gw.key === 'stripe' ? 'rgba(59,130,246,0.1)' : 'rgba(6,182,212,0.1)' } : {}}
+              data-testid={`gateway-${gw.key}-btn`}
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-sm">{gw.label}</span>
+                {gatewayInfo.active_gateway === gw.key && <CheckCircle size={16} className="text-emerald-400" />}
+              </div>
+              <p className={`text-[10px] ${gw.key !== 'none' && !gatewayInfo[`${gw.key}_configured`] ? 'text-amber-400' : 'text-zinc-500'}`}>{gw.desc}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+      )}
+
       {/* Stripe / Payment Gateway Configuration - Solo Super Admin */}
       {(admin?.role === 'super_admin' || admin?.original_role === 'super_admin') && (
       <div className="stat-card border-2 border-zinc-700/50">
