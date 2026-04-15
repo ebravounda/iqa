@@ -20,16 +20,16 @@ export default function AdminDashboard() {
 
   const fetchData = useCallback(async () => {
     try {
-      const [statsRes, accessRes, expiringRes, dailyRes] = await Promise.all([
+      const [statsRes, accessRes, expiringRes, dailyRes] = await Promise.allSettled([
         getDashboardStats(),
         getAccessLogs(null, null, null, null, 10),
         getExpiringMemberships(10),
         getDailyAccessStats(null, 7)
       ]);
-      setStats(statsRes.data);
-      setRecentAccess(accessRes.data);
-      setExpiringMemberships(expiringRes.data);
-      setChartData(dailyRes.data);
+      if (statsRes.status === 'fulfilled') setStats(statsRes.value.data);
+      if (accessRes.status === 'fulfilled') setRecentAccess(accessRes.value.data);
+      if (expiringRes.status === 'fulfilled') setExpiringMemberships(expiringRes.value.data);
+      if (dailyRes.status === 'fulfilled') setChartData(dailyRes.value.data);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {

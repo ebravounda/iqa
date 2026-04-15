@@ -99,11 +99,20 @@ async def get_expiring_memberships(days: int = 10, admin: dict = Depends(get_cur
     memberships = await db.memberships.find(query, {"_id": 0}).to_list(1000)
     expiring = []
     for m in memberships:
-        end_date = datetime.fromisoformat(m["end_date"].replace('Z', '+00:00'))
-        if now <= end_date <= future:
-            member = await db.members.find_one({"id": m["member_id"]}, {"_id": 0})
-            m["member"] = member
-            expiring.append(m)
+        try:
+            end_str = m.get("end_date", "")
+            if not end_str:
+                continue
+            if "T" in end_str or "+" in end_str:
+                end_date = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+            else:
+                end_date = datetime.strptime(end_str[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
+            if now <= end_date <= future:
+                member = await db.members.find_one({"id": m["member_id"]}, {"_id": 0})
+                m["member"] = member
+                expiring.append(m)
+        except Exception:
+            continue
     return expiring
 
 
