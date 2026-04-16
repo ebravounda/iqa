@@ -1,55 +1,46 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Users, ArrowDownLeft, ArrowUpRight, Activity } from 'lucide-react';
+import { Users, ArrowDownLeft, ArrowUpRight, Activity, ShieldCheck, ShieldX } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 export default function KioskDisplay() {
   const { gymId } = useParams();
   const [data, setData] = useState(null);
-  const [lastEntry, setLastEntry] = useState(null);
-  const [showFlash, setShowFlash] = useState(false);
-  const [flashDirection, setFlashDirection] = useState('entrada');
-
-  const fetchData = useCallback(async () => {
-    try {
-      const res = await axios.get(`${API}/access/display/${gymId}`);
-      const newData = res.data;
-      
-      // Detect new entry/exit
-      if (data && newData.recent_access.length > 0 && data.recent_access.length > 0) {
-        const newest = newData.recent_access[0];
-        const prevNewest = data.recent_access[0];
-        if (newest.timestamp !== prevNewest.timestamp) {
-          setLastEntry(newest);
-          setFlashDirection(newest.direction);
-          setShowFlash(true);
-          setTimeout(() => setShowFlash(false), 3000);
-        }
-      }
-      
-      setData(newData);
-      if (newData.primary_color) {
-        document.documentElement.style.setProperty('--gym-primary', newData.primary_color);
-      }
-    } catch (error) {
-      console.error('Display fetch error:', error);
-    }
-  }, [gymId, data]);
+  const [activeEvent, setActiveEvent] = useState(null);
+  const prevEventsRef = useRef(null);
 
   useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await axios.get(`${API}/access/display/${gymId}`);
+        const newData = res.data;
+
+        // Detect new event (approved or denied)
+        if (newData.recent_events && newData.recent_events.length > 0) {
+          const newestEvent = newData.recent_events[0];
+          const prevEvents = prevEventsRef.current;
+          if (!prevEvents || prevEvents.length === 0 || prevEvents[0].id !== newestEvent.id) {
+            setActiveEvent(newestEvent);
+            setTimeout(() => setActiveEvent(null), 4000);
+          }
+          prevEventsRef.current = newData.recent_events;
+        }
+
+        setData(newData);
+        if (newData.primary_color) {
+          document.documentElement.style.setProperty('--gym-primary', newData.primary_color);
+        }
+      } catch (error) {
+        console.error('Display fetch error:', error);
+      }
+    };
+
     fetchData();
-    const interval = setInterval(fetchData, 5000);
+    const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
   }, [gymId]);
-
-  useEffect(() => {
-    if (data) {
-      const interval = setInterval(fetchData, 5000);
-      return () => clearInterval(interval);
-    }
-  }, []);
 
   if (!data) {
     return (
@@ -69,20 +60,45 @@ export default function KioskDisplay() {
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative" data-testid="kiosk-display">
-      {/* Flash overlay on new access */}
-      {showFlash && (
-        <div className={`absolute inset-0 z-50 flex items-center justify-center transition-opacity duration-500 ${
-          flashDirection === 'entrada' ? 'bg-emerald-500/20' : 'bg-orange-500/20'
-        }`}>
-          <div className="text-center animate-pulse">
-            <div className={`w-32 h-32 rounded-full mx-auto mb-6 flex items-center justify-center text-5xl font-black ${
-              flashDirection === 'entrada' ? 'bg-emerald-500/30 text-emerald-400' : 'bg-orange-500/30 text-orange-400'
+      
+      {/* Event overlay */}
+      {activeEvent && (
+        <div 
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{
+            background: activeEvent.approved 
+              ? 'radial-gradient(ellipse at center, rgba(16,185,129,0.25) 0%, rgba(0,0,0,0.95) 70%)'
+              : 'radial-gradient(ellipse at center, rgba(239,68,68,0.25) 0%, rgba(0,0,0,0.95) 70%)'
+          }}
+        >
+          <div className="text-center">
+            <div className={`w-36 h-36 rounded-full mx-auto mb-8 flex items-center justify-center ${
+              activeEvent.approved 
+                ? 'bg-emerald-500/20 border-2 border-emerald-500/50' 
+                : 'bg-red-500/20 border-2 border-red-500/50'
             }`}>
-              {lastEntry?.initials}
+              {activeEvent.approved ? (
+                <span className="text-5xl font-black text-emerald-400">{activeEvent.initials}</span>
+              ) : (
+                <ShieldX size={64} className="text-red-400" />
+              )}
             </div>
-            <p className="text-3xl font-bold">
-              {flashDirection === 'entrada' ? 'Bienvenido/a' : 'Hasta luego'}
+            <p className={`text-4xl font-black mb-3 ${
+              activeEvent.approved ? 'text-emerald-400' : 'text-red-400'
+            }`}>
+              {activeEvent.approved ? 'Acceso Aprobado' : 'Acceso Denegado'}
             </p>
+            {activeEvent.approved && (
+              <p className="text-2xl text-zinc-300 font-medium">{activeEvent.initials}</p>
+            )}
+            {!activeEvent.approved && activeEvent.reason && (
+              <p className="text-xl text-red-300/80">{activeEvent.reason}</p>
+            )}
+            {activeEvent.approved && (
+              <p className="text-lg text-zinc-500 mt-2">
+                {activeEvent.direction === 'entrada' ? 'Bienvenido/a' : 'Hasta pronto'}
+              </p>
+            )}
           </div>
         </div>
       )}

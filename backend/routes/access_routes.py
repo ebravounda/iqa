@@ -446,8 +446,8 @@ async def get_display_data(gym_id: str):
             return "?"
         parts = name.strip().split()
         if len(parts) >= 2:
-            return (parts[0][0] + parts[-1][0]).upper()
-        return parts[0][0].upper()
+            return (parts[0][0] + ". " + parts[-1][0] + ".").upper()
+        return (parts[0][0] + ".").upper()
 
     display_logs = []
     for log in recent_logs:
@@ -458,6 +458,12 @@ async def get_display_data(gym_id: str):
             "is_guest": log.get("is_guest", False),
         })
 
+    # Recent access events (approved + denied) - last 5
+    recent_events = await db.access_events.find(
+        {"gym_id": gym_id},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(5).to_list(5)
+
     return {
         "gym_name": gym.get("name"),
         "logo_url": gym.get("logo_url"),
@@ -467,4 +473,22 @@ async def get_display_data(gym_id: str):
         "exits_today": exits,
         "max_capacity": max_capacity,
         "recent_access": display_logs,
+        "recent_events": recent_events,
     }
+
+
+@router.post("/access/event")
+async def log_access_event(body: dict):
+    """Log access event (approved or denied) for kiosk display"""
+    event = {
+        "id": str(uuid.uuid4()),
+        "gym_id": body.get("gym_id"),
+        "approved": body.get("approved", False),
+        "initials": body.get("initials", "?"),
+        "direction": body.get("direction", "entrada"),
+        "reason": body.get("reason", ""),
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.access_events.insert_one(event)
+    event.pop("_id", None)
+    return {"ok": True}
