@@ -415,3 +415,56 @@ async def get_hourly_access_stats(gym_id: Optional[str] = None, admin: dict = De
         except (IndexError, KeyError):
             pass
     return [{"hour": k, "accesos": v} for k, v in hourly.items()]
+
+
+
+@router.get("/access/display/{gym_id}")
+async def get_display_data(gym_id: str):
+    """Public endpoint for kiosk display - shows occupancy and recent access with initials only (LOPD)"""
+    gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0})
+    if not gym:
+        raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
+
+    now = datetime.now(timezone.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Occupancy
+    query = {"gym_id": gym_id, "timestamp": {"$gte": today_start.isoformat()}}
+    entries = await db.access_logs.count_documents({**query, "direction": "entrada"})
+    exits = await db.access_logs.count_documents({**query, "direction": "salida"})
+    current = max(0, entries - exits)
+    max_capacity = gym.get("max_capacity")
+
+    # Recent access logs (last 10) - only initials for LOPD
+    recent_logs = await db.access_logs.find(
+        {"gym_id": gym_id},
+        {"_id": 0}
+    ).sort("timestamp", -1).limit(10).to_list(10)
+
+    def get_initials(name):
+        if not name:
+            return "?"
+        parts = name.strip().split()
+        if len(parts) >= 2:
+            return (parts[0][0] + parts[-1][0]).upper()
+        return parts[0][0].upper()
+
+    display_logs = []
+    for log in recent_logs:
+        display_logs.append({
+            "initials": get_initials(log.get("member_name", log.get("guest_name", ""))),
+            "direction": log.get("direction", "entrada"),
+            "timestamp": log.get("timestamp"),
+            "is_guest": log.get("is_guest", False),
+        })
+
+    return {
+        "gym_name": gym.get("name"),
+        "logo_url": gym.get("logo_url"),
+        "primary_color": gym.get("primary_color", "#10b981"),
+        "current_occupancy": current,
+        "entries_today": entries,
+        "exits_today": exits,
+        "max_capacity": max_capacity,
+        "recent_access": display_logs,
+    }

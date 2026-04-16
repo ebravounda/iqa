@@ -31,6 +31,7 @@ import AdminClasses from "./pages/admin/AdminClasses";
 import AdminAttendance from "./pages/admin/AdminAttendance";
 import AdminAccounting from "./pages/admin/AdminAccounting";
 import KioskPage from "./pages/pwa/KioskPage";
+import KioskDisplay from "./pages/pwa/KioskDisplay";
 import AdminSchedules from "./pages/admin/AdminSchedules";
 import AdminStaff from "./pages/admin/AdminStaff";
 import AdminNotifications from "./pages/admin/AdminNotifications";
@@ -214,6 +215,7 @@ function AppRoutes() {
       
       {/* Kiosk Mode */}
       <Route path="/kiosk/:gymId" element={<KioskPage />} />
+      <Route path="/display/:gymId" element={<KioskDisplay />} />
       
       {/* Catch all */}
       <Route path="*" element={<Navigate to="/" replace />} />
