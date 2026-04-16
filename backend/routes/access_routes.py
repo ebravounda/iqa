@@ -134,7 +134,11 @@ async def validate_access(validation: AccessValidation):
         membership = await db.memberships.find_one({"member_id": member["id"], "status": "active"}, {"_id": 0})
         if not membership:
             return {"valid": False, "reason": "Sin membresia activa", "access_type": "rfid"}
-        end_date = datetime.fromisoformat(membership["end_date"].replace('Z', '+00:00'))
+        end_str = membership["end_date"]
+        if "T" in end_str or "+" in end_str:
+            end_date = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+        else:
+            end_date = datetime.strptime(end_str[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
         if end_date < datetime.now(timezone.utc):
             await db.memberships.update_one({"id": membership["id"]}, {"$set": {"status": "expired"}})
             return {"valid": False, "reason": "Membresia vencida", "access_type": "rfid"}
@@ -204,7 +208,11 @@ async def validate_access(validation: AccessValidation):
     membership = await db.memberships.find_one({"member_id": member["id"], "status": "active"}, {"_id": 0})
     if not membership:
         return {"valid": False, "reason": "No active membership"}
-    end_date = datetime.fromisoformat(membership["end_date"].replace('Z', '+00:00'))
+    end_str = membership["end_date"]
+    if "T" in end_str or "+" in end_str:
+        end_date = datetime.fromisoformat(end_str.replace('Z', '+00:00'))
+    else:
+        end_date = datetime.strptime(end_str[:10], "%Y-%m-%d").replace(tzinfo=timezone.utc)
     if end_date < datetime.now(timezone.utc):
         await db.memberships.update_one({"id": membership["id"]}, {"$set": {"status": "expired"}})
         return {"valid": False, "reason": "Membership expired"}
