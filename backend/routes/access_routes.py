@@ -388,8 +388,8 @@ async def get_member_access_stats(member_id: str, days: int = 30, admin: dict = 
 
 @router.put("/members/{member_id}/qr-mode")
 async def set_member_qr_mode(member_id: str, body: dict, admin: dict = Depends(get_current_admin)):
-    if admin["role"] != "super_admin":
-        raise HTTPException(status_code=403, detail="Solo el super admin puede asignar QR estatico")
+    if admin["role"] not in ("super_admin", "gym_admin") and admin.get("original_role") != "super_admin":
+        raise HTTPException(status_code=403, detail="No tienes permiso para cambiar el modo QR")
     qr_mode = body.get("qr_mode", "dynamic")
     if qr_mode not in ("dynamic", "static"):
         raise HTTPException(status_code=400, detail="qr_mode debe ser 'dynamic' o 'static'")

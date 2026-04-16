@@ -656,7 +656,7 @@ export default function AdminMembers() {
                             <Trash2 size={16} className="mr-2" /> Eliminar
                           </DropdownMenuItem>
                         )}
-                        {isSuperAdmin && (
+                        {(isSuperAdmin || admin?.role === 'gym_admin') && (
                           <>
                             <DropdownMenuSeparator className="bg-zinc-700" />
                             <DropdownMenuItem onClick={async () => {
