@@ -204,6 +204,7 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('original_admin');
     localStorage.removeItem('original_token');
     localStorage.removeItem('is_demo');
+    localStorage.removeItem('remembered_code');
     setToken(null);
     setUserType(null);
     setAdmin(null);

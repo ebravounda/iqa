@@ -118,7 +118,7 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
         user_agent = request.headers.get("user-agent", "")
         success, error_msg = await register_member_device(member["id"], member["gym_id"], device_fingerprint, user_agent)
         if not success:
-            raise HTTPException(status_code=403, detail=error_msg)
+            raise HTTPException(status_code=403, detail=f"DEVICE_LIMIT|{error_msg}")
     
     membership = await db.memberships.find_one(
         {"member_id": member["id"], "status": "active"}, {"_id": 0}

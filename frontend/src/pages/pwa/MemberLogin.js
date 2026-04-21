@@ -2,21 +2,117 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/button';
-import { Loader2, ShieldCheck, AlertOctagon, ArrowRight } from 'lucide-react';
+import { Loader2, ShieldCheck, AlertOctagon, ArrowRight, Smartphone, Trash2, Monitor, Tablet } from 'lucide-react';
 import { toast } from 'sonner';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
+
+function DeviceIcon({ name }) {
+  const n = (name || '').toLowerCase();
+  if (n.includes('iphone') || n.includes('samsung') || n.includes('android') || n.includes('huawei') || n.includes('xiaomi'))
+    return <Smartphone size={18} />;
+  if (n.includes('ipad') || n.includes('tablet'))
+    return <Tablet size={18} />;
+  return <Monitor size={18} />;
+}
 
 export default function MemberLogin() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [loading, setLoading] = useState(false);
   const [blocked, setBlocked] = useState(false);
   const [focused, setFocused] = useState(0);
+  const [rememberMe, setRememberMe] = useState(false);
+  const [autoLogging, setAutoLogging] = useState(false);
+  // Device limit state
+  const [deviceLimitHit, setDeviceLimitHit] = useState(false);
+  const [devices, setDevices] = useState([]);
+  const [maxDevices, setMaxDevices] = useState(2);
+  const [deactivating, setDeactivating] = useState(null);
+  const [savedCode, setSavedCode] = useState(''); // Store code for device deactivation
+
   const { loginMember, gym } = useAuth();
   const navigate = useNavigate();
   const inputRefs = useRef([]);
 
+  // Auto-login with remembered code
   useEffect(() => {
-    inputRefs.current[0]?.focus();
+    const saved = localStorage.getItem('remembered_code');
+    if (saved && saved.length === 6) {
+      setAutoLogging(true);
+      setRememberMe(true);
+      doLogin(saved);
+    } else {
+      inputRefs.current[0]?.focus();
+    }
   }, []);
+
+  const doLogin = async (fullCode) => {
+    setLoading(true);
+    try {
+      await loginMember(fullCode.toUpperCase());
+      // Save code if remember me is on
+      if (rememberMe || localStorage.getItem('remembered_code')) {
+        localStorage.setItem('remembered_code', fullCode.toUpperCase());
+      }
+      toast.success('Bienvenido!');
+      navigate('/app');
+    } catch (error) {
+      const detail = error.response?.data?.detail || '';
+      if (detail === 'Cuenta Bloqueada') {
+        setBlocked(true);
+      } else if (detail.startsWith('DEVICE_LIMIT|')) {
+        // Device limit exceeded - show device manager
+        const msg = detail.replace('DEVICE_LIMIT|', '');
+        toast.error(msg);
+        setSavedCode(fullCode.toUpperCase()); // Save code for deactivation
+        await fetchDevices(fullCode.toUpperCase());
+      } else {
+        toast.error(detail || 'Codigo no encontrado');
+        localStorage.removeItem('remembered_code');
+        setCode(['', '', '', '', '', '']);
+        setTimeout(() => inputRefs.current[0]?.focus(), 100);
+      }
+      setAutoLogging(false);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDevices = async (memberCode) => {
+    try {
+      const res = await axios.get(`${API}/my-devices-by-code?code=${memberCode}`);
+      setDevices(res.data.devices);
+      setMaxDevices(res.data.max_devices);
+      setDeviceLimitHit(true);
+    } catch {
+      toast.error('Error al cargar dispositivos');
+    }
+  };
+
+  const handleDeactivateDevice = async (deviceId) => {
+    const fullCode = savedCode || code.join('');
+    if (!fullCode) {
+      toast.error('Error: codigo no disponible');
+      return;
+    }
+    setDeactivating(deviceId);
+    try {
+      await axios.put(`${API}/my-devices-by-code/${deviceId}/deactivate?code=${fullCode}`);
+      setDevices(prev => prev.filter(d => d.id !== deviceId));
+      toast.success('Dispositivo desactivado');
+      // If now under limit, retry login
+      if (devices.length - 1 < maxDevices) {
+        setDeviceLimitHit(false);
+        toast.info('Intentando ingresar de nuevo...');
+        setTimeout(() => doLogin(fullCode), 500);
+      }
+    } catch {
+      toast.error('Error al desactivar dispositivo');
+    } finally {
+      setDeactivating(null);
+    }
+  };
 
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
@@ -25,24 +121,13 @@ export default function MemberLogin() {
       toast.error('Ingresa tu codigo de socio (6 caracteres)');
       return;
     }
-
-    setLoading(true);
-    try {
-      await loginMember(fullCode.toUpperCase());
-      toast.success('Bienvenido!');
-      navigate('/app');
-    } catch (error) {
-      const detail = error.response?.data?.detail || '';
-      if (detail === 'Cuenta Bloqueada') {
-        setBlocked(true);
-      } else {
-        toast.error(detail || 'Codigo no encontrado');
-        setCode(['', '', '', '', '', '']);
-        setTimeout(() => inputRefs.current[0]?.focus(), 100);
-      }
-    } finally {
-      setLoading(false);
+    // Save remember preference
+    if (rememberMe) {
+      localStorage.setItem('remembered_code', fullCode.toUpperCase());
+    } else {
+      localStorage.removeItem('remembered_code');
     }
+    await doLogin(fullCode);
   };
 
   const handleChange = (index, value) => {
@@ -56,7 +141,6 @@ export default function MemberLogin() {
       setFocused(index + 1);
     }
 
-    // Auto-submit when all 6 filled
     if (char && index === 5 && newCode.every(c => c)) {
       setTimeout(() => {
         const fullCode = newCode.join('');
@@ -100,6 +184,17 @@ export default function MemberLogin() {
   const fullCode = code.join('');
   const isComplete = fullCode.length === 6;
 
+  // Auto-login loading screen
+  if (autoLogging) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex flex-col items-center justify-center p-6" data-testid="auto-login-screen">
+        <Loader2 className="animate-spin mb-4" size={40} style={{ color: 'var(--gym-primary)' }} />
+        <p className="text-zinc-400 text-sm">Iniciando sesion...</p>
+      </div>
+    );
+  }
+
+  // Blocked screen
   if (blocked) {
     return (
       <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-6" data-testid="member-blocked-screen">
@@ -120,6 +215,70 @@ export default function MemberLogin() {
             onClick={() => { setBlocked(false); setCode(['', '', '', '', '', '']); }}
             className="text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
             data-testid="back-to-login-btn"
+          >
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Device limit screen
+  if (deviceLimitHit) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-6" data-testid="device-limit-screen">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center mx-auto mb-4">
+              <Smartphone size={32} className="text-amber-500" />
+            </div>
+            <h1 className="text-xl font-black mb-2">Limite de dispositivos</h1>
+            <p className="text-zinc-400 text-sm">
+              Ya tienes {devices.length} dispositivo{devices.length !== 1 ? 's' : ''} registrado{devices.length !== 1 ? 's' : ''} (maximo {maxDevices}).
+              Desactiva uno para poder acceder desde este.
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            {devices.map(device => (
+              <div 
+                key={device.id} 
+                className="flex items-center justify-between p-4 rounded-xl bg-zinc-900/80 border border-zinc-800"
+                data-testid={`device-item-${device.id}`}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-zinc-800 flex items-center justify-center text-zinc-400">
+                    <DeviceIcon name={device.device_name} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{device.device_name || 'Dispositivo'}</p>
+                    <p className="text-xs text-zinc-500">
+                      {device.last_active ? new Date(device.last_active).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeactivateDevice(device.id)}
+                  disabled={deactivating === device.id}
+                  className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
+                  data-testid={`deactivate-device-${device.id}`}
+                >
+                  {deactivating === device.id ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <Trash2 size={16} />
+                  )}
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <button 
+            onClick={() => { setDeviceLimitHit(false); setCode(['', '', '', '', '', '']); }}
+            className="w-full text-sm text-zinc-500 hover:text-zinc-300 transition-colors text-center py-2"
+            data-testid="back-from-devices-btn"
           >
             Volver al inicio
           </button>
@@ -173,7 +332,7 @@ export default function MemberLogin() {
         </div>
 
         {/* Code Input */}
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <div className="flex gap-2 sm:gap-3 justify-center" data-testid="code-input-group">
               {code.map((digit, index) => (
@@ -206,6 +365,28 @@ export default function MemberLogin() {
               Tu codigo esta en tu tarjeta de socio o email de bienvenida
             </p>
           </div>
+
+          {/* Remember Me */}
+          <label 
+            className="flex items-center justify-center gap-3 cursor-pointer select-none group"
+            data-testid="remember-me-label"
+          >
+            <div className="relative">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => {
+                  setRememberMe(e.target.checked);
+                  if (!e.target.checked) localStorage.removeItem('remembered_code');
+                }}
+                className="sr-only peer"
+                data-testid="remember-me-checkbox"
+              />
+              <div className="w-9 h-5 bg-zinc-800 rounded-full peer-checked:bg-[var(--gym-primary)] transition-colors" />
+              <div className="absolute left-0.5 top-0.5 w-4 h-4 bg-zinc-400 rounded-full transition-all peer-checked:translate-x-4 peer-checked:bg-black" />
+            </div>
+            <span className="text-sm text-zinc-400 group-hover:text-zinc-300 transition-colors">Recordarme</span>
+          </label>
 
           <Button
             type="submit"

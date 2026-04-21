@@ -66,6 +66,65 @@ def _parse_device_name(ua: str) -> str:
         return "Linux PC"
     return "Desconocido"
 
+# --- Member Self-Service Endpoints (for device limit exceeded) ---
+
+from auth import security, decode_jwt_token
+from fastapi.security import HTTPAuthorizationCredentials
+
+@router.get("/my-devices")
+async def get_my_devices(credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Member sees their own active devices."""
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    devices = await db.member_devices.find(
+        {"member_id": member_id, "active": True}, {"_id": 0}
+    ).sort("last_active", -1).to_list(20)
+    gym = await db.gyms.find_one({"id": payload.get("gym_id")}, {"_id": 0, "max_devices_per_member": 1})
+    max_devices = gym.get("max_devices_per_member", 2) if gym else 2
+    return {"devices": devices, "max_devices": max_devices}
+
+@router.put("/my-devices/{device_id}/deactivate")
+async def member_deactivate_own_device(device_id: str, credentials: HTTPAuthorizationCredentials = Depends(security)):
+    """Member deactivates one of their own devices to free up a slot."""
+    payload = decode_jwt_token(credentials.credentials)
+    member_id = payload.get("sub")
+    device = await db.member_devices.find_one({"id": device_id, "member_id": member_id, "active": True})
+    if not device:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    await db.member_devices.update_one(
+        {"id": device_id},
+        {"$set": {"active": False, "deactivated_at": datetime.now(timezone.utc).isoformat(), "deactivated_by": "self"}}
+    )
+    return {"message": "Dispositivo desactivado"}
+
+@router.get("/my-devices-by-code")
+async def get_devices_by_code(code: str):
+    """Public endpoint: get devices for a member code (used when login fails due to device limit)."""
+    member = await db.members.find_one({"code": code.upper()}, {"_id": 0, "id": 1, "gym_id": 1})
+    if not member:
+        raise HTTPException(status_code=404, detail="Codigo no encontrado")
+    devices = await db.member_devices.find(
+        {"member_id": member["id"], "active": True}, {"_id": 0}
+    ).sort("last_active", -1).to_list(20)
+    gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0, "max_devices_per_member": 1})
+    max_devices = gym.get("max_devices_per_member", 2) if gym else 2
+    return {"devices": devices, "max_devices": max_devices, "member_id": member["id"]}
+
+@router.put("/my-devices-by-code/{device_id}/deactivate")
+async def deactivate_device_by_code(device_id: str, code: str):
+    """Public endpoint: deactivate a device using member code (used when login fails due to device limit)."""
+    member = await db.members.find_one({"code": code.upper()}, {"_id": 0, "id": 1})
+    if not member:
+        raise HTTPException(status_code=404, detail="Codigo no encontrado")
+    device = await db.member_devices.find_one({"id": device_id, "member_id": member["id"], "active": True})
+    if not device:
+        raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    await db.member_devices.update_one(
+        {"id": device_id},
+        {"$set": {"active": False, "deactivated_at": datetime.now(timezone.utc).isoformat(), "deactivated_by": "self"}}
+    )
+    return {"message": "Dispositivo desactivado"}
+
 # --- Admin Endpoints ---
 
 @router.get("/member-devices/{member_id}")

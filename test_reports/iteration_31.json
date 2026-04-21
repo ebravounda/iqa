@@ -1,0 +1,89 @@
+{
+  "summary": "Iteration 31 - Remember Me (Recordarme) and Device Limit Management Features Testing Complete. All new features verified working. Found and fixed 1 bug in device deactivation flow.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration31_remember_me_device_limit.py",
+    "/app/test_reports/pytest/pytest_results_iteration31.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [],
+  "updated_files": [
+    "/app/frontend/src/pages/pwa/MemberLogin.js",
+    "/app/backend/tests/test_iteration31_remember_me_device_limit.py"
+  ],
+  "success_rate": {
+    "backend": "100% (9/9 passed, 1 skipped)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@gymaccess.com / admin123",
+    "test_member_code": "RMB8S5",
+    "test_gym_id": "efe99507-15d5-4e54-9f07-30d2507894e0"
+  },
+  "seed_data_creation": "No new seed data created",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 31 verified: 1) Recordarme toggle on PWA login - saves code to localStorage, auto-logins on next visit, 2) Device limit management - when login fails with DEVICE_LIMIT error, shows device list with deactivate buttons, 3) After deactivating device, auto-retries login, 4) Logout clears remembered_code from localStorage, 5) Back button on device screen returns to login form. Fixed bug: handleDeactivateDevice was using empty code array when auto-login triggered device limit - added savedCode state to preserve code for deactivation.",
+  "features_verified": {
+    "recordarme_toggle_ui": {
+      "status": "PASS",
+      "details": "Toggle appears between code inputs and submit button, starts OFF by default, labeled 'Recordarme'"
+    },
+    "recordarme_localstorage_save": {
+      "status": "PASS",
+      "details": "When toggle ON and login succeeds, 'remembered_code' saved to localStorage"
+    },
+    "recordarme_auto_login": {
+      "status": "PASS",
+      "details": "When remembered_code exists, login page auto-submits without showing code inputs"
+    },
+    "logout_clears_remembered_code": {
+      "status": "PASS",
+      "details": "Logout removes 'remembered_code' from localStorage (AuthContext.js line 207)"
+    },
+    "get_devices_by_code_endpoint": {
+      "status": "PASS",
+      "details": "GET /api/my-devices-by-code?code=RMB8S5 returns devices list and max_devices"
+    },
+    "deactivate_device_by_code_endpoint": {
+      "status": "PASS",
+      "details": "PUT /api/my-devices-by-code/{device_id}/deactivate?code=RMB8S5 deactivates device"
+    },
+    "device_limit_screen_ui": {
+      "status": "PASS",
+      "details": "Shows amber smartphone icon, device list with names and dates, red trash buttons, back button"
+    },
+    "device_deactivation_flow": {
+      "status": "PASS",
+      "details": "After deactivating device, list updates and if under limit, auto-retries login"
+    },
+    "back_button_device_screen": {
+      "status": "PASS",
+      "details": "Back button ('Volver al inicio') returns to login form"
+    },
+    "admin_login_regression": {
+      "status": "PASS",
+      "details": "Admin login still works correctly"
+    }
+  },
+  "bugs_fixed": {
+    "device_deactivation_empty_code": {
+      "description": "handleDeactivateDevice was using code.join('') which was empty when auto-login triggered device limit",
+      "fix": "Added savedCode state to preserve the code when device limit is hit, used in deactivation",
+      "file": "/app/frontend/src/pages/pwa/MemberLogin.js",
+      "lines_changed": "32, 67, 92-97"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
