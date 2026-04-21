@@ -6,7 +6,7 @@ import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { 
   UserPlus, Users, Clock, Check, X, QrCode, ChevronRight, AlertCircle
 } from 'lucide-react';
@@ -312,13 +312,14 @@ export default function MemberGuests() {
 
             <div onClick={(e) => e.stopPropagation()} className="bg-white p-6 rounded-2xl">
               {guestQR ? (
-                <QRCodeSVG
+                <QRCodeCanvas
                   value={guestQR.qr_code}
                   size={250}
-                  level="H"
+                  level="M"
                   includeMargin={false}
                   bgColor="#FFFFFF"
                   fgColor="#000000"
+                  style={{ imageRendering: 'pixelated' }}
                 />
               ) : (
                 <div className="w-[250px] h-[250px] bg-zinc-200 animate-pulse rounded" />

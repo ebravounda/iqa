@@ -165,7 +165,9 @@ async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(secu
         plan = await db.plans.find_one({"id": membership["plan_id"]}, {"_id": 0})
     if gym:
         gym.setdefault("business_type", "gym")
-    return {"member": member, "gym": gym, "membership": membership, "plan": plan}
+    # Issue a fresh token on every /me call to extend session
+    new_token = create_jwt_token({"sub": member["id"], "role": "member", "gym_id": member["gym_id"]})
+    return {"member": member, "gym": gym, "membership": membership, "plan": plan, "token": new_token}
 
 
 @router.put("/auth/admin/update-profile")

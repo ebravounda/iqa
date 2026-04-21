@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { generateQR } from '../../lib/api';
 import { getMembershipStatus, getDaysRemaining } from '../../lib/utils';
 import { getLabels } from '../../lib/businessLabels';
-import { QRCodeSVG } from 'qrcode.react';
+import { QRCodeCanvas } from 'qrcode.react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Maximize2, AlertTriangle, CheckCircle, CreditCard, BarChart3, Calendar, Clock, Trophy, Dumbbell, Download, Smartphone } from 'lucide-react';
 import { Button } from '../../components/ui/button';
@@ -115,8 +115,8 @@ export default function MemberHome() {
 
   const QRDisplay = ({ size = 200, showTimer = true }) => (
     <div className="relative">
-      {showTimer && (
-        <svg className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)]" viewBox="0 0 100 100">
+      {showTimer && qrMode === 'dynamic' && (
+        <svg className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)]" viewBox="0 0 100 100" style={{ willChange: 'auto' }}>
           <circle cx="50" cy="50" r="45" fill="none" stroke="#27272A" strokeWidth="2" />
           <circle
             cx="50" cy="50" r="45" fill="none"
@@ -127,22 +127,21 @@ export default function MemberHome() {
           />
         </svg>
       )}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={qrCode}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
-          transition={{ duration: 0.2 }}
-          className="bg-white p-4 rounded-2xl"
-        >
-          {qrCode ? (
-            <QRCodeSVG value={qrCode} size={size} level="H" includeMargin={false} bgColor="#FFFFFF" fgColor="#000000" />
-          ) : (
-            <div style={{ width: size, height: size }} className="bg-zinc-200 animate-pulse rounded" />
-          )}
-        </motion.div>
-      </AnimatePresence>
+      <div className="bg-white p-4 rounded-2xl" data-testid="qr-code-wrapper">
+        {qrCode ? (
+          <QRCodeCanvas
+            value={qrCode}
+            size={size}
+            level="M"
+            includeMargin={false}
+            bgColor="#FFFFFF"
+            fgColor="#000000"
+            style={{ imageRendering: 'pixelated', width: size, height: size }}
+          />
+        ) : (
+          <div style={{ width: size, height: size }} className="bg-zinc-200 animate-pulse rounded" />
+        )}
+      </div>
     </div>
   );
 

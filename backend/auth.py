@@ -10,7 +10,7 @@ from database import db
 
 JWT_SECRET = os.environ.get('JWT_SECRET', 'default_secret_change_me')
 JWT_ALGORITHM = "HS256"
-JWT_EXPIRATION_HOURS = 24
+JWT_EXPIRATION_HOURS = 24 * 30  # 30 days
 
 security = HTTPBearer()
 

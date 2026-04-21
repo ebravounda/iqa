@@ -63,6 +63,13 @@ export const AuthProvider = ({ children }) => {
       setMembership(response.data.membership);
       setPlan(response.data.plan);
       
+      // Silent token refresh - extend session on every /me call
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        setToken(response.data.token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      }
+      
       if (response.data.gym?.primary_color) {
         document.documentElement.style.setProperty('--gym-primary', response.data.gym.primary_color);
       }
