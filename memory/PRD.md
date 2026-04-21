@@ -28,20 +28,26 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
 - Gamification, routines, classes system
 - Auto-suspension cron for expired memberships
 - Excel export of members
-- Device management per member
+- Device management per member (admin + member self-service)
 - Kiosk HDMI display for real-time occupancy (KioskDisplay.js)
 - Raspberry Pi access_control.py v2.2 with real-time event posting
 - JWT 30-day token expiration with silent auto-refresh
 - Modern PWA login with 6-character individual code inputs
+- "Recordarme" (Remember Me) feature with auto-login
+- Device limit self-service: members can deactivate their own devices when limit exceeded
 
 ## Completed - April 2026 (This Session)
-- [x] QR code rendering: QRCodeSVG → QRCodeCanvas (fixes budget Samsung A05s/A14/A15 grayish rendering)
+- [x] QR code rendering: QRCodeSVG -> QRCodeCanvas (fixes budget Samsung A05s/A14/A15 grayish rendering)
 - [x] Removed AnimatePresence animation on QR refresh (eliminates gray flash on slow devices)
-- [x] Error correction level H → M (less dense QR, still reliable, better on small screens)
+- [x] Error correction level H -> M (less dense QR, still reliable, better on small screens)
 - [x] imageRendering: 'pixelated' on canvas for crisp edges
-- [x] JWT expiration 24h → 30 days (720 hours) - users no longer auto-logout daily
+- [x] JWT expiration 24h -> 30 days (720 hours) - users no longer auto-logout daily
 - [x] Silent token refresh: /me endpoint returns fresh token, AuthContext saves it automatically
-- [x] PWA MemberLogin.js redesign: 6 individual code input fields with auto-advance, backspace navigation, paste support, auto-submit, ambient glow effects
+- [x] PWA MemberLogin.js redesign: 6 individual code input fields with auto-advance, backspace, paste, auto-submit
+- [x] "Recordarme" toggle: saves member code in localStorage, auto-logins on next app open
+- [x] Device limit self-service: when login fails due to device limit, shows device list with deactivate buttons
+- [x] New endpoints: GET/PUT /api/my-devices-by-code for member self-service device management
+- [x] Logout clears remembered_code from localStorage
 
 ## Completed - Feb 2026 (Previous Sessions)
 - [x] Fixed duplicate useState bug in AdminMembers.js
@@ -86,9 +92,9 @@ bash /opt/gymaccess/deploy-whitelabel.sh
 - POST /api/auth/admin/login
 - POST /api/auth/member/login?code=XXX
 - GET /api/auth/member/me (returns fresh token for session refresh)
-- GET /api/members
-- PUT /api/members/{member_id}/membership
-- POST /api/access/event (Raspberry Pi → Kiosk display)
+- GET /api/my-devices-by-code?code=XXX (member self-service devices)
+- PUT /api/my-devices-by-code/{id}/deactivate?code=XXX
+- POST /api/access/event (Raspberry Pi -> Kiosk display)
 - GET /api/access/display/{gym_id} (Kiosk data feed)
 - POST /api/redsys/initiate
 - POST /api/redsys/notification
