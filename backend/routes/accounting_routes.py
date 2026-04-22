@@ -235,6 +235,23 @@ async def generate_accounting_pdf(
         gym_doc = await db.gyms.find_one({"id": target_gym_id}, {"_id": 0, "name": 1})
         gym_name = gym_doc.get("name", gym_name) if gym_doc else gym_name
     total = sum(t.get("amount", 0) for t in transactions)
+    
+    # Get membership breakdown (users per plan)
+    target_gym_id2 = admin.get("gym_id") or gym_id
+    ms_query = {"status": "active"}
+    if target_gym_id2:
+        ms_query["gym_id"] = target_gym_id2
+    active_memberships = await db.memberships.find(ms_query, {"_id": 0, "plan_id": 1}).to_list(10000)
+    plan_counts = {}
+    for ms in active_memberships:
+        pid = ms.get("plan_id", "")
+        plan_counts[pid] = plan_counts.get(pid, 0) + 1
+    plan_names = {}
+    for pid in plan_counts:
+        p = await db.plans.find_one({"id": pid}, {"_id": 0, "name": 1, "price": 1})
+        if p:
+            plan_names[pid] = {"name": p.get("name", "Sin nombre"), "price": p.get("price", 0)}
+    
     buffer = BytesIO()
     doc = SimpleDocTemplate(buffer, pagesize=A4, topMargin=20*mm, bottomMargin=20*mm)
     styles = getSampleStyleSheet()
@@ -253,6 +270,36 @@ async def generate_accounting_pdf(
     elements.append(Spacer(1, 10*mm))
     elements.append(Paragraph(f"<b>Total Recaudado: ${total:,.2f}</b>  |  Transacciones: {len(transactions)}", styles['Normal']))
     elements.append(Spacer(1, 8*mm))
+    
+    # Membership breakdown table
+    if plan_counts:
+        section_style = ParagraphStyle('Sec', parent=styles['Heading2'], fontSize=12, spaceBefore=4, spaceAfter=4, textColor=colors.HexColor('#18181B'))
+        elements.append(Paragraph("Usuarios por Membresia (activos)", section_style))
+        mb_data = [['Plan', 'Precio', 'Usuarios Activos', 'Ingreso Estimado']]
+        total_active = 0
+        total_estimated = 0
+        for pid, count in sorted(plan_counts.items(), key=lambda x: x[1], reverse=True):
+            info = plan_names.get(pid, {"name": "Desconocido", "price": 0})
+            estimated = info["price"] * count
+            total_active += count
+            total_estimated += estimated
+            mb_data.append([info["name"], f'${info["price"]:,.2f}', str(count), f'${estimated:,.2f}'])
+        mb_data.append(['TOTAL', '', str(total_active), f'${total_estimated:,.2f}'])
+        mb_table = Table(mb_data, colWidths=[150, 70, 100, 100])
+        mb_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1E3A5F')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, -1), 9),
+            ('ALIGN', (1, 0), (-1, -1), 'RIGHT'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.lightgrey),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#F0F7FF')]),
+            ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#E3F2FD')),
+            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+            ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(mb_table)
+        elements.append(Spacer(1, 8*mm))
+    
     if transactions:
         table_data = [['Fecha', 'Socio', 'Plan', 'Metodo', 'Monto']]
         for t in transactions:
@@ -445,6 +492,50 @@ async def generate_accounting_excel(
     ws_summary.column_dimensions['A'].width = 30
     ws_summary.column_dimensions['B'].width = 15
     ws_summary.column_dimensions['C'].width = 18
+
+    # Membership breakdown: users per plan
+    ms_query2 = {"status": "active"}
+    if target_gym_id:
+        ms_query2["gym_id"] = target_gym_id
+    active_ms = await db.memberships.find(ms_query2, {"_id": 0, "plan_id": 1}).to_list(10000)
+    plan_counts = {}
+    for ms in active_ms:
+        pid = ms.get("plan_id", "")
+        plan_counts[pid] = plan_counts.get(pid, 0) + 1
+    
+    if plan_counts:
+        ws_summary.append([])
+        ws_summary.append([])
+        r = ws_summary.max_row + 1
+        ws_summary.append(["USUARIOS POR MEMBRESIA (ACTIVOS)", "", "", ""])
+        ws_summary.cell(row=ws_summary.max_row, column=1).font = Font(bold=True, size=12)
+        ws_summary.append(["Plan", "Precio", "Usuarios Activos", "Ingreso Estimado"])
+        for col in range(1, 5):
+            ws_summary.cell(row=ws_summary.max_row, column=col).font = header_font
+            ws_summary.cell(row=ws_summary.max_row, column=col).fill = PatternFill(start_color="1E3A5F", end_color="1E3A5F", fill_type="solid")
+        
+        total_active = 0
+        total_estimated = 0
+        for pid, count in sorted(plan_counts.items(), key=lambda x: x[1], reverse=True):
+            plan_doc = await db.plans.find_one({"id": pid}, {"_id": 0, "name": 1, "price": 1})
+            pname = plan_doc.get("name", "Desconocido") if plan_doc else "Desconocido"
+            pprice = plan_doc.get("price", 0) if plan_doc else 0
+            estimated = pprice * count
+            total_active += count
+            total_estimated += estimated
+            ws_summary.append([pname, pprice, count, estimated])
+            ws_summary.cell(row=ws_summary.max_row, column=2).number_format = '#,##0.00'
+            ws_summary.cell(row=ws_summary.max_row, column=4).number_format = '#,##0.00'
+        
+        ws_summary.append(["TOTAL", "", total_active, total_estimated])
+        ws_summary.cell(row=ws_summary.max_row, column=1).font = Font(bold=True)
+        ws_summary.cell(row=ws_summary.max_row, column=3).font = Font(bold=True)
+        ws_summary.cell(row=ws_summary.max_row, column=4).font = Font(bold=True)
+        ws_summary.cell(row=ws_summary.max_row, column=4).number_format = '#,##0.00'
+        for col in range(1, 5):
+            ws_summary.cell(row=ws_summary.max_row, column=col).fill = PatternFill(start_color="E3F2FD", end_color="E3F2FD", fill_type="solid")
+    
+    ws_summary.column_dimensions['D'].width = 20
 
     # --- Sheet 2: PAGOS DETALLADOS ---
     ws_tx = wb.create_sheet("Pagos Membresias")
