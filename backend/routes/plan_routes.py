@@ -6,6 +6,7 @@ import uuid
 from database import db
 from auth import get_current_admin
 from models import PlanCreate, MembershipCreate
+from membership_service import create_membership as svc_create_membership
 
 router = APIRouter(prefix="/api")
 
@@ -57,25 +58,12 @@ async def create_membership(membership: MembershipCreate, admin: dict = Depends(
     plan = await db.plans.find_one({"id": membership.plan_id})
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
-    await db.memberships.update_many(
-        {"member_id": membership.member_id, "status": "active"},
-        {"$set": {"status": "expired"}}
+    result = await svc_create_membership(
+        member_id=membership.member_id,
+        plan_id=membership.plan_id,
+        gym_id=plan["gym_id"],
     )
-    start_date = datetime.now(timezone.utc)
-    end_date = start_date + timedelta(days=plan["duration_days"])
-    membership_dict = {
-        "id": str(uuid.uuid4()),
-        "member_id": membership.member_id,
-        "plan_id": membership.plan_id,
-        "gym_id": plan["gym_id"],
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "status": "active",
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.memberships.insert_one(membership_dict)
-    membership_dict.pop("_id", None)
-    return membership_dict
+    return result
 
 @router.get("/memberships")
 async def get_memberships(gym_id: Optional[str] = None, member_id: Optional[str] = None, admin: dict = Depends(get_current_admin)):

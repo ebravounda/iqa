@@ -11,6 +11,7 @@ import os
 
 from database import db
 from auth import get_current_admin, check_role
+from membership_service import create_membership_and_activate
 from redsys_utils import (
     generate_order_number, create_redsys_form_data, verify_redsys_response,
     get_response_message,
@@ -243,30 +244,13 @@ async def redsys_notification(request: Request):
             plan_id = payment["plan_id"]
             gym_id = payment["gym_id"]
 
-            plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
-            duration_days = plan.get("duration_days", 30) if plan else 30
-
-            now = datetime.now(timezone.utc)
-            membership = {
-                "id": str(uuid.uuid4()),
-                "member_id": member_id,
-                "plan_id": plan_id,
-                "gym_id": gym_id,
-                "start_date": now.isoformat(),
-                "end_date": (now + timedelta(days=duration_days)).strftime("%Y-%m-%d"),
-                "status": "active",
-                "payment_status": "paid",
-                "payment_method": "redsys",
-                "payment_id": payment["id"],
-                "created_at": now.isoformat(),
-            }
-            await db.memberships.insert_one(membership)
-            membership.pop("_id", None)
-
-            # Activate member
-            await db.members.update_one(
-                {"id": member_id},
-                {"$set": {"status": "active"}, "$unset": {"suspension_type": "", "suspension_reason": ""}}
+            membership = await create_membership_and_activate(
+                member_id=member_id,
+                plan_id=plan_id,
+                gym_id=gym_id,
+                payment_method="redsys",
+                payment_id=payment["id"],
+                extra_fields={"payment_status": "paid"},
             )
 
             logger.info(f"Redsys payment OK: order={order_number} member={member_id}")

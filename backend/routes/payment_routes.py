@@ -3,6 +3,7 @@ from datetime import datetime, timezone, timedelta
 from typing import Optional
 import uuid
 import os
+from membership_service import create_membership_and_activate
 import logging
 
 from database import db
@@ -78,23 +79,12 @@ async def get_payment_status(session_id: str, credentials = Depends(security)):
         if transaction and payment_status == "paid" and transaction.get("payment_status") != "paid":
             plan = await db.plans.find_one({"id": transaction["plan_id"]})
             if plan:
-                await db.memberships.update_many(
-                    {"member_id": transaction["member_id"], "status": {"$in": ["active", "pending_payment"]}},
-                    {"$set": {"status": "expired"}}
-                )
-                start_date = datetime.now(timezone.utc)
-                end_date = start_date + timedelta(days=plan["duration_days"])
-                membership = {
-                    "id": str(uuid.uuid4()), "member_id": transaction["member_id"],
-                    "plan_id": transaction["plan_id"], "gym_id": transaction["gym_id"],
-                    "start_date": start_date.isoformat(), "end_date": end_date.isoformat(),
-                    "status": "active", "payment_id": transaction["id"],
-                    "created_at": datetime.now(timezone.utc).isoformat()
-                }
-                await db.memberships.insert_one(membership)
-                await db.members.update_one(
-                    {"id": transaction["member_id"], "status": {"$in": ["suspended", "pending"]}},
-                    {"$set": {"status": "active", "suspension_reason": None}}
+                await create_membership_and_activate(
+                    member_id=transaction["member_id"],
+                    plan_id=transaction["plan_id"],
+                    gym_id=transaction["gym_id"],
+                    payment_method="stripe",
+                    payment_id=transaction["id"],
                 )
             await db.payment_transactions.update_one(
                 {"session_id": session_id},
@@ -123,26 +113,11 @@ async def stripe_webhook(request: Request):
             if member_id and plan_id:
                 plan = await db.plans.find_one({"id": plan_id})
                 if plan:
-                    start_date = datetime.now(timezone.utc)
-                    end_date = start_date + timedelta(days=plan["duration_days"])
-                    await db.memberships.update_many(
-                        {"member_id": member_id, "status": "active"}, {"$set": {"status": "expired"}}
-                    )
-                    membership = {
-                        "id": str(uuid.uuid4()), "member_id": member_id, "plan_id": plan_id,
-                        "gym_id": gym_id, "start_date": start_date.isoformat(),
-                        "end_date": end_date.isoformat(), "status": "active",
-                        "payment_method": "stripe", "created_at": start_date.isoformat()
-                    }
-                    await db.memberships.insert_one(membership)
-                    # Also expire any pending_payment memberships for this plan
-                    await db.memberships.update_many(
-                        {"member_id": member_id, "status": "pending_payment"},
-                        {"$set": {"status": "expired"}}
-                    )
-                    await db.members.update_one(
-                        {"id": member_id, "status": {"$in": ["suspended", "pending"]}},
-                        {"$set": {"status": "active", "suspension_reason": None}}
+                    await create_membership_and_activate(
+                        member_id=member_id,
+                        plan_id=plan_id,
+                        gym_id=gym_id,
+                        payment_method="stripe",
                     )
                     await db.payment_transactions.update_one(
                         {"session_id": session.get("id")},
@@ -273,22 +248,11 @@ async def create_manual_payment(payment: ManualPayment, admin: dict = Depends(ge
     }
     await db.payment_transactions.insert_one(transaction)
     transaction.pop("_id", None)
-    await db.memberships.update_many(
-        {"member_id": payment.member_id, "status": "active"},
-        {"$set": {"status": "expired"}}
-    )
-    start_date = datetime.now(timezone.utc)
-    end_date = start_date + timedelta(days=plan["duration_days"])
-    membership = {
-        "id": str(uuid.uuid4()), "member_id": payment.member_id, "plan_id": payment.plan_id,
-        "gym_id": gym_id, "start_date": start_date.isoformat(), "end_date": end_date.isoformat(),
-        "status": "active", "payment_id": transaction["id"], "payment_method": payment.payment_method,
-        "created_at": datetime.now(timezone.utc).isoformat()
-    }
-    await db.memberships.insert_one(membership)
-    membership.pop("_id", None)
-    await db.members.update_one(
-        {"id": payment.member_id, "status": {"$in": ["suspended", "pending"]}},
-        {"$set": {"status": "active"}, "$unset": {"suspension_reason": "", "suspension_type": "", "suspended_at": "", "suspended_by": ""}}
+    membership = await create_membership_and_activate(
+        member_id=payment.member_id,
+        plan_id=payment.plan_id,
+        gym_id=gym_id,
+        payment_method=payment.payment_method,
+        payment_id=transaction["id"],
     )
     return {"transaction": transaction, "membership": membership, "message": "Pago registrado y membresia activada"}

@@ -6,6 +6,7 @@ import logging
 
 from database import db
 from auth import get_current_admin
+from membership_service import create_membership_and_activate
 from routes.misc_routes import send_gym_email
 
 logger = logging.getLogger(__name__)
@@ -156,22 +157,16 @@ async def stripe_webhook(request: Request):
         if member_id and plan_id:
             plan = await db.plans.find_one({"id": plan_id}, {"_id": 0})
             if plan:
-                now = datetime.now(timezone.utc)
-                membership = {
-                    "id": str(uuid.uuid4()),
-                    "member_id": member_id,
-                    "plan_id": plan_id,
-                    "gym_id": gym_id,
-                    "start_date": now.isoformat(),
-                    "end_date": (now + timedelta(days=plan.get("duration_days", 30))).isoformat(),
-                    "status": "active",
-                    "payment_method": "stripe",
-                    "amount_paid": session.get("amount_total", 0) / 100,
-                    "stripe_session_id": session.get("id"),
-                    "created_at": now.isoformat(),
-                }
-                await db.memberships.insert_one(membership)
-                await db.members.update_one({"id": member_id}, {"$set": {"status": "active"}})
+                await create_membership_and_activate(
+                    member_id=member_id,
+                    plan_id=plan_id,
+                    gym_id=gym_id,
+                    payment_method="stripe",
+                    extra_fields={
+                        "amount_paid": session.get("amount_total", 0) / 100,
+                        "stripe_session_id": session.get("id"),
+                    },
+                )
                 await db.stripe_payments.update_one(
                     {"stripe_session_id": session.get("id")},
                     {"$set": {"status": "completed"}}

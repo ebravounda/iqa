@@ -8,6 +8,7 @@ import os
 import logging
 
 from database import db
+from membership_service import create_membership_and_activate
 from auth import get_current_admin, security, decode_jwt_token
 
 logger = logging.getLogger(__name__)
@@ -150,28 +151,12 @@ async def mp_webhook(request: Request):
                             # Activate membership
                             plan = await db.plans.find_one({"id": transaction["plan_id"]})
                             if plan:
-                                await db.memberships.update_many(
-                                    {"member_id": transaction["member_id"], "status": "active"},
-                                    {"$set": {"status": "expired"}}
-                                )
-                                start_date = datetime.now(timezone.utc)
-                                end_date = start_date + timedelta(days=plan["duration_days"])
-                                membership = {
-                                    "id": str(uuid.uuid4()),
-                                    "member_id": transaction["member_id"],
-                                    "plan_id": transaction["plan_id"],
-                                    "gym_id": transaction["gym_id"],
-                                    "start_date": start_date.isoformat(),
-                                    "end_date": end_date.isoformat(),
-                                    "status": "active",
-                                    "payment_id": transaction["id"],
-                                    "payment_method": "mercadopago",
-                                    "created_at": datetime.now(timezone.utc).isoformat()
-                                }
-                                await db.memberships.insert_one(membership)
-                                await db.members.update_one(
-                                    {"id": transaction["member_id"], "status": "suspended"},
-                                    {"$set": {"status": "active", "suspension_reason": None}}
+                                await create_membership_and_activate(
+                                    member_id=transaction["member_id"],
+                                    plan_id=transaction["plan_id"],
+                                    gym_id=transaction["gym_id"],
+                                    payment_method="mercadopago",
+                                    payment_id=transaction["id"],
                                 )
                             logger.info(f"MercadoPago payment approved: {ext_ref}")
         

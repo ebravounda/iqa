@@ -1,0 +1,97 @@
+{
+  "summary": "Iteration 32 - Backend Refactoring Tests Complete. Verified centralized membership_service.py works correctly across all 6 route files. All payment gateway routes (Stripe, Redsys, MercadoPago) import correctly. AdminDevices.js Kiosk display link card working. PWA member login with QR code rendering verified.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_iteration32_membership_service_refactor.py",
+    "/app/test_reports/pytest/pytest_results_iteration32.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "membership_service.py is well-structured with clear separation of concerns",
+    "All route files correctly import and use the centralized service functions",
+    "The /backend/downloads/ folder was successfully deleted (3039-line old monolithic copy)",
+    "Raspberry Pi docs preserved in /app/docs/ as expected"
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_iteration32_membership_service_refactor.py"
+  ],
+  "success_rate": {
+    "backend": "100% (20/20 passed)",
+    "frontend": "100% (all features verified)"
+  },
+  "test_credentials": {
+    "super_admin": "admin@gymaccess.com / admin123",
+    "test_member_code": "RMB8S5",
+    "test_gym_id": "efe99507-15d5-4e54-9f07-30d2507894e0"
+  },
+  "seed_data_creation": "No new seed data created",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Iteration 32 verified backend refactoring: 1) membership_service.py centralized functions (expire_active_memberships, create_membership, activate_member, create_membership_and_activate) work correctly, 2) All 6 route files using the service: plan_routes.py, payment_routes.py, mercadopago_routes.py, redsys_routes.py, stripe_auto_routes.py, 3) AdminDevices.js has new Kiosk display link card with copy/open buttons, 4) PWA member login with 6-char code inputs and QRCodeCanvas working, 5) /backend/downloads/ folder deleted, docs preserved in /app/docs/",
+  "features_verified": {
+    "health_endpoint": {
+      "status": "PASS",
+      "details": "GET /api/health returns healthy status"
+    },
+    "admin_login": {
+      "status": "PASS",
+      "details": "POST /api/auth/admin/login works with admin@gymaccess.com"
+    },
+    "member_login": {
+      "status": "PASS",
+      "details": "POST /api/auth/member/login works with code RMB8S5"
+    },
+    "member_me_endpoint": {
+      "status": "PASS",
+      "details": "GET /api/auth/member/me returns member info with fresh token"
+    },
+    "membership_creation_via_service": {
+      "status": "PASS",
+      "details": "POST /api/memberships uses svc_create_membership from membership_service.py"
+    },
+    "payment_routes_import": {
+      "status": "PASS",
+      "details": "All payment gateway routes (stripe, redsys, mercadopago) import create_membership_and_activate correctly"
+    },
+    "manual_payment_endpoint": {
+      "status": "PASS",
+      "details": "POST /api/payments/manual creates membership via centralized service"
+    },
+    "admin_devices_kiosk_card": {
+      "status": "PASS",
+      "details": "AdminDevices.js shows Kiosk display link card with Monitor icon, copy and open buttons"
+    },
+    "kiosk_display_page": {
+      "status": "PASS",
+      "details": "Kiosk URL /display/{gym_id} shows real-time occupancy and access events"
+    },
+    "pwa_member_login_6char": {
+      "status": "PASS",
+      "details": "PWA login page has 6 single-character inputs for member code"
+    },
+    "qr_code_rendering": {
+      "status": "PASS",
+      "details": "QRCodeCanvas renders QR code with auto-refresh timer"
+    },
+    "downloads_folder_deleted": {
+      "status": "PASS",
+      "details": "/backend/downloads/ folder no longer exists (was 3039-line old monolithic copy)"
+    },
+    "docs_preserved": {
+      "status": "PASS",
+      "details": "GUIA_RASPBERRY_SETUP.md and raspberry_access_control.py preserved in /app/docs/"
+    }
+  },
+  "mocked_apis": {
+    "has_mocked_apis": false,
+    "mocked_apis_list": []
+  }
+}
