@@ -281,6 +281,278 @@ async def generate_accounting_pdf(
                              headers={"Content-Disposition": f"attachment; filename={filename}"})
 
 
+@router.get("/accounting/excel")
+async def generate_accounting_excel(
+    gym_id: Optional[str] = None, date_from: Optional[str] = None,
+    date_to: Optional[str] = None, status: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
+):
+    """Export detailed Excel with memberships, payments, status, and summary."""
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from io import BytesIO
+
+    target_gym_id = admin.get("gym_id") or gym_id
+
+    # Fetch transactions (all statuses)
+    tx_query = {}
+    if target_gym_id:
+        tx_query["gym_id"] = target_gym_id
+    if status:
+        tx_query["payment_status"] = status
+    if date_from:
+        tx_query["created_at"] = {"$gte": date_from}
+    if date_to:
+        if "created_at" in tx_query:
+            tx_query["created_at"]["$lte"] = date_to + "T23:59:59"
+        else:
+            tx_query["created_at"] = {"$lte": date_to + "T23:59:59"}
+
+    transactions = await db.payment_transactions.find(tx_query, {"_id": 0}).sort("created_at", -1).to_list(10000)
+
+    # Enrich with member + plan data
+    for t in transactions:
+        if t.get("member_id") and not t.get("member_name"):
+            member = await db.members.find_one({"id": t["member_id"]}, {"_id": 0, "name": 1, "code": 1, "email": 1, "phone": 1})
+            if member:
+                t["member_name"] = member.get("name")
+                t["member_code"] = member.get("code")
+                t["member_email"] = member.get("email", "")
+                t["member_phone"] = member.get("phone", "")
+        if t.get("plan_id") and not t.get("plan_name"):
+            plan = await db.plans.find_one({"id": t["plan_id"]}, {"_id": 0, "name": 1, "price": 1, "duration_days": 1})
+            if plan:
+                t["plan_name"] = plan.get("name")
+                t["plan_price"] = plan.get("price")
+                t["plan_duration"] = plan.get("duration_days")
+
+    # Fetch memberships for member status
+    member_ids = list(set(t.get("member_id") for t in transactions if t.get("member_id")))
+    memberships = {}
+    for mid in member_ids:
+        ms = await db.memberships.find_one(
+            {"member_id": mid, "status": {"$in": ["active", "expired"]}},
+            {"_id": 0, "status": 1, "end_date": 1, "start_date": 1}
+        )
+        if ms:
+            memberships[mid] = ms
+
+    # POS sales
+    pos_query = {}
+    if target_gym_id:
+        pos_query["gym_id"] = target_gym_id
+    if date_from:
+        pos_query["created_at"] = {"$gte": date_from}
+    if date_to:
+        if "created_at" in pos_query:
+            pos_query["created_at"]["$lte"] = date_to + "T23:59:59"
+        else:
+            pos_query["created_at"] = {"$lte": date_to + "T23:59:59"}
+    pos_sales = await db.pos_sales.find(pos_query, {"_id": 0}).sort("created_at", -1).to_list(5000)
+
+    # Withdrawals
+    w_query = {}
+    if target_gym_id:
+        w_query["gym_id"] = target_gym_id
+    if date_from:
+        w_query["created_at"] = {"$gte": date_from}
+    if date_to:
+        if "created_at" in w_query:
+            w_query["created_at"]["$lte"] = date_to + "T23:59:59"
+        else:
+            w_query["created_at"] = {"$lte": date_to + "T23:59:59"}
+    withdrawals = await db.cash_withdrawals.find(w_query, {"_id": 0}).sort("created_at", -1).to_list(1000)
+
+    # Gym name
+    gym_name = "Todos"
+    if target_gym_id:
+        gym_doc = await db.gyms.find_one({"id": target_gym_id}, {"_id": 0, "name": 1})
+        gym_name = gym_doc.get("name", "Gym") if gym_doc else "Gym"
+
+    # Create workbook
+    wb = Workbook()
+
+    # --- Sheet 1: RESUMEN ---
+    ws_summary = wb.active
+    ws_summary.title = "Resumen"
+
+    header_font = Font(bold=True, color="FFFFFF", size=11)
+    header_fill = PatternFill(start_color="18181B", end_color="18181B", fill_type="solid")
+    green_fill = PatternFill(start_color="D5F5E3", end_color="D5F5E3", fill_type="solid")
+    red_fill = PatternFill(start_color="FADBD8", end_color="FADBD8", fill_type="solid")
+    amber_fill = PatternFill(start_color="FEF9E7", end_color="FEF9E7", fill_type="solid")
+    thin_border = Border(
+        left=Side(style='thin', color='D5D5D5'), right=Side(style='thin', color='D5D5D5'),
+        top=Side(style='thin', color='D5D5D5'), bottom=Side(style='thin', color='D5D5D5')
+    )
+
+    ws_summary.append([f"INFORME DE CONTABILIDAD - {gym_name.upper()}"])
+    ws_summary.merge_cells('A1:F1')
+    ws_summary['A1'].font = Font(bold=True, size=14)
+    ws_summary.append([f"Periodo: {date_from or 'Inicio'} a {date_to or 'Hoy'}"])
+    ws_summary.append([])
+
+    paid = [t for t in transactions if t.get("payment_status") == "paid"]
+    pending = [t for t in transactions if t.get("payment_status") != "paid"]
+    total_paid = sum(t.get("amount", 0) for t in paid)
+    total_pending = sum(t.get("amount", 0) for t in pending)
+    total_pos = sum(s.get("total", 0) for s in pos_sales)
+    total_withdrawals_amount = sum(w.get("amount", 0) for w in withdrawals)
+
+    summary_data = [
+        ["Concepto", "Cantidad", "Monto"],
+        ["Pagos Completados", len(paid), total_paid],
+        ["Pagos Pendientes", len(pending), total_pending],
+        ["Total Membresias", len(transactions), total_paid + total_pending],
+        ["Ventas POS", len(pos_sales), total_pos],
+        ["TOTAL INGRESOS", len(transactions) + len(pos_sales), total_paid + total_pos],
+        ["Retiros de Caja", len(withdrawals), -total_withdrawals_amount],
+        ["NETO", "", total_paid + total_pos - total_withdrawals_amount],
+    ]
+    for row in summary_data:
+        ws_summary.append(row)
+
+    for col in range(1, 4):
+        ws_summary.cell(row=4, column=col).font = header_font
+        ws_summary.cell(row=4, column=col).fill = header_fill
+    for row_idx in range(5, 12):
+        for col in range(1, 4):
+            ws_summary.cell(row=row_idx, column=col).border = thin_border
+    ws_summary.cell(row=5, column=3).number_format = '#,##0.00'
+    ws_summary.cell(row=6, column=3).number_format = '#,##0.00'
+    ws_summary.cell(row=6, column=1).fill = amber_fill
+    ws_summary.cell(row=6, column=2).fill = amber_fill
+    ws_summary.cell(row=6, column=3).fill = amber_fill
+    for col in range(1, 4):
+        ws_summary.cell(row=9, column=col).font = Font(bold=True)
+        ws_summary.cell(row=9, column=col).fill = green_fill
+        ws_summary.cell(row=11, column=col).font = Font(bold=True, size=12)
+
+    # By payment method
+    ws_summary.append([])
+    ws_summary.append(["DESGLOSE POR METODO DE PAGO", "", ""])
+    method_map = {"cash": "Efectivo", "card_reception": "Tarjeta Recepcion", "stripe": "Stripe Online", "mercadopago": "MercadoPago", "redsys": "Redsys"}
+    methods = {}
+    for t in paid:
+        m = method_map.get(t.get("payment_method", "stripe"), "Stripe Online")
+        methods[m] = methods.get(m, {"count": 0, "amount": 0})
+        methods[m]["count"] += 1
+        methods[m]["amount"] += t.get("amount", 0)
+    ws_summary.append(["Metodo", "Transacciones", "Monto"])
+    for m, v in methods.items():
+        ws_summary.append([m, v["count"], v["amount"]])
+
+    ws_summary.column_dimensions['A'].width = 30
+    ws_summary.column_dimensions['B'].width = 15
+    ws_summary.column_dimensions['C'].width = 18
+
+    # --- Sheet 2: PAGOS DETALLADOS ---
+    ws_tx = wb.create_sheet("Pagos Membresias")
+    headers = ["Fecha", "Hora", "Socio", "Codigo", "Email", "Telefono", "Plan", "Duracion (dias)", "Metodo Pago", "Estado", "Monto", "Estado Membresia", "Vencimiento"]
+    ws_tx.append(headers)
+    for col_idx, h in enumerate(headers, 1):
+        cell = ws_tx.cell(row=1, column=col_idx)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = Alignment(horizontal='center')
+
+    for t in transactions:
+        ms = memberships.get(t.get("member_id"), {})
+        status_label = "Pagado" if t.get("payment_status") == "paid" else "Pendiente"
+        ms_status = ms.get("status", "").capitalize() if ms else ""
+        ms_end = ms.get("end_date", "")[:10] if ms else ""
+        method = method_map.get(t.get("payment_method", "stripe"), "Stripe Online")
+        row = [
+            t.get("created_at", "")[:10],
+            t.get("created_at", "")[11:19] if len(t.get("created_at", "")) > 19 else "",
+            t.get("member_name", ""),
+            t.get("member_code", ""),
+            t.get("member_email", ""),
+            t.get("member_phone", ""),
+            t.get("plan_name", ""),
+            t.get("plan_duration", ""),
+            method,
+            status_label,
+            t.get("amount", 0),
+            ms_status,
+            ms_end,
+        ]
+        ws_tx.append(row)
+
+    # Color rows by status
+    for row_idx in range(2, len(transactions) + 2):
+        status_cell = ws_tx.cell(row=row_idx, column=10)
+        if status_cell.value == "Pagado":
+            status_cell.fill = green_fill
+        else:
+            status_cell.fill = amber_fill
+        ws_tx.cell(row=row_idx, column=11).number_format = '#,##0.00'
+        for col in range(1, 14):
+            ws_tx.cell(row=row_idx, column=col).border = thin_border
+
+    widths = [12, 10, 25, 10, 25, 15, 20, 14, 18, 12, 12, 16, 14]
+    for i, w in enumerate(widths, 1):
+        ws_tx.column_dimensions[chr(64 + i) if i <= 26 else 'A'].width = w
+
+    # --- Sheet 3: VENTAS POS ---
+    if pos_sales:
+        ws_pos = wb.create_sheet("Ventas POS")
+        pos_headers = ["Fecha", "Hora", "Productos", "Metodo", "Total"]
+        ws_pos.append(pos_headers)
+        for col_idx, h in enumerate(pos_headers, 1):
+            cell = ws_pos.cell(row=1, column=col_idx)
+            cell.font = header_font
+            cell.fill = header_fill
+        for s in pos_sales:
+            items_str = ", ".join([f"{i['product_name']} x{i['quantity']}" for i in s.get("items", [])])
+            ws_pos.append([
+                s.get("created_at", "")[:10],
+                s.get("created_at", "")[11:19] if len(s.get("created_at", "")) > 19 else "",
+                items_str,
+                "Efectivo" if s.get("payment_method") == "cash" else "Tarjeta",
+                s.get("total", 0),
+            ])
+        ws_pos.column_dimensions['A'].width = 12
+        ws_pos.column_dimensions['B'].width = 10
+        ws_pos.column_dimensions['C'].width = 50
+        ws_pos.column_dimensions['D'].width = 14
+        ws_pos.column_dimensions['E'].width = 12
+
+    # --- Sheet 4: RETIROS ---
+    if withdrawals:
+        ws_w = wb.create_sheet("Retiros de Caja")
+        w_headers = ["Fecha", "Hora", "Motivo", "Notas", "Responsable", "Monto"]
+        ws_w.append(w_headers)
+        for col_idx, h in enumerate(w_headers, 1):
+            cell = ws_w.cell(row=1, column=col_idx)
+            cell.font = header_font
+            cell.fill = header_fill
+        for w in withdrawals:
+            ws_w.append([
+                w.get("created_at", "")[:10],
+                w.get("created_at", "")[11:19] if len(w.get("created_at", "")) > 19 else "",
+                w.get("reason", ""),
+                w.get("notes", ""),
+                w.get("registered_by_name", ""),
+                w.get("amount", 0),
+            ])
+            ws_w.cell(row=ws_w.max_row, column=6).fill = red_fill
+        ws_w.column_dimensions['A'].width = 12
+        ws_w.column_dimensions['B'].width = 10
+        ws_w.column_dimensions['C'].width = 30
+        ws_w.column_dimensions['D'].width = 30
+        ws_w.column_dimensions['E'].width = 20
+        ws_w.column_dimensions['F'].width = 12
+
+    buffer = BytesIO()
+    wb.save(buffer)
+    buffer.seek(0)
+    filename = f"contabilidad_{gym_name.replace(' ', '_')}_{date_from or 'all'}_{date_to or 'all'}.xlsx"
+    return StreamingResponse(
+        buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
 @router.get("/accounting/sales-report-pdf")
 async def generate_sales_report_pdf(
     gym_id: Optional[str] = None, period: str = "daily",

@@ -5,7 +5,7 @@ import { Button } from '../../components/ui/button';
 import { Input } from '../../components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
-import { DollarSign, FileText, Download, Calendar, TrendingUp, CreditCard, Banknote, Zap, Trash2, AlertTriangle, FileBarChart } from 'lucide-react';
+import { DollarSign, FileText, Download, Calendar, TrendingUp, CreditCard, Banknote, Zap, Trash2, AlertTriangle, FileBarChart, FileSpreadsheet } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format, subDays, startOfWeek, startOfMonth } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -21,10 +21,11 @@ export default function AdminAccounting() {
   const [dateFrom, setDateFrom] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [quickFilter, setQuickFilter] = useState('30d');
+  const [statusFilter, setStatusFilter] = useState('');
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [withdrawalForm, setWithdrawalForm] = useState({ amount: 0, reason: '', notes: '' });
 
-  useEffect(() => { fetchReport(); }, [dateFrom, dateTo]);
+  useEffect(() => { fetchReport(); }, [dateFrom, dateTo, statusFilter]);
 
   const applyQuickFilter = (filter) => {
     setQuickFilter(filter);
@@ -45,6 +46,7 @@ export default function AdminAccounting() {
       const params = {};
       if (dateFrom) params.date_from = dateFrom;
       if (dateTo) params.date_to = dateTo;
+      if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
       const [reportRes, txRes] = await Promise.all([
         axios.get(`${API}/accounting/report`, { params }),
         axios.get(`${API}/accounting/transactions`, { params })
@@ -77,6 +79,25 @@ export default function AdminAccounting() {
       toast.success('PDF descargado');
     } catch (error) {
       toast.error('Error al generar PDF');
+    }
+  };
+
+  const downloadExcel = async () => {
+    try {
+      const params = new URLSearchParams();
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+      if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      const response = await axios.get(`${API}/accounting/excel?${params.toString()}`, { responseType: 'blob' });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `contabilidad_${dateFrom || 'all'}_${dateTo || 'all'}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+      toast.success('Excel descargado');
+    } catch (error) {
+      toast.error('Error al generar Excel');
     }
   };
 
@@ -161,15 +182,21 @@ export default function AdminAccounting() {
 
   return (
     <div className="space-y-6" data-testid="admin-accounting">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-black tracking-tight">Contabilidad</h1>
           <p className="text-zinc-400 text-sm">Ingresos, pagos y reportes financieros</p>
         </div>
-        <Button onClick={downloadPDF} className="btn-gym-primary" data-testid="download-pdf-btn">
-          <FileText size={18} className="mr-2" />
-          Exportar PDF
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button onClick={downloadExcel} variant="outline" className="border-zinc-700" data-testid="download-excel-btn">
+            <FileSpreadsheet size={18} className="mr-2" />
+            Excel
+          </Button>
+          <Button onClick={downloadPDF} className="btn-gym-primary" data-testid="download-pdf-btn">
+            <FileText size={18} className="mr-2" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       {/* Sales Reports */}
@@ -208,6 +235,16 @@ export default function AdminAccounting() {
             </Button>
           ))}
           <div className="flex items-center gap-2 ml-auto">
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-36 input-dark" data-testid="status-filter">
+                <SelectValue placeholder="Todos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos</SelectItem>
+                <SelectItem value="paid">Pagados</SelectItem>
+                <SelectItem value="pending">Pendientes</SelectItem>
+              </SelectContent>
+            </Select>
             <Input type="date" value={dateFrom} onChange={(e) => { setDateFrom(e.target.value); setQuickFilter(''); }} className="input-dark w-40" data-testid="date-from" />
             <span className="text-zinc-500">-</span>
             <Input type="date" value={dateTo} onChange={(e) => { setDateTo(e.target.value); setQuickFilter(''); }} className="input-dark w-40" data-testid="date-to" />
