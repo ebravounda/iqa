@@ -57,7 +57,8 @@ export const AuthProvider = ({ children }) => {
 
   const fetchMemberData = async () => {
     try {
-      const response = await axios.get(`${API}/auth/member/me`);
+      const fp = localStorage.getItem('device_fingerprint') || '';
+      const response = await axios.get(`${API}/auth/member/me${fp ? `?device_fingerprint=${fp}` : ''}`);
       setMember(response.data.member);
       setGym(response.data.gym);
       setMembership(response.data.membership);
@@ -93,14 +94,18 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Periodic status check for members - detects suspension in real-time
+  // Periodic status check for members - detects suspension and device deactivation in real-time
   useEffect(() => {
     if (!token || userType !== 'member') return;
     const interval = setInterval(async () => {
       try {
-        await axios.get(`${API}/auth/member/me`);
+        const fp = localStorage.getItem('device_fingerprint') || '';
+        await axios.get(`${API}/auth/member/me${fp ? `?device_fingerprint=${fp}` : ''}`);
       } catch (err) {
         // 403 will be caught by the Axios interceptor and force logout
+        if (err.response?.status === 403) {
+          logout();
+        }
       }
     }, 30000); // Check every 30 seconds
     return () => clearInterval(interval);

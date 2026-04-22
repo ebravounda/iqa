@@ -133,10 +133,20 @@ async def login_member(code: str, request: Request, device_fingerprint: str = No
     return {"member": member, "gym": gym, "membership": membership, "token": token}
 
 @router.get("/auth/member/me")
-async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(security)):
+async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(security), device_fingerprint: str = None):
     payload = decode_jwt_token(credentials.credentials)
     if payload.get("role") != "member":
         raise HTTPException(status_code=403, detail="Not a member")
+    member = await db.members.find_one({"id": payload.get("sub")}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Member not found")
+    # Check if device is still active
+    if device_fingerprint:
+        device = await db.member_devices.find_one(
+            {"member_id": member["id"], "device_fingerprint": device_fingerprint, "active": True}
+        )
+        if not device:
+            raise HTTPException(status_code=403, detail="Dispositivo desactivado")
     member = await db.members.find_one({"id": payload.get("sub")}, {"_id": 0})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
