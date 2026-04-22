@@ -1,0 +1,49 @@
+{
+  "short_name": "IngresoQR",
+  "name": "IngresoQR - Control de Acceso",
+  "description": "Sistema de control de acceso para gimnasios con QR",
+  "icons": [
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "maskable"
+    }
+  ],
+  "start_url": "/app",
+  "display": "standalone",
+  "theme_color": "#09090B",
+  "background_color": "#09090B",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "es",
+  "dir": "ltr",
+  "categories": ["fitness", "health", "utilities"],
+  "screenshots": [
+    {
+      "src": "logo512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "IngresoQR"
+    }
+  ]
+}
