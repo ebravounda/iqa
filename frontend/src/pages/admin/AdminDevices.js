@@ -5,7 +5,7 @@ import { formatDateTime } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../components/ui/dialog';
-import { Plus, Cpu, Copy, RefreshCw, Check, Wifi, WifiOff, Trash2 } from 'lucide-react';
+import { Plus, Cpu, Copy, RefreshCw, Check, Wifi, WifiOff, Trash2, Monitor, ExternalLink } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { toast } from 'sonner';
 
@@ -20,6 +20,7 @@ export default function AdminDevices() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newDevice, setNewDevice] = useState({ name: '', location: '', gym_id: admin?.gym_id || '' });
   const [copiedToken, setCopiedToken] = useState(false);
+  const [copiedKiosk, setCopiedKiosk] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -230,6 +231,50 @@ export default function AdminDevices() {
               {copiedToken ? <Check size={18} /> : <Copy size={18} />}
             </Button>
           </div>
+        </div>
+      )}
+
+      {/* Kiosk Display Link */}
+      {gym && (
+        <div className="stat-card">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center">
+              <Monitor size={20} className="text-blue-500" />
+            </div>
+            <div>
+              <h3 className="font-bold">Pantalla Kiosk (HDMI / TV)</h3>
+              <p className="text-xs text-zinc-500">Muestra ocupacion en tiempo real y eventos de acceso</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 bg-zinc-800 px-4 py-3 rounded-lg font-mono text-xs sm:text-sm text-zinc-300 overflow-x-auto" data-testid="kiosk-url">
+              {window.location.origin}/display/{gym.id}
+            </code>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(`${window.location.origin}/display/${gym.id}`);
+                setCopiedKiosk(true);
+                toast.success('Enlace copiado');
+                setTimeout(() => setCopiedKiosk(false), 2000);
+              }}
+              variant="outline"
+              className="border-zinc-700 shrink-0"
+              data-testid="copy-kiosk-btn"
+            >
+              {copiedKiosk ? <Check size={18} /> : <Copy size={18} />}
+            </Button>
+            <Button
+              onClick={() => window.open(`${window.location.origin}/display/${gym.id}`, '_blank')}
+              variant="outline"
+              className="border-zinc-700 shrink-0"
+              data-testid="open-kiosk-btn"
+            >
+              <ExternalLink size={18} />
+            </Button>
+          </div>
+          <p className="text-xs text-zinc-600 mt-3">
+            Abre este enlace en cualquier TV, monitor o Raspberry Pi conectado por HDMI
+          </p>
         </div>
       )}
 
