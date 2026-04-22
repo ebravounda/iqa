@@ -132,7 +132,7 @@ export default function MemberHome() {
           <QRCodeCanvas
             value={qrCode}
             size={size}
-            level="M"
+            level="H"
             includeMargin={false}
             bgColor="#FFFFFF"
             fgColor="#000000"

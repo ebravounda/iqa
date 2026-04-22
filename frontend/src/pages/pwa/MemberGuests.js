@@ -315,7 +315,7 @@ export default function MemberGuests() {
                 <QRCodeCanvas
                   value={guestQR.qr_code}
                   size={250}
-                  level="M"
+                  level="H"
                   includeMargin={false}
                   bgColor="#FFFFFF"
                   fgColor="#000000"
