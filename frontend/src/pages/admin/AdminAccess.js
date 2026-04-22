@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { getAccessLogs, getMembers, getMemberAccessStats } from '../../lib/api';
+import { getAccessLogs, getMembers, getMemberAccessStats, resetMemberDirection } from '../../lib/api';
 import { formatDateTime } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Button } from '../../components/ui/button';
 import { Calendar } from '../../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../components/ui/dialog';
-import { Search, Calendar as CalendarIcon, Download, ArrowUpRight, ArrowDownLeft, BarChart3, User, FileSpreadsheet } from 'lucide-react';
+import { Search, Calendar as CalendarIcon, Download, ArrowUpRight, ArrowDownLeft, BarChart3, User, FileSpreadsheet, RotateCcw } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -254,16 +254,37 @@ export default function AdminAccess() {
                     </td>
                     <td>
                       {log.member_id && !log.is_guest && (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => viewMemberStats(log.member_id)}
-                          className="h-8 px-2 text-zinc-400 hover:text-white"
-                          data-testid={`view-stats-${log.member_id}`}
-                        >
-                          <BarChart3 size={16} className="mr-1" />
-                          <span className="text-xs">Asistencia</span>
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => viewMemberStats(log.member_id)}
+                            className="h-8 px-2 text-zinc-400 hover:text-white"
+                            data-testid={`view-stats-${log.member_id}`}
+                          >
+                            <BarChart3 size={16} className="mr-1" />
+                            <span className="text-xs">Asistencia</span>
+                          </Button>
+                          {log.direction === 'entrada' && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={async () => {
+                                if (!window.confirm(`Resetear direccion de ${log.member_name}? El proximo escaneo sera ENTRADA.`)) return;
+                                try {
+                                  await resetMemberDirection(log.member_id);
+                                  toast.success(`Direccion reseteada para ${log.member_name}`);
+                                  fetchLogs();
+                                } catch { toast.error('Error al resetear'); }
+                              }}
+                              className="h-8 px-2 text-amber-400 hover:text-amber-300 hover:bg-amber-500/10"
+                              data-testid={`reset-direction-${log.member_id}`}
+                            >
+                              <RotateCcw size={14} className="mr-1" />
+                              <span className="text-xs">Reset</span>
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>

@@ -263,6 +263,28 @@ async def get_member_access_logs(credentials: HTTPAuthorizationCredentials = Dep
     logs = await db.access_logs.find({"member_id": member_id}, {"_id": 0}).sort("timestamp", -1).to_list(50)
     return logs
 
+@router.post("/access/reset-direction/{member_id}")
+async def reset_member_direction(member_id: str, admin: dict = Depends(get_current_admin)):
+    """Reset anti-passback direction for a member. Next scan will be 'entrada'."""
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+    gym_id = member.get("gym_id")
+    if admin["role"] != "super_admin" and admin.get("gym_id") != gym_id:
+        raise HTTPException(status_code=403, detail="No autorizado")
+    access_log = {
+        "id": str(uuid.uuid4()),
+        "member_id": member_id,
+        "member_name": member.get("name"),
+        "member_code": member.get("code"),
+        "gym_id": gym_id,
+        "direction": "salida",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "note": f"Reset manual por {admin.get('email', admin.get('id'))}"
+    }
+    await db.access_logs.insert_one(access_log)
+    return {"message": f"Direccion reseteada para {member.get('name')}. Proximo escaneo sera ENTRADA."}
+
 @router.get("/access/stats/member")
 async def get_member_visit_stats_pwa(credentials: HTTPAuthorizationCredentials = Depends(security)):
     """Visit statistics for the logged-in member (PWA)"""

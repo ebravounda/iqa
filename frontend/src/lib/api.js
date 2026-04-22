@@ -97,6 +97,7 @@ export const getAccessLogs = (gymId, memberId, dateFrom, dateTo, limit = 100) =>
   return axios.get(url);
 };
 export const getMemberAccessLogs = () => axios.get(`${API}/access/logs/member`);
+export const resetMemberDirection = (memberId) => axios.post(`${API}/access/reset-direction/${memberId}`);
 export const getAccessStats = (gymId) => {
   let url = `${API}/access/stats`;
   if (gymId) url += `?gym_id=${gymId}`;
