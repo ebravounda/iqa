@@ -2,6 +2,9 @@ import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useBusiness } from '../../context/BusinessContext';
 import { getMembers, createMember, updateMember, approveMember, suspendMember, deleteMember, getPlans, createMembership, checkExpiredMemberships, getGyms, setMemberQRMode, uploadAvatarAdmin, getMemberDevices, deactivateDevice, deactivateAllDevices, getMemberEmails, resendEmail, cleanupInactiveMembers, assignRFID, importMembers, assignMembershipsBulk, updateMemberMembership, getMembershipLogs } from '../../lib/api';
+import axios from 'axios';
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 import { formatDate } from '../../lib/utils';
 import { Input } from '../../components/ui/input';
 import { Textarea } from '../../components/ui/textarea';
@@ -12,7 +15,7 @@ import {
   Search, Plus, MoreVertical, Check,
   UserPlus, CreditCard, Pencil, Trash2, Ban, CheckCircle,
   AlertTriangle, RefreshCw, PauseCircle, Banknote, Receipt, QrCode, Camera,
-  Mail, Phone, Copy, X as XIcon, Smartphone, Building2, Loader2, Send, Upload, FileSpreadsheet
+  Mail, Phone, Copy, X as XIcon, Smartphone, Building2, Loader2, Send, Upload, FileSpreadsheet, Download
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '../../components/ui/dropdown-menu';
@@ -666,6 +669,22 @@ export default function AdminMembers() {
                             }} className="cursor-pointer text-cyan-400" data-testid={`member-qr-${member.code}`}>
                               <QrCode size={16} className="mr-2" /> {member.qr_mode === 'static' ? 'Cambiar a QR Dinamico' : 'Asignar QR Estatico'}
                             </DropdownMenuItem>
+                            {member.qr_mode === 'static' && (
+                              <DropdownMenuItem onClick={async () => {
+                                try {
+                                  const res = await axios.get(`${API}/members/${member.id}/qr-card-pdf`, { responseType: 'blob' });
+                                  const url = window.URL.createObjectURL(new Blob([res.data]));
+                                  const a = document.createElement('a');
+                                  a.href = url;
+                                  a.download = `tarjeta_qr_${member.code}.pdf`;
+                                  a.click();
+                                  window.URL.revokeObjectURL(url);
+                                  toast.success('Tarjeta QR descargada');
+                                } catch (e) { toast.error('Error al generar tarjeta'); }
+                              }} className="cursor-pointer text-yellow-400" data-testid={`member-qr-card-${member.code}`}>
+                                <Download size={16} className="mr-2" /> Descargar Tarjeta QR
+                              </DropdownMenuItem>
+                            )}
                           </>
                         )}
                         <DropdownMenuSeparator className="bg-zinc-700" />

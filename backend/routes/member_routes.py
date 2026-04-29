@@ -854,3 +854,107 @@ async def assign_memberships_bulk(data: dict, admin: dict = Depends(get_current_
         "error_details": errors[:10],
         "message": f"Asignacion completada: {assigned} membresias creadas, {skipped} omitidos, {no_plan} sin plan, {len(errors)} errores"
     }
+
+
+@router.get("/members/{member_id}/qr-card-pdf")
+async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current_admin)):
+    """Generate a credit-card sized PDF with the member's static QR code for printing."""
+    from reportlab.lib.pagesizes import mm
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.pdfgen import canvas as pdf_canvas
+    from io import BytesIO
+    import qrcode
+
+    member = await db.members.find_one({"id": member_id}, {"_id": 0})
+    if not member:
+        raise HTTPException(status_code=404, detail="Socio no encontrado")
+
+    # Get gym info
+    gym = await db.gyms.find_one({"id": member.get("gym_id")}, {"_id": 0})
+    gym_name = gym.get("name", "GYM") if gym else "GYM"
+    primary_color = gym.get("primary_color", "#E1FF01") if gym else "#E1FF01"
+
+    # QR value: use static_qr_code or code
+    qr_value = member.get("static_qr_code") or member.get("code", "")
+    member_name = member.get("name", "")
+    member_code = member.get("code", "")
+
+    # Credit card size: 85.6mm x 54mm
+    card_w = 85.6 * mm
+    card_h = 54 * mm
+
+    # Generate QR code image
+    qr = qrcode.QRCode(version=1, error_correction=qrcode.constants.ERROR_CORRECT_H, box_size=10, border=1)
+    qr.add_data(qr_value)
+    qr.make(fit=True)
+    qr_img = qr.make_image(fill_color="black", back_color="white")
+    qr_buffer = BytesIO()
+    qr_img.save(qr_buffer, format='PNG')
+    qr_buffer.seek(0)
+
+    # Create PDF
+    buffer = BytesIO()
+    c = pdf_canvas.Canvas(buffer, pagesize=(card_w, card_h))
+
+    # Background - dark
+    c.setFillColor(colors.HexColor('#09090B'))
+    c.rect(0, 0, card_w, card_h, fill=1, stroke=0)
+
+    # Accent line at top
+    try:
+        c.setFillColor(colors.HexColor(primary_color))
+    except:
+        c.setFillColor(colors.HexColor('#E1FF01'))
+    c.rect(0, card_h - 3*mm, card_w, 3*mm, fill=1, stroke=0)
+
+    # Gym name (top left)
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 9)
+    c.drawString(5*mm, card_h - 10*mm, gym_name.upper())
+
+    # Member name
+    c.setFont("Helvetica-Bold", 11)
+    c.drawString(5*mm, card_h - 18*mm, member_name[:25])
+
+    # Member code
+    c.setFillColor(colors.HexColor('#A1A1AA'))
+    c.setFont("Helvetica", 8)
+    c.drawString(5*mm, card_h - 24*mm, f"Codigo: {member_code}")
+
+    # QR code (right side)
+    qr_size = 36 * mm
+    qr_x = card_w - qr_size - 5*mm
+    qr_y = (card_h - qr_size) / 2 - 2*mm
+
+    # White background for QR
+    c.setFillColor(colors.white)
+    c.roundRect(qr_x - 2*mm, qr_y - 2*mm, qr_size + 4*mm, qr_size + 4*mm, 2*mm, fill=1, stroke=0)
+
+    # Draw QR
+    from reportlab.lib.utils import ImageReader
+    qr_reader = ImageReader(qr_buffer)
+    c.drawImage(qr_reader, qr_x, qr_y, width=qr_size, height=qr_size)
+
+    # Footer text
+    c.setFillColor(colors.HexColor('#71717A'))
+    c.setFont("Helvetica", 5)
+    c.drawString(5*mm, 3*mm, "Presenta este QR en el lector para acceder")
+
+    # Accent dot bottom-right
+    try:
+        c.setFillColor(colors.HexColor(primary_color))
+    except:
+        c.setFillColor(colors.HexColor('#E1FF01'))
+    c.circle(card_w - 4*mm, 4*mm, 1.5*mm, fill=1, stroke=0)
+
+    c.save()
+    buffer.seek(0)
+
+    filename = f"tarjeta_qr_{member_code}_{member_name.replace(' ', '_')[:20]}.pdf"
+    return StreamingResponse(
+        buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
