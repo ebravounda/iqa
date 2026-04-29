@@ -102,8 +102,8 @@ export default function AdminAccounting() {
   };
 
   const methodLabel = (m) => {
-    const map = { cash: 'Efectivo', card_reception: 'Tarjeta', stripe: 'Stripe', mercadopago: 'MercadoPago' };
-    return map[m] || 'Stripe Online';
+    const map = { cash: 'Efectivo', card_reception: 'Tarjeta', stripe: 'Stripe', mercadopago: 'MercadoPago', redsys: 'Redsys TPV' };
+    return map[m] || 'Otro';
   };
 
   const handleWithdrawal = async () => {

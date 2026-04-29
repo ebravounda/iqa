@@ -303,7 +303,7 @@ async def generate_accounting_pdf(
     if transactions:
         table_data = [['Fecha', 'Socio', 'Plan', 'Metodo', 'Monto']]
         for t in transactions:
-            method_map = {"cash": "Efectivo", "card_reception": "Tarjeta", "stripe": "Stripe Online", "mercadopago": "MercadoPago"}
+            method_map = {"cash": "Efectivo", "card_reception": "Tarjeta", "stripe": "Stripe Online", "mercadopago": "MercadoPago", "redsys": "Redsys TPV"}
             method = method_map.get(t.get("payment_method", "stripe"), "Stripe Online")
             date_str = t.get("created_at", "")[:10]
             table_data.append([date_str, t.get("member_name", "-"), t.get("plan_name", "-"), method, f"${t.get('amount', 0):,.2f}"])
@@ -744,7 +744,7 @@ async def generate_sales_report_pdf(
     if transactions:
         elements.append(Paragraph("Detalle de Membresias", section_style))
         mem_data = [['Fecha', 'Socio', 'Plan', 'Metodo', 'Monto']]
-        method_map = {"cash": "Efectivo", "card_reception": "Tarjeta", "stripe": "Stripe", "mercadopago": "MercadoPago"}
+        method_map = {"cash": "Efectivo", "card_reception": "Tarjeta", "stripe": "Stripe", "mercadopago": "MercadoPago", "redsys": "Redsys TPV"}
         for tx in transactions:
             mem_data.append([
                 tx.get("created_at", "")[:10],
