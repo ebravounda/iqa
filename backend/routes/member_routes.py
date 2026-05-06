@@ -895,16 +895,11 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     buffer = BytesIO()
     c = pdf_canvas.Canvas(buffer, pagesize=(card_w, card_h))
 
-    # === FRONT SIDE ===
-    # Background gradient effect (dark with subtle lighter area)
-    c.setFillColor(colors.HexColor('#111113'))
+    # Background
+    c.setFillColor(colors.HexColor('#0A0A0C'))
     c.rect(0, 0, card_w, card_h, fill=1, stroke=0)
 
-    # Subtle dark panel on left
-    c.setFillColor(colors.HexColor('#0A0A0C'))
-    c.rect(0, 0, card_w * 0.48, card_h, fill=1, stroke=0)
-
-    # Thin accent line at left edge
+    # Accent line left edge
     try:
         accent = colors.HexColor(primary_color)
     except:
@@ -912,62 +907,57 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     c.setFillColor(accent)
     c.rect(0, 0, 1.5*mm, card_h, fill=1, stroke=0)
 
-    # QR code - centered on left half
-    qr_size = 28 * mm
-    qr_x = (card_w * 0.48 - qr_size) / 2 + 1*mm
-    qr_y = (card_h - qr_size) / 2 + 2*mm
+    # === QR CODE - LARGE, CENTERED ===
+    qr_size = 40 * mm
+    qr_x = (card_w - qr_size) / 2
+    qr_y = 7 * mm
 
-    # White rounded background for QR
+    # White background for QR
     c.setFillColor(colors.white)
-    c.roundRect(qr_x - 2.5*mm, qr_y - 2.5*mm, qr_size + 5*mm, qr_size + 5*mm, 3*mm, fill=1, stroke=0)
+    c.roundRect(qr_x - 2*mm, qr_y - 2*mm, qr_size + 4*mm, qr_size + 4*mm, 2*mm, fill=1, stroke=0)
 
     # Draw QR
     qr_reader = ImageReader(qr_buffer)
     c.drawImage(qr_reader, qr_x, qr_y, width=qr_size, height=qr_size)
 
-    # "Escanea para acceder" below QR
-    c.setFillColor(colors.HexColor('#71717A'))
-    c.setFont("Helvetica", 5.5)
-    text_x = (card_w * 0.48) / 2 + 1*mm
-    c.drawCentredString(text_x, qr_y - 5*mm, "Escanea para acceder")
+    # === TOP AREA: Gym name + Member info ===
+    top_y = qr_y + qr_size + 3*mm
 
-    # Right side content
-    right_x = card_w * 0.52
-
-    # Gym name (top right area)
+    # Gym name (left)
     c.setFillColor(accent)
-    c.setFont("Helvetica-Bold", 8)
-    c.drawString(right_x, card_h - 10*mm, gym_name.upper())
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(5*mm, top_y, gym_name.upper())
 
-    # Separator line
-    c.setStrokeColor(colors.HexColor('#333336'))
-    c.setLineWidth(0.3)
-    c.line(right_x, card_h - 13*mm, card_w - 5*mm, card_h - 13*mm)
-
-    # Member name (may need to truncate)
-    c.setFillColor(colors.white)
-    name_font_size = 10 if len(member_name) <= 20 else 8.5 if len(member_name) <= 28 else 7.5
-    c.setFont("Helvetica-Bold", name_font_size)
-    c.drawString(right_x, card_h - 21*mm, member_name[:32])
-
-    # Member code
+    # Member code (right)
     c.setFillColor(colors.HexColor('#A1A1AA'))
-    c.setFont("Helvetica", 7.5)
-    c.drawString(right_x, card_h - 27*mm, f"ID: {member_code}")
+    c.setFont("Helvetica-Bold", 7)
+    c.drawRightString(card_w - 5*mm, top_y, member_code)
 
-    # Membership label
-    c.setFont("Helvetica", 6)
+    # Member name - split into first name and last name if needed
+    name_parts = member_name.split(' ', 1)
+    first_name = name_parts[0] if name_parts else ""
+    last_name = name_parts[1] if len(name_parts) > 1 else ""
+
+    # First name + last name on left side of QR
+    c.setFillColor(colors.white)
+    c.setFont("Helvetica-Bold", 6.5)
+    # Position name vertically on left of QR
+    name_x = 5*mm
+    name_y = qr_y + qr_size / 2 + 3*mm
+    c.drawString(name_x, name_y, first_name[:15])
+    if last_name:
+        c.setFont("Helvetica", 5.5)
+        c.drawString(name_x, name_y - 7, last_name[:18])
+
+    # "SOCIO" label on right of QR
     c.setFillColor(colors.HexColor('#52525B'))
-    c.drawString(right_x, card_h - 38*mm, "TARJETA DE SOCIO")
-
-    # Bottom accent bar
-    c.setFillColor(accent)
-    c.rect(right_x, 3*mm, 8*mm, 1.5*mm, fill=1, stroke=0)
-
-    # IngresoQR branding
-    c.setFillColor(colors.HexColor('#3F3F46'))
     c.setFont("Helvetica", 5)
-    c.drawRightString(card_w - 4*mm, 3.5*mm, "IngresoQR")
+    c.drawRightString(card_w - 5*mm, qr_y + qr_size / 2, "TARJETA DE SOCIO")
+
+    # Bottom branding
+    c.setFillColor(colors.HexColor('#3F3F46'))
+    c.setFont("Helvetica", 4.5)
+    c.drawCentredString(card_w / 2, 2.5*mm, "Presenta este QR en el lector para acceder")
 
     c.save()
     buffer.seek(0)
