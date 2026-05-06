@@ -876,8 +876,9 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     gym_name = gym.get("name", "GYM") if gym else "GYM"
     primary_color = gym.get("primary_color", "#E1FF01") if gym else "#E1FF01"
 
-    # QR value: use static_qr_code or code
-    qr_value = member.get("static_qr_code") or member.get("code", "")
+    # QR value: must match what the app generates for static QR
+    from qr_utils import generate_static_qr_data
+    qr_value = generate_static_qr_data(member["id"], member.get("gym_id", ""))
     member_name = member.get("name", "")
     member_code = member.get("code", "")
 
