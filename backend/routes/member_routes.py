@@ -907,10 +907,19 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     c.setFillColor(accent)
     c.rect(0, 0, 1.5*mm, card_h, fill=1, stroke=0)
 
+    # === TOP BAR: Gym name + Member code ===
+    c.setFillColor(accent)
+    c.setFont("Helvetica-Bold", 7)
+    c.drawString(5*mm, card_h - 7*mm, gym_name.upper())
+
+    c.setFillColor(colors.HexColor('#A1A1AA'))
+    c.setFont("Helvetica-Bold", 7)
+    c.drawRightString(card_w - 5*mm, card_h - 7*mm, member_code)
+
     # === QR CODE - LARGE, CENTERED ===
-    qr_size = 40 * mm
+    qr_size = 34 * mm
     qr_x = (card_w - qr_size) / 2
-    qr_y = 7 * mm
+    qr_y = 14 * mm
 
     # White background for QR
     c.setFillColor(colors.white)
@@ -920,44 +929,41 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     qr_reader = ImageReader(qr_buffer)
     c.drawImage(qr_reader, qr_x, qr_y, width=qr_size, height=qr_size)
 
-    # === TOP AREA: Gym name + Member info ===
-    top_y = qr_y + qr_size + 3*mm
+    # === MEMBER NAME - BELOW TOP BAR, ABOVE QR ===
+    # Split name into parts for multi-line
+    name_parts = member_name.split()
+    if len(name_parts) <= 2:
+        line1 = member_name
+        line2 = ""
+    elif len(name_parts) == 3:
+        line1 = " ".join(name_parts[:2])
+        line2 = name_parts[2]
+    else:
+        line1 = " ".join(name_parts[:2])
+        line2 = " ".join(name_parts[2:])
 
-    # Gym name (left)
-    c.setFillColor(accent)
-    c.setFont("Helvetica-Bold", 7)
-    c.drawString(5*mm, top_y, gym_name.upper())
-
-    # Member code (right)
-    c.setFillColor(colors.HexColor('#A1A1AA'))
-    c.setFont("Helvetica-Bold", 7)
-    c.drawRightString(card_w - 5*mm, top_y, member_code)
-
-    # Member name - split into first name and last name if needed
-    name_parts = member_name.split(' ', 1)
-    first_name = name_parts[0] if name_parts else ""
-    last_name = name_parts[1] if len(name_parts) > 1 else ""
-
-    # First name + last name on left side of QR
+    name_y = qr_y + qr_size + 4*mm
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 6.5)
-    # Position name vertically on left of QR
-    name_x = 5*mm
-    name_y = qr_y + qr_size / 2 + 3*mm
-    c.drawString(name_x, name_y, first_name[:15])
-    if last_name:
-        c.setFont("Helvetica", 5.5)
-        c.drawString(name_x, name_y - 7, last_name[:18])
+    font_size = 8 if len(line1) <= 22 else 7
+    c.setFont("Helvetica-Bold", font_size)
+    c.drawCentredString(card_w / 2, name_y + 4*mm, line1[:28])
+    if line2:
+        c.setFont("Helvetica", font_size - 0.5)
+        c.drawCentredString(card_w / 2, name_y, line2[:28])
 
-    # "SOCIO" label on right of QR
+    # === BOTTOM TEXT ===
     c.setFillColor(colors.HexColor('#52525B'))
-    c.setFont("Helvetica", 5)
-    c.drawRightString(card_w - 5*mm, qr_y + qr_size / 2, "TARJETA DE SOCIO")
+    c.setFont("Helvetica", 4.5)
+    c.drawCentredString(card_w / 2, 3*mm, "Escanea este QR en el lector para acceder")
 
-    # Bottom branding
+    # Small accent bar bottom
+    c.setFillColor(accent)
+    c.rect(5*mm, 8*mm, 6*mm, 1*mm, fill=1, stroke=0)
+
+    # IngresoQR branding bottom right
     c.setFillColor(colors.HexColor('#3F3F46'))
     c.setFont("Helvetica", 4.5)
-    c.drawCentredString(card_w / 2, 2.5*mm, "Presenta este QR en el lector para acceder")
+    c.drawRightString(card_w - 5*mm, 3*mm, "IngresoQR")
 
     c.save()
     buffer.seek(0)
