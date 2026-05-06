@@ -861,9 +861,8 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     """Generate a credit-card sized PDF with the member's static QR code for printing."""
     from reportlab.lib.pagesizes import mm
     from reportlab.lib import colors
-    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, Image as RLImage
-    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.pdfgen import canvas as pdf_canvas
+    from reportlab.lib.utils import ImageReader
     from io import BytesIO
     import qrcode
 
@@ -871,12 +870,10 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     if not member:
         raise HTTPException(status_code=404, detail="Socio no encontrado")
 
-    # Get gym info
     gym = await db.gyms.find_one({"id": member.get("gym_id")}, {"_id": 0})
     gym_name = gym.get("name", "GYM") if gym else "GYM"
     primary_color = gym.get("primary_color", "#E1FF01") if gym else "#E1FF01"
 
-    # QR value: must match what the app generates for static QR
     from qr_utils import generate_static_qr_data
     qr_value = generate_static_qr_data(member["id"], member.get("gym_id", ""))
     member_name = member.get("name", "")
@@ -895,60 +892,82 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     qr_img.save(qr_buffer, format='PNG')
     qr_buffer.seek(0)
 
-    # Create PDF
     buffer = BytesIO()
     c = pdf_canvas.Canvas(buffer, pagesize=(card_w, card_h))
 
-    # Background - dark
-    c.setFillColor(colors.HexColor('#09090B'))
+    # === FRONT SIDE ===
+    # Background gradient effect (dark with subtle lighter area)
+    c.setFillColor(colors.HexColor('#111113'))
     c.rect(0, 0, card_w, card_h, fill=1, stroke=0)
 
-    # Accent line at top
+    # Subtle dark panel on left
+    c.setFillColor(colors.HexColor('#0A0A0C'))
+    c.rect(0, 0, card_w * 0.48, card_h, fill=1, stroke=0)
+
+    # Thin accent line at left edge
     try:
-        c.setFillColor(colors.HexColor(primary_color))
+        accent = colors.HexColor(primary_color)
     except:
-        c.setFillColor(colors.HexColor('#E1FF01'))
-    c.rect(0, card_h - 3*mm, card_w, 3*mm, fill=1, stroke=0)
+        accent = colors.HexColor('#E1FF01')
+    c.setFillColor(accent)
+    c.rect(0, 0, 1.5*mm, card_h, fill=1, stroke=0)
 
-    # Gym name (top left)
+    # QR code - centered on left half
+    qr_size = 28 * mm
+    qr_x = (card_w * 0.48 - qr_size) / 2 + 1*mm
+    qr_y = (card_h - qr_size) / 2 + 2*mm
+
+    # White rounded background for QR
     c.setFillColor(colors.white)
-    c.setFont("Helvetica-Bold", 9)
-    c.drawString(5*mm, card_h - 10*mm, gym_name.upper())
-
-    # Member name
-    c.setFont("Helvetica-Bold", 11)
-    c.drawString(5*mm, card_h - 18*mm, member_name[:25])
-
-    # Member code
-    c.setFillColor(colors.HexColor('#A1A1AA'))
-    c.setFont("Helvetica", 8)
-    c.drawString(5*mm, card_h - 24*mm, f"Codigo: {member_code}")
-
-    # QR code (right side)
-    qr_size = 36 * mm
-    qr_x = card_w - qr_size - 5*mm
-    qr_y = (card_h - qr_size) / 2 - 2*mm
-
-    # White background for QR
-    c.setFillColor(colors.white)
-    c.roundRect(qr_x - 2*mm, qr_y - 2*mm, qr_size + 4*mm, qr_size + 4*mm, 2*mm, fill=1, stroke=0)
+    c.roundRect(qr_x - 2.5*mm, qr_y - 2.5*mm, qr_size + 5*mm, qr_size + 5*mm, 3*mm, fill=1, stroke=0)
 
     # Draw QR
-    from reportlab.lib.utils import ImageReader
     qr_reader = ImageReader(qr_buffer)
     c.drawImage(qr_reader, qr_x, qr_y, width=qr_size, height=qr_size)
 
-    # Footer text
+    # "Escanea para acceder" below QR
     c.setFillColor(colors.HexColor('#71717A'))
-    c.setFont("Helvetica", 5)
-    c.drawString(5*mm, 3*mm, "Presenta este QR en el lector para acceder")
+    c.setFont("Helvetica", 5.5)
+    text_x = (card_w * 0.48) / 2 + 1*mm
+    c.drawCentredString(text_x, qr_y - 5*mm, "Escanea para acceder")
 
-    # Accent dot bottom-right
-    try:
-        c.setFillColor(colors.HexColor(primary_color))
-    except:
-        c.setFillColor(colors.HexColor('#E1FF01'))
-    c.circle(card_w - 4*mm, 4*mm, 1.5*mm, fill=1, stroke=0)
+    # Right side content
+    right_x = card_w * 0.52
+
+    # Gym name (top right area)
+    c.setFillColor(accent)
+    c.setFont("Helvetica-Bold", 8)
+    c.drawString(right_x, card_h - 10*mm, gym_name.upper())
+
+    # Separator line
+    c.setStrokeColor(colors.HexColor('#333336'))
+    c.setLineWidth(0.3)
+    c.line(right_x, card_h - 13*mm, card_w - 5*mm, card_h - 13*mm)
+
+    # Member name (may need to truncate)
+    c.setFillColor(colors.white)
+    name_font_size = 10 if len(member_name) <= 20 else 8.5 if len(member_name) <= 28 else 7.5
+    c.setFont("Helvetica-Bold", name_font_size)
+    c.drawString(right_x, card_h - 21*mm, member_name[:32])
+
+    # Member code
+    c.setFillColor(colors.HexColor('#A1A1AA'))
+    c.setFont("Helvetica", 7.5)
+    c.drawString(right_x, card_h - 27*mm, f"ID: {member_code}")
+
+    # Membership label
+    c.setFont("Helvetica", 6)
+    c.setFillColor(colors.HexColor('#52525B'))
+    c.drawString(right_x, card_h - 38*mm, "TARJETA DE SOCIO")
+
+    # Bottom accent bar
+    c.setFillColor(accent)
+    c.rect(right_x, 3*mm, 8*mm, 1.5*mm, fill=1, stroke=0)
+
+    # IngresoQR branding
+    c.setFillColor(colors.HexColor('#3F3F46'))
+    c.setFont("Helvetica", 5)
+    c.drawRightString(card_w - 4*mm, 3.5*mm, "IngresoQR")
 
     c.save()
     buffer.seek(0)
