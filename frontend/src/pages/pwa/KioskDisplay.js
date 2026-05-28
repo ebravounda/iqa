@@ -34,6 +34,7 @@ export default function KioskDisplay() {
         }
       } catch (error) {
         console.error('Display fetch error:', error);
+        // Don't clear data on error - keep showing last valid data
       }
     };
 

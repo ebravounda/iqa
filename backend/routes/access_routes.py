@@ -450,8 +450,8 @@ async def get_display_data(gym_id: str):
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Occupancy
-    query = {"gym_id": gym_id, "timestamp": {"$gte": today_start.isoformat()}}
+    # Occupancy - exclude manual resets from count
+    query = {"gym_id": gym_id, "timestamp": {"$gte": today_start.isoformat()}, "note": {"$exists": False}}
     entries = await db.access_logs.count_documents({**query, "direction": "entrada"})
     exits = await db.access_logs.count_documents({**query, "direction": "salida"})
     current = max(0, entries - exits)

@@ -88,7 +88,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching member data:', error);
-      logout();
+      // Only logout on authentication errors (401/403), NOT on network errors
+      if (error.response?.status === 401 || error.response?.status === 403) {
+        logout();
+      }
     } finally {
       setLoading(false);
     }

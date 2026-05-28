@@ -140,16 +140,14 @@ async def get_member_me(credentials: HTTPAuthorizationCredentials = Depends(secu
     member = await db.members.find_one({"id": payload.get("sub")}, {"_id": 0})
     if not member:
         raise HTTPException(status_code=404, detail="Member not found")
-    # Check if device is still active
+    # Check if device is still active (only if fingerprint provided AND device exists)
     if device_fingerprint:
         device = await db.member_devices.find_one(
-            {"member_id": member["id"], "device_fingerprint": device_fingerprint, "active": True}
+            {"member_id": member["id"], "device_fingerprint": device_fingerprint}
         )
-        if not device:
+        # Only force logout if the device EXISTS but is deactivated
+        if device and not device.get("active", True):
             raise HTTPException(status_code=403, detail="Dispositivo desactivado")
-    member = await db.members.find_one({"id": payload.get("sub")}, {"_id": 0})
-    if not member:
-        raise HTTPException(status_code=404, detail="Member not found")
     if member.get("status") == "suspended":
         s_type = member.get("suspension_type")
         if s_type == "manual":
