@@ -216,15 +216,8 @@ async def validate_access(validation: AccessValidation):
     if end_date < datetime.now(timezone.utc):
         await db.memberships.update_one({"id": membership["id"]}, {"$set": {"status": "expired"}})
         return {"valid": False, "reason": "Membership expired"}
-    # Anti-passback
-    last_log = await db.access_logs.find_one(
-        {"member_id": member["id"], "gym_id": gym["id"], "is_guest": {"$ne": True}},
-        {"_id": 0}, sort=[("timestamp", -1)]
-    )
-    if last_log:
-        actual_direction = "salida" if last_log.get("direction") == "entrada" else "entrada"
-    else:
-        actual_direction = "entrada"
+    # Direction: use the direction sent by the device (Pi knows which scanner was used)
+    actual_direction = validation.direction if validation.direction in ("entrada", "salida") else "entrada"
     access_log = {
         "id": str(uuid.uuid4()), "member_id": member["id"], "member_name": member["name"],
         "member_code": member["code"], "gym_id": gym["id"],
