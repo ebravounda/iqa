@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Button } from '../../components/ui/button';
-import { Loader2, ShieldCheck, AlertOctagon, ArrowRight, Smartphone, Trash2, Monitor, Tablet } from 'lucide-react';
+import { Loader2, ShieldCheck, AlertOctagon, ArrowRight, Smartphone, Trash2, Monitor, Tablet, Mail } from 'lucide-react';
 import { toast } from 'sonner';
 import axios from 'axios';
 
@@ -24,13 +24,16 @@ export default function MemberLogin() {
   const [focused, setFocused] = useState(0);
   const [rememberMe, setRememberMe] = useState(false);
   const [autoLogging, setAutoLogging] = useState(false);
-  // Device limit state
-  const [deviceLimitHit, setDeviceLimitHit] = useState(false);
+  const [recoveryMode, setRecoveryMode] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState('');
+  const [recoverySent, setRecoverySent] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);  const [deviceLimitHit, setDeviceLimitHit] = useState(false);
   const [devices, setDevices] = useState([]);
   const [maxDevices, setMaxDevices] = useState(2);
   const [deactivating, setDeactivating] = useState(null);
   const [savedCode, setSavedCode] = useState(''); // Store code for device deactivation
 
+  // Device limit state
   const { loginMember, gym } = useAuth();
   const navigate = useNavigate();
   const inputRefs = useRef([]);
@@ -184,6 +187,21 @@ export default function MemberLogin() {
   const fullCode = code.join('');
   const isComplete = fullCode.length === 6;
 
+  const handleRecoverCode = async (e) => {
+    if (e) e.preventDefault();
+    if (!recoveryEmail.trim()) { toast.error('Ingresa tu email'); return; }
+    setRecoveryLoading(true);
+    try {
+      await axios.post(`${API}/auth/member/recover-code`, { email: recoveryEmail.trim() });
+      setRecoverySent(true);
+      toast.success('Si tu email esta registrado, recibiras tu codigo');
+    } catch {
+      toast.error('Error al enviar. Intenta de nuevo.');
+    } finally {
+      setRecoveryLoading(false);
+    }
+  };
+
   // Auto-login loading screen
   if (autoLogging) {
     return (
@@ -279,6 +297,59 @@ export default function MemberLogin() {
             onClick={() => { setDeviceLimitHit(false); setCode(['', '', '', '', '', '']); }}
             className="w-full text-sm text-zinc-500 hover:text-zinc-300 transition-colors text-center py-2"
             data-testid="back-from-devices-btn"
+          >
+            Volver al inicio
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Recovery screen
+  if (recoveryMode) {
+    return (
+      <div className="min-h-screen bg-[#09090B] flex items-center justify-center p-6" data-testid="recovery-screen">
+        <div className="w-full max-w-sm space-y-6">
+          <div className="text-center">
+            <div className="w-16 h-16 rounded-full bg-blue-500/10 border-2 border-blue-500/30 flex items-center justify-center mx-auto mb-4">
+              <Mail size={32} className="text-blue-500" />
+            </div>
+            <h1 className="text-xl font-black mb-2">{recoverySent ? 'Email enviado' : 'Recuperar codigo'}</h1>
+            <p className="text-zinc-400 text-sm">
+              {recoverySent 
+                ? 'Si tu email esta registrado, recibiras tu codigo de socio en breve. Revisa tu bandeja de entrada y spam.'
+                : 'Ingresa tu email y te enviaremos tu codigo de socio.'
+              }
+            </p>
+          </div>
+
+          {!recoverySent && (
+            <form onSubmit={handleRecoverCode} className="space-y-4">
+              <input
+                type="email"
+                value={recoveryEmail}
+                onChange={(e) => setRecoveryEmail(e.target.value)}
+                placeholder="tu@email.com"
+                className="w-full h-14 px-4 bg-zinc-900/80 border-2 border-zinc-800 rounded-xl text-white outline-none focus:border-[var(--gym-primary)] transition-colors"
+                autoFocus
+                data-testid="recovery-email-input"
+              />
+              <Button
+                type="submit"
+                disabled={recoveryLoading || !recoveryEmail.trim()}
+                className="w-full h-14 text-base font-bold rounded-xl"
+                style={recoveryEmail.trim() ? { backgroundColor: 'var(--gym-primary)', color: 'var(--gym-primary-foreground)' } : {}}
+                data-testid="recovery-submit-btn"
+              >
+                {recoveryLoading ? <Loader2 className="animate-spin" size={22} /> : 'Enviar codigo'}
+              </Button>
+            </form>
+          )}
+
+          <button
+            onClick={() => { setRecoveryMode(false); setRecoverySent(false); setRecoveryEmail(''); }}
+            className="w-full text-sm text-zinc-500 hover:text-zinc-300 transition-colors text-center py-2"
+            data-testid="back-from-recovery-btn"
           >
             Volver al inicio
           </button>
@@ -412,7 +483,14 @@ export default function MemberLogin() {
         </form>
 
         {/* Footer */}
-        <div className="mt-10 text-center">
+        <div className="mt-8 text-center space-y-3">
+          <button
+            onClick={() => setRecoveryMode(true)}
+            className="text-sm text-zinc-400 hover:text-white transition-colors"
+            data-testid="forgot-code-btn"
+          >
+            Olvide mi codigo
+          </button>
           <p className="text-xs text-zinc-700">
             No tienes cuenta? Consulta en recepcion
           </p>

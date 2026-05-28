@@ -235,3 +235,60 @@ async def update_admin_credentials(admin_id: str, request: Request, admin: dict 
     if "email" in updates and target.get("gym_id"):
         await db.gyms.update_one({"id": target["gym_id"]}, {"$set": {"gym_admin_email": updates["email"]}})
     return {"message": "Credenciales actualizadas", "admin": updated}
+
+
+@router.post("/auth/member/recover-code")
+async def recover_member_code(request: Request):
+    """Send member code to their email address."""
+    body = await request.json()
+    email = (body.get("email") or "").strip().lower()
+    if not email:
+        raise HTTPException(status_code=400, detail="Email requerido")
+    
+    # Find member by email
+    member = await db.members.find_one(
+        {"email": {"$regex": f"^{email}$", "$options": "i"}},
+        {"_id": 0, "name": 1, "code": 1, "gym_id": 1, "email": 1}
+    )
+    
+    # Always return success (don't reveal if email exists or not)
+    if not member:
+        return {"message": "Si tu email esta registrado, recibiras tu codigo de socio en breve."}
+    
+    # Send email with code
+    from routes.misc_routes import send_gym_email
+    gym = await db.gyms.find_one({"id": member["gym_id"]}, {"_id": 0, "name": 1})
+    gym_name = gym.get("name", "IngresoQR") if gym else "IngresoQR"
+    
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 500px; margin: 0 auto; background: #09090B; color: white; padding: 30px; border-radius: 12px;">
+        <h2 style="color: #E1FF01; margin-bottom: 5px;">{gym_name}</h2>
+        <p style="color: #A1A1AA; font-size: 14px; margin-top: 0;">Recuperacion de codigo de socio</p>
+        <hr style="border-color: #27272A; margin: 20px 0;">
+        <p>Hola <strong>{member.get('name', '')}</strong>,</p>
+        <p>Tu codigo de socio es:</p>
+        <div style="background: #18181B; border: 2px solid #E1FF01; border-radius: 12px; padding: 20px; text-align: center; margin: 20px 0;">
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #E1FF01;">{member['code']}</span>
+        </div>
+        <p style="font-size: 13px; color: #A1A1AA;">Usa este codigo para acceder a la app desde tu movil.</p>
+        <p style="font-size: 13px; color: #A1A1AA;">Si no solicitaste este email, puedes ignorarlo.</p>
+        <hr style="border-color: #27272A; margin: 20px 0;">
+        <p style="font-size: 11px; color: #52525B; text-align: center;">IngresoQR - Control de acceso</p>
+    </div>
+    """
+    
+    try:
+        await send_gym_email(
+            gym_id=member["gym_id"],
+            to_email=member["email"],
+            subject=f"Tu codigo de socio - {gym_name}",
+            html_body=html_body,
+            member_id=None,
+            email_type="code_recovery"
+        )
+    except Exception as e:
+        # Log error but don't reveal to user
+        import logging
+        logging.getLogger("server").error(f"Error sending recovery email: {e}")
+    
+    return {"message": "Si tu email esta registrado, recibiras tu codigo de socio en breve."}
