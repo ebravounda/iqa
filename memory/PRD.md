@@ -43,6 +43,15 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
 - [x] REFACTORING: Fixed systemd service WorkingDirectory
 - [x] QR level restored to "H" (High) for USB scanner compatibility
 
+## Completed - May 2026 (This Session)
+- [x] FIX: Dashboard "Ocupacion en Tiempo Real" (current_occupancy) — naive count replaced with same unique-member aggregation as kiosk (misc_routes.py)
+- [x] FEATURE: Staff-only plans (`is_staff_only` flag on Plan):
+  - models.py: Added `is_staff_only` to PlanCreate
+  - plan_routes.py: `/plans/public/{gym_id}` hides staff plans, `update_plan` allows toggling
+  - access_routes.py: Kiosk monthly ranking excludes members with staff plans
+  - gamification_routes.py: Admin ranking excludes members with staff plans
+  - AdminPlans.js: Checkbox in modal + amber "INTERNO" badge in cards
+
 ## Pending / Backlog
 
 ### P0 - Verification

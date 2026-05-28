@@ -371,11 +371,25 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
             capacity_info = {"max_members": max_members, "active_members": active_members,
                             "usage_percent": round((active_members / max_members * 100), 1)}
     
-    # Real-time occupancy: entries - exits today
+    # Real-time occupancy: count UNIQUE members whose LAST log today is "entrada"
+    # (matches the kiosk display aggregation in access_routes.py)
+    occupancy_match = {"timestamp": {"$gte": today_start.isoformat()}, "member_id": {"$exists": True, "$ne": None}}
+    if gym_id:
+        occupancy_match["gym_id"] = gym_id
+    pipeline = [
+        {"$match": occupancy_match},
+        {"$sort": {"timestamp": -1}},
+        {"$group": {"_id": "$member_id", "last_direction": {"$first": "$direction"}}},
+        {"$match": {"last_direction": "entrada"}},
+        {"$count": "inside"}
+    ]
+    occ_result = await db.access_logs.aggregate(pipeline).to_list(1)
+    current_occupancy = occ_result[0]["inside"] if occ_result else 0
+
+    # Entries / exits totals today (for the small badges)
     occupancy_query = {**access_query, "timestamp": {"$gte": today_start.isoformat()}}
     today_entries = await db.access_logs.count_documents({**occupancy_query, "direction": "entrada"})
     today_exits = await db.access_logs.count_documents({**occupancy_query, "direction": "salida"})
-    current_occupancy = max(0, today_entries - today_exits)
     max_capacity = None
     if gym_id and capacity_info:
         max_capacity = capacity_info["max_members"]

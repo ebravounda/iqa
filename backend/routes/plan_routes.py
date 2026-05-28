@@ -32,9 +32,16 @@ async def get_plans(gym_id: Optional[str] = None, admin: dict = Depends(get_curr
 
 @router.get("/plans/public/{gym_id}")
 async def get_plans_public(gym_id: str):
-    plans = await db.plans.find({"gym_id": gym_id, "active": True}, {"_id": 0}).to_list(100)
+    # Public endpoint - hides staff-only plans
+    plans = await db.plans.find(
+        {"gym_id": gym_id, "active": True, "is_staff_only": {"$ne": True}},
+        {"_id": 0}
+    ).to_list(100)
     if not plans:
-        plans = await db.plans.find({"gym_id": gym_id}, {"_id": 0}).to_list(100)
+        plans = await db.plans.find(
+            {"gym_id": gym_id, "is_staff_only": {"$ne": True}},
+            {"_id": 0}
+        ).to_list(100)
     return plans
 
 @router.delete("/plans/{plan_id}")
@@ -44,7 +51,7 @@ async def delete_plan(plan_id: str, admin: dict = Depends(get_current_admin)):
 
 @router.put("/plans/{plan_id}")
 async def update_plan(plan_id: str, plan_update: dict, admin: dict = Depends(get_current_admin)):
-    allowed_fields = {"name", "description", "price", "duration_days", "access_type"}
+    allowed_fields = {"name", "description", "price", "duration_days", "access_type", "is_staff_only"}
     update_data = {k: v for k, v in plan_update.items() if k in allowed_fields and v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")

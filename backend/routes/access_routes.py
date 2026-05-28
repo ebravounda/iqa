@@ -489,10 +489,31 @@ async def get_display_data(gym_id: str):
         {"_id": 0}
     ).sort("timestamp", -1).limit(5).to_list(5)
 
+    # Exclude members with staff-only plans from the ranking
+    staff_plans = await db.plans.find(
+        {"gym_id": gym_id, "is_staff_only": True}, {"_id": 0, "id": 1}
+    ).to_list(100)
+    staff_plan_ids = [p["id"] for p in staff_plans]
+    staff_member_ids = []
+    if staff_plan_ids:
+        staff_memberships = await db.memberships.find(
+            {"gym_id": gym_id, "plan_id": {"$in": staff_plan_ids}},
+            {"_id": 0, "member_id": 1}
+        ).to_list(2000)
+        staff_member_ids = list({m["member_id"] for m in staff_memberships})
+
     # Monthly ranking - top 5 members by visits this month (initials only for LOPD)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    ranking_match = {
+        "gym_id": gym_id,
+        "timestamp": {"$gte": month_start.isoformat()},
+        "direction": "entrada",
+        "member_id": {"$exists": True, "$ne": None},
+    }
+    if staff_member_ids:
+        ranking_match["member_id"] = {"$exists": True, "$nin": staff_member_ids}
     ranking_pipeline = [
-        {"$match": {"gym_id": gym_id, "timestamp": {"$gte": month_start.isoformat()}, "direction": "entrada", "member_id": {"$exists": True, "$ne": None}}},
+        {"$match": ranking_match},
         {"$group": {"_id": "$member_id", "visits": {"$sum": 1}, "name": {"$first": "$member_name"}}},
         {"$sort": {"visits": -1}},
         {"$limit": 5}

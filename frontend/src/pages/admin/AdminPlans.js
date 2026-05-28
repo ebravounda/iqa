@@ -17,7 +17,7 @@ export default function AdminPlans() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlan, setNewPlan] = useState({
-    name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: ''
+    name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false
   });
   const [gyms, setGyms] = useState([]);
   const [collapsedGyms, setCollapsedGyms] = useState({});
@@ -65,15 +65,15 @@ export default function AdminPlans() {
     if (!gymId) { toast.error('Selecciona un gimnasio'); return; }
     try {
       if (editPlan) {
-        await updatePlan(editPlan.id, { ...newPlan, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days) });
+        await updatePlan(editPlan.id, { ...newPlan, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days), is_staff_only: !!newPlan.is_staff_only });
         toast.success('Plan actualizado');
       } else {
-        await createPlan({ ...newPlan, gym_id: gymId, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days) });
+        await createPlan({ ...newPlan, gym_id: gymId, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days), is_staff_only: !!newPlan.is_staff_only });
         toast.success('Plan creado exitosamente');
       }
       setShowCreateModal(false);
       setEditPlan(null);
-      setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '' });
+      setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false });
       fetchPlans();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error');
@@ -88,7 +88,8 @@ export default function AdminPlans() {
       price: plan.price?.toString() || '',
       duration_days: plan.duration_days?.toString() || '',
       access_type: plan.access_type || 'unlimited',
-      gym_id: plan.gym_id || ''
+      gym_id: plan.gym_id || '',
+      is_staff_only: !!plan.is_staff_only
     });
     setShowCreateModal(true);
   };
@@ -141,7 +142,7 @@ export default function AdminPlans() {
         )}
         <Dialog open={showCreateModal} onOpenChange={(v) => { setShowCreateModal(v); if (!v) setEditPlan(null); }}>
           <DialogTrigger asChild>
-            <Button className="btn-gym-primary" data-testid="create-plan-btn" onClick={() => { setEditPlan(null); setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '' }); }}>
+            <Button className="btn-gym-primary" data-testid="create-plan-btn" onClick={() => { setEditPlan(null); setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false }); }}>
               <Plus size={20} className="mr-2" /> Nuevo Plan
             </Button>
           </DialogTrigger>
@@ -192,6 +193,28 @@ export default function AdminPlans() {
                     }>{preset.label}</button>
                 ))}
               </div>
+              <label className="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:bg-zinc-800/40"
+                style={{
+                  background: newPlan.is_staff_only ? 'rgba(245, 158, 11, 0.08)' : 'var(--bg-tertiary)',
+                  borderColor: newPlan.is_staff_only ? 'rgb(245, 158, 11)' : 'var(--border-secondary)'
+                }}
+                data-testid="plan-staff-only-toggle">
+                <input
+                  type="checkbox"
+                  checked={!!newPlan.is_staff_only}
+                  onChange={(e) => setNewPlan({ ...newPlan, is_staff_only: e.target.checked })}
+                  className="mt-1 w-4 h-4 accent-amber-500"
+                  data-testid="plan-staff-only-checkbox"
+                />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold" style={{ color: newPlan.is_staff_only ? 'rgb(245, 158, 11)' : 'var(--text-primary)' }}>
+                    Plan interno (trabajadores / staff)
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>
+                    Oculto al publico en la PWA y excluido del ranking de gamificacion.
+                  </p>
+                </div>
+              </label>
               <Button onClick={handleCreatePlan} className="w-full btn-gym-primary" data-testid="save-plan-btn">
                 {editPlan ? <><Pencil size={20} className="mr-2" /> Guardar Cambios</> : <><Plus size={20} className="mr-2" /> Crear Plan</>}
               </Button>
@@ -234,7 +257,14 @@ export default function AdminPlans() {
                           <Trash2 size={14} />
                         </button>
                       </div>
-                      <h3 className="font-bold mb-2">{plan.name}</h3>
+                      <h3 className="font-bold mb-2 flex items-center gap-2">
+                        {plan.name}
+                        {plan.is_staff_only && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/40" data-testid={`staff-badge-${plan.id}`}>
+                            INTERNO
+                          </span>
+                        )}
+                      </h3>
                       <div className="flex items-baseline gap-1 mb-3">
                         <span className="text-3xl font-black" style={{ color: 'var(--gym-primary)' }}>{formatCurrency(plan.price)}</span>
                       </div>
@@ -262,7 +292,14 @@ export default function AdminPlans() {
                   <Trash2 size={16} />
                 </button>
               </div>
-              <h3 className="font-bold text-lg mb-2">{plan.name}</h3>
+              <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                {plan.name}
+                {plan.is_staff_only && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-400 border border-amber-500/40" data-testid={`staff-badge-${plan.id}`}>
+                    INTERNO
+                  </span>
+                )}
+              </h3>
               <div className="flex items-baseline gap-1 mb-4">
                 <span className="text-4xl font-black" style={{ color: 'var(--gym-primary)' }}>{formatCurrency(plan.price)}</span>
               </div>

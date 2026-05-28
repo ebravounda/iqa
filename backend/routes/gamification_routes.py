@@ -101,8 +101,25 @@ async def get_gym_ranking(gym_id: Optional[str] = None, admin: dict = Depends(ge
     target_gym_id = gym_id if admin["role"] == "super_admin" and gym_id else admin.get("gym_id")
     if not target_gym_id:
         return {"ranking": []}
+
+    # Exclude members with staff-only plans from the ranking
+    staff_plans = await db.plans.find(
+        {"gym_id": target_gym_id, "is_staff_only": True}, {"_id": 0, "id": 1}
+    ).to_list(100)
+    staff_plan_ids = [p["id"] for p in staff_plans]
+    staff_member_ids = set()
+    if staff_plan_ids:
+        staff_memberships = await db.memberships.find(
+            {"gym_id": target_gym_id, "plan_id": {"$in": staff_plan_ids}},
+            {"_id": 0, "member_id": 1}
+        ).to_list(2000)
+        staff_member_ids = {m["member_id"] for m in staff_memberships}
+
+    member_query = {"gym_id": target_gym_id, "status": "active"}
+    if staff_member_ids:
+        member_query["id"] = {"$nin": list(staff_member_ids)}
     members = await db.members.find(
-        {"gym_id": target_gym_id, "status": "active"}, {"_id": 0, "id": 1, "name": 1, "code": 1, "avatar_url": 1}
+        member_query, {"_id": 0, "id": 1, "name": 1, "code": 1, "avatar_url": 1}
     ).to_list(500)
     ranking = []
     for m in members:

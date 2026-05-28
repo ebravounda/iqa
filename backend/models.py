@@ -89,6 +89,7 @@ class PlanCreate(BaseModel):
     price: float
     duration_days: int
     access_type: str = "unlimited"
+    is_staff_only: Optional[bool] = False
 
 class MembershipCreate(BaseModel):
     member_id: str
