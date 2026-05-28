@@ -496,6 +496,24 @@ async def get_display_data(gym_id: str):
         {"_id": 0}
     ).sort("timestamp", -1).limit(5).to_list(5)
 
+    # Monthly ranking - top 5 members by visits this month (initials only for LOPD)
+    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    ranking_pipeline = [
+        {"$match": {"gym_id": gym_id, "timestamp": {"$gte": month_start.isoformat()}, "direction": "entrada", "member_id": {"$exists": True, "$ne": None}}},
+        {"$group": {"_id": "$member_id", "visits": {"$sum": 1}, "name": {"$first": "$member_name"}}},
+        {"$sort": {"visits": -1}},
+        {"$limit": 5}
+    ]
+    ranking_raw = await db.access_logs.aggregate(ranking_pipeline).to_list(5)
+    ranking = []
+    for i, r in enumerate(ranking_raw):
+        ranking.append({
+            "position": i + 1,
+            "initials": get_initials(r.get("name", "")),
+            "first_name": r.get("name", "").split()[0] if r.get("name") else "?",
+            "visits": r.get("visits", 0),
+        })
+
     return {
         "gym_name": gym.get("name"),
         "logo_url": gym.get("logo_url"),
@@ -506,6 +524,7 @@ async def get_display_data(gym_id: str):
         "max_capacity": max_capacity,
         "recent_access": display_logs,
         "recent_events": recent_events,
+        "ranking": ranking,
     }
 
 

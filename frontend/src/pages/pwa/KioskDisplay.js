@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { Users, ArrowDownLeft, ArrowUpRight, Activity, ShieldCheck, ShieldX } from 'lucide-react';
+import { Users, ArrowDownLeft, ArrowUpRight, Activity, ShieldCheck, ShieldX, Trophy, Medal } from 'lucide-react';
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -17,7 +17,6 @@ export default function KioskDisplay() {
         const res = await axios.get(`${API}/access/display/${gymId}`);
         const newData = res.data;
 
-        // Detect new event (approved or denied)
         if (newData.recent_events && newData.recent_events.length > 0) {
           const newestEvent = newData.recent_events[0];
           const prevEvents = prevEventsRef.current;
@@ -34,7 +33,6 @@ export default function KioskDisplay() {
         }
       } catch (error) {
         console.error('Display fetch error:', error);
-        // Don't clear data on error - keep showing last valid data
       }
     };
 
@@ -58,6 +56,10 @@ export default function KioskDisplay() {
   const now = new Date();
   const timeStr = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
   const dateStr = now.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
+  const monthName = now.toLocaleDateString('es-ES', { month: 'long' });
+
+  const positionColors = ['text-yellow-400', 'text-zinc-300', 'text-amber-600'];
+  const positionBg = ['bg-yellow-400/10 border-yellow-400/30', 'bg-zinc-400/10 border-zinc-400/30', 'bg-amber-600/10 border-amber-600/30'];
 
   return (
     <div className="min-h-screen bg-black text-white overflow-hidden relative" data-testid="kiosk-display">
@@ -105,7 +107,7 @@ export default function KioskDisplay() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-8 py-5 border-b border-zinc-800/50">
+      <div className="flex items-center justify-between px-8 py-4 border-b border-zinc-800/50">
         <div className="flex items-center gap-4">
           {logoUrl ? (
             <img src={logoUrl} alt={data.gym_name} className="h-12 max-w-[160px] object-contain" />
@@ -123,36 +125,35 @@ export default function KioskDisplay() {
         </div>
       </div>
 
-      {/* Main content */}
-      <div className="flex h-[calc(100vh-88px)]">
+      {/* Main content - 3 columns */}
+      <div className="flex h-[calc(100vh-80px)]">
         
         {/* Left: Occupancy */}
-        <div className="flex-1 flex flex-col items-center justify-center border-r border-zinc-800/50 px-8">
+        <div className="flex-1 flex flex-col items-center justify-center border-r border-zinc-800/50 px-6">
           <div className="flex items-center gap-3 mb-4">
-            <Activity size={24} className="text-zinc-500" />
-            <span className="text-lg text-zinc-500 uppercase tracking-widest font-medium">Socios en el interior</span>
+            <Activity size={22} className="text-zinc-500" />
+            <span className="text-base text-zinc-500 uppercase tracking-widest font-medium">Socios en el interior</span>
           </div>
           
           <div className="relative">
-            <p className="text-[12rem] font-black leading-none tabular-nums" style={{ color: 'var(--gym-primary)' }} data-testid="occupancy-count">
+            <p className="text-[10rem] font-black leading-none tabular-nums" style={{ color: 'var(--gym-primary)' }} data-testid="occupancy-count">
               {data.current_occupancy}
             </p>
             {data.max_capacity && (
-              <p className="text-center text-zinc-600 text-2xl mt-2">
+              <p className="text-center text-zinc-600 text-xl mt-2">
                 de {data.max_capacity} max.
               </p>
             )}
           </div>
 
-          {/* Stats row */}
-          <div className="flex gap-12 mt-10">
+          <div className="flex gap-10 mt-8">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
                 <ArrowDownLeft size={20} className="text-emerald-400" />
               </div>
               <div>
                 <p className="text-2xl font-bold tabular-nums">{data.entries_today}</p>
-                <p className="text-xs text-zinc-500 uppercase">Entradas hoy</p>
+                <p className="text-xs text-zinc-500 uppercase">Entradas</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -161,16 +162,52 @@ export default function KioskDisplay() {
               </div>
               <div>
                 <p className="text-2xl font-bold tabular-nums">{data.exits_today}</p>
-                <p className="text-xs text-zinc-500 uppercase">Salidas hoy</p>
+                <p className="text-xs text-zinc-500 uppercase">Salidas</p>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Center: Ranking */}
+        <div className="w-[320px] flex flex-col border-r border-zinc-800/50">
+          <div className="px-5 py-4 border-b border-zinc-800/50 flex items-center gap-2">
+            <Trophy size={18} className="text-yellow-400" />
+            <p className="text-sm text-zinc-400 uppercase tracking-widest font-medium">Ranking <span className="capitalize">{monthName}</span></p>
+          </div>
+          <div className="flex-1 flex flex-col justify-center px-5 py-4 space-y-3">
+            {data.ranking && data.ranking.length > 0 ? (
+              data.ranking.map((r, i) => (
+                <div
+                  key={r.position}
+                  className={`flex items-center gap-4 p-4 rounded-xl border ${i < 3 ? positionBg[i] : 'bg-zinc-900/50 border-zinc-800/50'}`}
+                  data-testid={`ranking-${r.position}`}
+                >
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-black text-lg ${i < 3 ? positionColors[i] : 'text-zinc-500'}`}>
+                    {i === 0 ? '1' : i === 1 ? '2' : i === 2 ? '3' : r.position}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-bold text-base truncate">{r.first_name}</p>
+                    <p className="text-xs text-zinc-500">{r.initials}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className={`text-xl font-black tabular-nums ${i === 0 ? 'text-yellow-400' : 'text-white'}`}>{r.visits}</p>
+                    <p className="text-[10px] text-zinc-600 uppercase">visitas</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="text-center text-zinc-700 py-8">
+                <Trophy size={32} className="mx-auto mb-3 opacity-30" />
+                <p>Sin datos este mes</p>
+              </div>
+            )}
+          </div>
+        </div>
+
         {/* Right: Recent access */}
-        <div className="w-[400px] flex flex-col">
-          <div className="px-6 py-4 border-b border-zinc-800/50">
-            <p className="text-sm text-zinc-500 uppercase tracking-widest font-medium">Ultimos accesos</p>
+        <div className="w-[340px] flex flex-col">
+          <div className="px-5 py-4 border-b border-zinc-800/50">
+            <p className="text-sm text-zinc-400 uppercase tracking-widest font-medium">Ultimos accesos</p>
           </div>
           <div className="flex-1 overflow-hidden">
             {data.recent_access.map((log, i) => {
@@ -179,12 +216,12 @@ export default function KioskDisplay() {
               return (
                 <div
                   key={`${log.timestamp}-${i}`}
-                  className={`flex items-center gap-4 px-6 py-3.5 border-b border-zinc-800/30 ${
+                  className={`flex items-center gap-3 px-5 py-3 border-b border-zinc-800/30 ${
                     i === 0 ? 'bg-zinc-900/50' : ''
                   }`}
                   data-testid={`access-log-${i}`}
                 >
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
                     isEntry ? 'bg-emerald-500/20 text-emerald-400' : 'bg-orange-500/20 text-orange-400'
                   }`}>
                     {log.initials}
