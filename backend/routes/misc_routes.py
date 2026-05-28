@@ -9,6 +9,7 @@ from database import db
 from auth import get_current_admin, create_jwt_token
 from models import MemberPublicRegister
 from qr_utils import generate_member_code
+from utils.time_utils import get_today_start_utc, get_week_start_utc, get_month_start_utc
 import uuid
 import aiosmtplib
 from email.mime.text import MIMEText
@@ -332,17 +333,22 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
     active_members = await db.members.count_documents({**query, "status": "active"})
     pending_members = await db.members.count_documents({**query, "status": "pending"})
     suspended_members = await db.members.count_documents({**query, "status": "suspended"})
-    
-    # Access stats
-    today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Resolve gym (for timezone-aware day boundaries). Super admin without
+    # a gym filter falls back to the default timezone (Europe/Madrid).
+    gym = None
+    if gym_id:
+        gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0, "timezone": 1, "max_members": 1, "max_capacity": 1})
+
+    # Access stats - all boundaries in gym local time, converted to UTC
+    today_start = get_today_start_utc(gym)
     access_query = {}
     if gym_id:
         access_query["gym_id"] = gym_id
     today_count = await db.access_logs.count_documents({**access_query, "timestamp": {"$gte": today_start.isoformat()}})
-    from datetime import timedelta
-    week_start = today_start - timedelta(days=today_start.weekday())
+    week_start = get_week_start_utc(gym)
     week_count = await db.access_logs.count_documents({**access_query, "timestamp": {"$gte": week_start.isoformat()}})
-    month_start = today_start.replace(day=1)
+    month_start = get_month_start_utc(gym)
     month_count = await db.access_logs.count_documents({**access_query, "timestamp": {"$gte": month_start.isoformat()}})
     
     member_query = {"status": "active"}
@@ -364,9 +370,8 @@ async def get_dashboard_stats(admin: dict = Depends(get_current_admin)):
     today_bookings = await db.bookings.count_documents({"date": today, "status": "confirmed", **({"gym_id": gym_id} if gym_id else {})})
     
     capacity_info = None
-    if gym_id:
-        gym = await db.gyms.find_one({"id": gym_id}, {"_id": 0, "max_members": 1})
-        max_members = gym.get("max_members") if gym else None
+    if gym_id and gym:
+        max_members = gym.get("max_members")
         if max_members and max_members > 0:
             capacity_info = {"max_members": max_members, "active_members": active_members,
                             "usage_percent": round((active_members / max_members * 100), 1)}

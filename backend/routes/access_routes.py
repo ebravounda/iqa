@@ -12,6 +12,7 @@ from qr_utils import (
     generate_qr_data, generate_static_qr_data, validate_qr_data, 
     sanitize_qr_input, QR_SECRET
 )
+from utils.time_utils import get_today_start_utc, get_month_start_utc
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api")
@@ -440,8 +441,12 @@ async def get_display_data(gym_id: str):
     if not gym:
         raise HTTPException(status_code=404, detail="Gimnasio no encontrado")
 
-    now = datetime.now(timezone.utc)
-    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    now = datetime.now(timezone.utc)  # noqa: F841 (kept for potential future use)
+    # Use the gym's local timezone (Europe/Madrid by default) so that
+    # "today" rolls over at LOCAL midnight, not UTC midnight. Otherwise
+    # members who entered before 00:00 UTC (=01:00/02:00 local in Spain)
+    # disappear from the occupancy counter mid-night.
+    today_start = get_today_start_utc(gym)
 
     # Occupancy - count unique members whose LAST log today is "entrada"
     pipeline = [
@@ -503,7 +508,7 @@ async def get_display_data(gym_id: str):
         staff_member_ids = list({m["member_id"] for m in staff_memberships})
 
     # Monthly ranking - top 5 members by visits this month (initials only for LOPD)
-    month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    month_start = get_month_start_utc(gym)
     ranking_match = {
         "gym_id": gym_id,
         "timestamp": {"$gte": month_start.isoformat()},

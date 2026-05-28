@@ -51,6 +51,15 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
   - access_routes.py: Kiosk monthly ranking excludes members with staff plans
   - gamification_routes.py: Admin ranking excludes members with staff plans
   - AdminPlans.js: Checkbox in modal + amber "INTERNO" badge in cards
+- [x] CRITICAL FIX: Timezone bug in occupancy / daily-rollover queries
+  - Symptom: members who entered between 22:00-23:59 UTC disappeared from the kiosk/dashboard occupancy counter at midnight UTC (= 01:00/02:00 local in Spain)
+  - Fix: new helper `utils/time_utils.py` with `get_today_start_utc(gym)` that respects gym's timezone (defaults to Europe/Madrid)
+  - Applied in: access_routes.py (kiosk display), misc_routes.py (dashboard stats), monthly ranking
+  - Tested: entry at 23:30 UTC (= 01:30 Madrid today) correctly counts as inside; entry 30h ago correctly excluded
+- [x] HARDWARE FIX: Improved systemd service for Raspberry Pi
+  - Added ExecStartPre that kills any zombie access_control.py instance before launching
+  - Sleeps 3s before start so GPIO/USB devices are released
+  - File: /app/raspberry-pi/gymaccess.service (to be deployed manually to the Pi)
 
 ## Pending / Backlog
 
