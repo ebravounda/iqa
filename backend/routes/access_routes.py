@@ -450,11 +450,21 @@ async def get_display_data(gym_id: str):
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
 
-    # Occupancy - exclude manual resets from count
-    query = {"gym_id": gym_id, "timestamp": {"$gte": today_start.isoformat()}, "note": {"$exists": False}}
-    entries = await db.access_logs.count_documents({**query, "direction": "entrada"})
-    exits = await db.access_logs.count_documents({**query, "direction": "salida"})
-    current = max(0, entries - exits)
+    # Occupancy - count unique members whose LAST log today is "entrada"
+    pipeline = [
+        {"$match": {"gym_id": gym_id, "timestamp": {"$gte": today_start.isoformat()}, "member_id": {"$exists": True, "$ne": None}}},
+        {"$sort": {"timestamp": -1}},
+        {"$group": {"_id": "$member_id", "last_direction": {"$first": "$direction"}}},
+        {"$match": {"last_direction": "entrada"}},
+        {"$count": "inside"}
+    ]
+    result = await db.access_logs.aggregate(pipeline).to_list(1)
+    current = result[0]["inside"] if result else 0
+
+    # Total entries/exits today (for display)
+    all_today = {"gym_id": gym_id, "timestamp": {"$gte": today_start.isoformat()}}
+    entries = await db.access_logs.count_documents({**all_today, "direction": "entrada"})
+    exits = await db.access_logs.count_documents({**all_today, "direction": "salida"})
     max_capacity = gym.get("max_capacity")
 
     # Recent access logs (last 10) - only initials for LOPD
