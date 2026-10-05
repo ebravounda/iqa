@@ -45,9 +45,16 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
 
 ## Completed - February 2026 (This Session)
 - [x] FIX (iOS PWA): Redsys payment failing in PWABuilder iOS app due to WKWebView WAF block
-  - Backend (`redsys_routes.py`): `/api/redsys/initiate` now persists Ds_* params on payment doc and returns `pay_url`. New public `GET /api/redsys/pay/{order_number}` serves an auto-submitting HTML form on our HTTPS domain.
-  - Frontend (`MemberMembership.js`): On standalone/iOS PWA, shows a modal with a visible `<a target="_blank">` button so iOS opens Safari externally (where cookies, 3DS and Redsys WAF work). Normal browsers get a direct `window.location.href` redirect.
+  - Backend (`redsys_routes.py`): `/api/redsys/initiate` now persists Ds_* params on payment doc and returns `pay_url`. New public `GET /api/redsys/pay/{order_number}` serves an auto-submitting HTML form on our HTTPS domain with proper Referer policy.
+  - Frontend (`MemberMembership.js`): On standalone/iOS PWA, shows a modal with a visible `<a target="_blank">` button so iOS opens Safari externally. Normal browsers get direct redirect. **VERIFIED WORKING on iPhone**.
 - [x] FIX: Lint error in `AdminPOS.js` (handleDeleteCategory function was nested inside handleDeleteProduct)
+- [x] FEATURE: 6-pack client requests (all tested with testing_agent, 11/11 passed)
+  - **(1) Session logout on mobile**: `AuthContext.js` periodic poll now stores silently-refreshed JWT (was discarding it). `fetchMemberData` ignores network errors so iOS backgrounding/wifi switches don't trigger logout.
+  - **(2) Billing by activity/category**: `PlanCreate` model has new optional `category` field. `plan_routes.update_plan` allows editing. `AdminPlans.js` has new free-text input with datalist suggestions. `/accounting/report` + `/accounting/excel` accept `category` filter and return `category_breakdown` + `available_categories`. Excel has new "Actividad" column and dedicated "Por Actividad" sheet.
+  - **(3) Excel export**: Now accepts category filter. Frontend `AdminAccounting.js` surfaces real backend error message when export fails (parses blob response).
+  - **(4) Mobile admin UX**: New `AdminMobileBottomNav` component with 5 one-tap actions (Inicio, Socios, TPV, Accesos, Caja). `lg:hidden` so desktop sidebar is untouched.
+  - **(5) Open turnstile button**: New `OpenTurnstileButton` component on `AdminDashboard`. `device_management_routes.send_device_command` now accepts `open_turnstile` for `gym_admin` on own-gym devices. `raspberry_access_control.py` `execute_command` pulses the entry relay via `GPIOController.abrir_torno('entrada')` when it receives the command.
+  - **(6) Class reservations**: Already fully functional (backend `/bookings` + PWA `MemberClasses.js`). Capacity enforced, duplicate booking blocked, cancel supported. No changes required.
 
 ## Completed - May 2026 (This Session)
 - [x] FIX: Dashboard "Ocupacion en Tiempo Real" (current_occupancy) — naive count replaced with same unique-member aggregation as kiosk (misc_routes.py)
