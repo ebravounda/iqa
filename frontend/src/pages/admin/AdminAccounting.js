@@ -251,7 +251,7 @@ export default function AdminAccounting() {
           <div className="flex items-center gap-2 ml-auto">
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-44 input-dark" data-testid="category-filter">
-                <SelectValue placeholder="Actividad" />
+                <SelectValue placeholder="Actividad / Plan" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas las actividades</SelectItem>
@@ -347,12 +347,12 @@ export default function AdminAccounting() {
         </div>
       </div>
 
-      {/* Breakdown by Activity/Category */}
+      {/* Breakdown by Activity/Plan */}
       {report?.category_breakdown?.length > 0 && (
         <div className="stat-card" data-testid="category-breakdown-card">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-bold">Facturacion por Actividad</h3>
-            <span className="text-xs text-zinc-500">Desglose por categoria de plan</span>
+            <span className="text-xs text-zinc-500">Agrupado por plan (o categoria custom si la asignaste)</span>
           </div>
           <div className="overflow-x-auto">
             <table className="data-table">

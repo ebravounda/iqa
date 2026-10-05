@@ -210,7 +210,7 @@ export default function AdminPlans() {
                   ))}
                 </datalist>
                 <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
-                  Agrupa planes por disciplina para facturacion separada (deja vacio para "General").
+                  Opcional. Deja vacio o "General" y el plan sera la actividad en Contabilidad (ej: "Kickboxing"). Usa esto solo si quieres agrupar varios planes bajo una misma actividad.
                 </p>
               </div>
               <label className="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:bg-zinc-800/40"

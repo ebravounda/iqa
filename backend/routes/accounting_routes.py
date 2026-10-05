@@ -32,21 +32,33 @@ async def get_accounting_report(
             query["created_at"] = {"$lte": date_to + "T23:59:59"}
     transactions = await db.payment_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(5000)
 
-    # Build plan_id -> category map (and name) for the scoped gym to enable category filtering/breakdown
+    # Build plan_id -> activity map. "Activity" is the plan's explicit category when the admin set a custom one,
+    # otherwise it falls back to the plan's own name. This way La Fabrika's existing plans
+    # ("Kickboxing", "Boxeo", "Capoeira"...) appear automatically as activities with zero config.
     plan_query = {}
     tgt_gym_id = admin.get("gym_id") if admin["role"] != "super_admin" else gym_id
     if tgt_gym_id:
         plan_query["gym_id"] = tgt_gym_id
     plans_cat = await db.plans.find(plan_query, {"_id": 0, "id": 1, "name": 1, "category": 1}).to_list(500)
-    plan_cat_map = {p["id"]: (p.get("category") or "General") for p in plans_cat}
+    plan_cat_map = {}
+    for p in plans_cat:
+        cat = p.get("category")
+        # Treat the default/unset "General" as not-set and fall back to the plan name
+        if not cat or cat.strip().lower() == "general":
+            cat = p.get("name") or "Sin plan"
+        plan_cat_map[p["id"]] = cat
 
-    # Attach category to each transaction (fallback to "General")
+    # Attach activity to each transaction. Fall back to transaction's own plan_name
+    # so legacy or deleted plans still show up as a grouping instead of "General".
     for t in transactions:
-        t["category"] = plan_cat_map.get(t.get("plan_id"), "General")
+        activity = plan_cat_map.get(t.get("plan_id"))
+        if not activity:
+            activity = t.get("plan_name") or "Sin plan"
+        t["category"] = activity
 
-    # Optional filter by category
+    # Optional filter by activity
     if category and category != "all":
-        transactions = [t for t in transactions if (t.get("category") or "General") == category]
+        transactions = [t for t in transactions if (t.get("category") or "Sin plan") == category]
     
     # Include POS sales
     pos_query = {}
@@ -391,20 +403,28 @@ async def generate_accounting_excel(
 
     transactions = await db.payment_transactions.find(tx_query, {"_id": 0}).sort("created_at", -1).to_list(10000)
 
-    # Load plan -> category map for this gym
+    # Load plan -> activity map (plan's custom category if set, otherwise plan name)
     plan_q = {}
     if target_gym_id:
         plan_q["gym_id"] = target_gym_id
     plans_all = await db.plans.find(plan_q, {"_id": 0, "id": 1, "name": 1, "category": 1, "price": 1, "duration_days": 1}).to_list(500)
-    plan_cat_map = {p["id"]: (p.get("category") or "General") for p in plans_all}
+    plan_cat_map = {}
+    for p in plans_all:
+        cat = p.get("category")
+        if not cat or cat.strip().lower() == "general":
+            cat = p.get("name") or "Sin plan"
+        plan_cat_map[p["id"]] = cat
 
-    # Attach category to each tx
+    # Attach activity to each tx
     for t in transactions:
-        t["category"] = plan_cat_map.get(t.get("plan_id"), "General")
+        activity = plan_cat_map.get(t.get("plan_id"))
+        if not activity:
+            activity = t.get("plan_name") or "Sin plan"
+        t["category"] = activity
 
-    # Optional category filter
+    # Optional activity filter
     if category and category != "all":
-        transactions = [t for t in transactions if (t.get("category") or "General") == category]
+        transactions = [t for t in transactions if (t.get("category") or "Sin plan") == category]
 
     # Enrich with member + plan data
     for t in transactions:
