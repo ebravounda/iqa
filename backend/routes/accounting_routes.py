@@ -126,7 +126,8 @@ async def get_accounting_report(
         {"category": k, "count": v["count"], "amount": v["amount"]}
         for k, v in sorted(category_breakdown.items(), key=lambda x: x[1]["amount"], reverse=True)
     ]
-    available_categories = sorted({p.get("category") or "General" for p in plans_cat})
+    # Available activities = resolved values from plan_cat_map (plan name or custom category)
+    available_categories = sorted(set(plan_cat_map.values())) if plan_cat_map else []
 
     return {
         "transactions": transactions,
