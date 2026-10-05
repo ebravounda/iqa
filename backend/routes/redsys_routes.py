@@ -214,7 +214,7 @@ async def redsys_pay_page(order_number: str):
 <meta charset="utf-8">
 <title>Redirigiendo al pago seguro...</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="referrer" content="no-referrer">
+<meta name="referrer" content="origin">
 <style>
   html,body{{margin:0;padding:0;background:#09090B;color:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}}
   .wrap{{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}}
