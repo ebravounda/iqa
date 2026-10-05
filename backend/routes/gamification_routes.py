@@ -57,7 +57,7 @@ async def compute_member_gamification(member_id: str, gym_id: str):
             visit_dates.add(ts.date())
             if ts.hour < 8:
                 early_count += 1
-        except:
+        except Exception:
             pass
     total_visits = len(visit_dates)
     current_streak, max_streak = calculate_streak(visit_dates)

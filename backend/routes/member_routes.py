@@ -775,7 +775,7 @@ async def assign_memberships_bulk(data: dict, admin: dict = Depends(get_current_
             
             try:
                 importe = float(importe_str) if importe_str else 0
-            except:
+            except Exception:
                 importe = 0
 
             # Find member by code or email
@@ -816,7 +816,7 @@ async def assign_memberships_bulk(data: dict, admin: dict = Depends(get_current_
             try:
                 parts = fecha_hasta.split("/")
                 end_date = f"{parts[2]}-{parts[1]}-{parts[0]}"
-            except:
+            except Exception:
                 errors.append(f"Fecha invalida: {fecha_hasta} ({info.get('nombre', '')})")
                 continue
 
@@ -902,7 +902,7 @@ async def generate_qr_card_pdf(member_id: str, admin: dict = Depends(get_current
     # Accent line left edge
     try:
         accent = colors.HexColor(primary_color)
-    except:
+    except Exception:
         accent = colors.HexColor('#E1FF01')
     c.setFillColor(accent)
     c.rect(0, 0, 1.5*mm, card_h, fill=1, stroke=0)

@@ -69,7 +69,7 @@ async def get_hourly_heatmap(gym_id: Optional[str] = None, days: int = 30, admin
             weekday = dt.weekday()
             hour = dt.hour
             heatmap[f"{weekday}-{hour}"] = heatmap.get(f"{weekday}-{hour}", 0) + 1
-        except:
+        except Exception:
             pass
     
     result = []
@@ -176,7 +176,7 @@ async def get_peak_hours(gym_id: Optional[str] = None, admin: dict = Depends(get
         try:
             hour = int(log["timestamp"][11:13])
             hourly[hour] += 1
-        except:
+        except Exception:
             pass
     
     total_days = 30

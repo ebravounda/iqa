@@ -93,7 +93,7 @@ async def get_devices_status(admin: dict = Depends(get_current_admin)):
                 diff = (now - last).total_seconds()
                 d["computed_status"] = "online" if diff < 120 else "offline"
                 d["seconds_since_ping"] = int(diff)
-            except:
+            except Exception:
                 d["computed_status"] = "offline"
                 d["seconds_since_ping"] = None
         else:

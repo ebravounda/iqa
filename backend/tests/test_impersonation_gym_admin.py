@@ -153,7 +153,7 @@ class TestGymCreationWithAdminCredentials:
             try:
                 self.session.delete(f"{BASE_URL}/api/gyms/{self.created_gym_id}")
                 print(f"Cleanup: Deleted test gym {self.created_gym_id}")
-            except:
+            except Exception:
                 pass
     
     def test_create_gym_with_admin_credentials(self):
