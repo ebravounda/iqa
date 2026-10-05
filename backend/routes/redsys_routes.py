@@ -151,7 +151,7 @@ async def initiate_redsys_payment(body: dict, request: Request):
         url_ko=url_ko,
     )
 
-    # Save pending payment
+    # Save pending payment + Redsys form data (so we can re-render it via GET /pay/{order_number})
     payment = {
         "id": str(uuid.uuid4()),
         "order_number": order_number,
@@ -167,13 +167,85 @@ async def initiate_redsys_payment(body: dict, request: Request):
         "status": "pending",
         "payment_status": "pending",
         "redsys_environment": "sandbox" if is_sandbox else "production",
+        "redsys_url": form_data.get("redsys_url"),
+        "redsys_signature_version": form_data.get("Ds_SignatureVersion"),
+        "redsys_merchant_parameters": form_data.get("Ds_MerchantParameters"),
+        "redsys_signature": form_data.get("Ds_Signature"),
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.payment_transactions.insert_one(payment)
     payment.pop("_id", None)
 
+    # Public URL that renders a self-submitting HTML form to Redsys (safe to open in external Safari)
+    pay_url = f"{backend_url}/api/redsys/pay/{order_number}"
+
     form_data["order_number"] = order_number
+    form_data["pay_url"] = pay_url
     return form_data
+
+
+# ── Public: Render self-submitting Redsys form (opened in external browser) ──
+
+@router.get("/redsys/pay/{order_number}", response_class=HTMLResponse)
+async def redsys_pay_page(order_number: str):
+    """
+    Public endpoint that serves a self-contained HTML page which auto-submits the
+    Redsys POST form. This is meant to be opened by the user in the system browser
+    (e.g. Safari) from an iOS PWA via <a target="_blank">, so Redsys's WAF/3DS/cookies
+    work correctly outside the WKWebView.
+    """
+    payment = await db.payment_transactions.find_one({"order_number": order_number})
+    if not payment:
+        return HTMLResponse(content="<h1>Pago no encontrado</h1>", status_code=404)
+
+    redsys_url = payment.get("redsys_url") or ""
+    ds_version = payment.get("redsys_signature_version") or "HMAC_SHA256_V1"
+    ds_params = payment.get("redsys_merchant_parameters") or ""
+    ds_signature = payment.get("redsys_signature") or ""
+
+    if not redsys_url or not ds_params or not ds_signature:
+        return HTMLResponse(content="<h1>Pago no disponible</h1>", status_code=400)
+
+    # Escape attribute values (defensive; these are base64/url strings already)
+    from html import escape
+    html = f"""<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Redirigiendo al pago seguro...</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="no-referrer">
+<style>
+  html,body{{margin:0;padding:0;background:#09090B;color:#fafafa;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;min-height:100vh}}
+  .wrap{{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}}
+  .sp{{width:52px;height:52px;border:4px solid #27272a;border-top-color:#c5f82a;border-radius:50%;animation:s 1s linear infinite;margin:0 auto 24px}}
+  @keyframes s{{to{{transform:rotate(360deg)}}}}
+  button{{background:#c5f82a;color:#000;border:0;padding:14px 28px;border-radius:12px;font-weight:800;font-size:16px;cursor:pointer;margin-top:16px}}
+  .small{{color:#71717a;font-size:13px;margin-top:12px;max-width:320px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="sp"></div>
+  <h2 style="margin:0 0 6px 0">Conectando con la pasarela segura</h2>
+  <p class="small">Se abrira Redsys automaticamente. Si no se abre en unos segundos, pulsa el boton.</p>
+  <form id="r" method="POST" action="{escape(redsys_url, quote=True)}">
+    <input type="hidden" name="Ds_SignatureVersion" value="{escape(ds_version, quote=True)}"/>
+    <input type="hidden" name="Ds_MerchantParameters" value="{escape(ds_params, quote=True)}"/>
+    <input type="hidden" name="Ds_Signature" value="{escape(ds_signature, quote=True)}"/>
+    <button type="submit">Continuar al pago</button>
+  </form>
+</div>
+<script>
+  // Auto-submit after a short delay so the user sees we're redirecting
+  setTimeout(function(){{ try {{ document.getElementById('r').submit(); }} catch(e) {{}} }}, 400);
+</script>
+</body>
+</html>"""
+    return HTMLResponse(content=html, status_code=200, headers={
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+    })
 
 
 # ── Notification callback (server-to-server from Redsys) ──

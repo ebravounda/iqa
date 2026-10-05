@@ -234,6 +234,11 @@ export default function AdminPOS() {
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Eliminar producto?')) return;
     try {
+      await axios.delete(`${API}/pos/products/${id}`);
+      toast.success('Producto eliminado');
+      fetchData();
+    } catch { toast.error('Error al eliminar'); }
+  };
 
   const handleDeleteCategory = async (cat) => {
     if (cat === 'General') { toast.error('No puedes eliminar la categoria General'); return; }
@@ -245,11 +250,6 @@ export default function AdminPOS() {
       setActiveCategory('all');
       fetchData();
     } catch (err) { toast.error(err.response?.data?.detail || 'Error al eliminar categoria'); }
-  };
-      await axios.delete(`${API}/pos/products/${id}`);
-      toast.success('Producto eliminado');
-      fetchData();
-    } catch { toast.error('Error al eliminar'); }
   };
 
   if (loading) return <div className="flex justify-center p-12"><Loader2 className="animate-spin" size={32} /></div>;

@@ -43,6 +43,12 @@ Create a comprehensive SaaS multi-tenant gym access control system ("IngresoQR")
 - [x] REFACTORING: Fixed systemd service WorkingDirectory
 - [x] QR level restored to "H" (High) for USB scanner compatibility
 
+## Completed - February 2026 (This Session)
+- [x] FIX (iOS PWA): Redsys payment failing in PWABuilder iOS app due to WKWebView WAF block
+  - Backend (`redsys_routes.py`): `/api/redsys/initiate` now persists Ds_* params on payment doc and returns `pay_url`. New public `GET /api/redsys/pay/{order_number}` serves an auto-submitting HTML form on our HTTPS domain.
+  - Frontend (`MemberMembership.js`): On standalone/iOS PWA, shows a modal with a visible `<a target="_blank">` button so iOS opens Safari externally (where cookies, 3DS and Redsys WAF work). Normal browsers get a direct `window.location.href` redirect.
+- [x] FIX: Lint error in `AdminPOS.js` (handleDeleteCategory function was nested inside handleDeleteProduct)
+
 ## Completed - May 2026 (This Session)
 - [x] FIX: Dashboard "Ocupacion en Tiempo Real" (current_occupancy) — naive count replaced with same unique-member aggregation as kiosk (misc_routes.py)
 - [x] FEATURE: Staff-only plans (`is_staff_only` flag on Plan):

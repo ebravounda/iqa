@@ -14,6 +14,7 @@ export default function MemberMembership() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
+  const [redsysPayUrl, setRedsysPayUrl] = useState(null);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
@@ -137,64 +138,49 @@ export default function MemberMembership() {
       if (gateway === 'redsys') {
         const redsysRes = await initiateRedsysPayment({ member_id: member?.id, plan_id: planId, gym_id: gym?.id });
         if (redsysRes.data?.redsys_url) {
-          // Detect PWABuilder / standalone PWA on iOS so we can open the payment in the
-          // system browser (Safari) instead of the embedded WKWebView, which breaks Redsys 3DS/WAF.
+          // Detect PWABuilder / standalone PWA on iOS. In WKWebView the Redsys WAF
+          // blocks the request (missing third-party cookies/referers), so we need
+          // the user to open the payment in the system Safari browser via a
+          // user-gesture <a target="_blank"> click. Our backend exposes a public
+          // GET /api/redsys/pay/{order_number} page that auto-submits the POST
+          // form to Redsys from the external browser context.
           const isStandalone = window.matchMedia('(display-mode: standalone)').matches
             || window.navigator.standalone === true
             || /pwabuilder/i.test(navigator.userAgent || '');
 
-          // Build the auto-submit HTML form
-          const formHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirigiendo a pago seguro...</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;background:#09090B;color:#fafafa;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center;padding:24px}.spinner{width:48px;height:48px;border:4px solid #27272a;border-top-color:#c5f82a;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 24px}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div><div class="spinner"></div><p>Conectando con la pasarela de pago segura...</p><form id="r" method="POST" action="${redsysRes.data.redsys_url}">`
-            + `<input type="hidden" name="Ds_SignatureVersion" value="${redsysRes.data.Ds_SignatureVersion}"/>`
-            + `<input type="hidden" name="Ds_MerchantParameters" value="${redsysRes.data.Ds_MerchantParameters}"/>`
-            + `<input type="hidden" name="Ds_Signature" value="${redsysRes.data.Ds_Signature}"/>`
-            + `</form></div><script>document.getElementById('r').submit();</script></body></html>`;
+          const payUrl = redsysRes.data.pay_url;
 
-          if (isStandalone) {
-            // Open Redsys in the OS browser so cookies, 3DS redirects and the Redsys WAF work.
-            const w = window.open('', '_blank');
-            if (w) {
-              w.document.open();
-              w.document.write(formHtml);
-              w.document.close();
-            } else {
-              // Popup blocked -> fallback to same-window POST
-              const form = document.createElement('form');
-              form.method = 'POST';
-              form.action = redsysRes.data.redsys_url;
-              Object.entries({
-                'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
-                'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
-                'Ds_Signature': redsysRes.data.Ds_Signature,
-              }).forEach(([name, value]) => {
-                const input = document.createElement('input');
-                input.type = 'hidden';
-                input.name = name;
-                input.value = value;
-                form.appendChild(input);
-              });
-              document.body.appendChild(form);
-              form.submit();
-            }
-          } else {
-            // Normal web browser: submit in-place as before
-            const form = document.createElement('form');
-            form.method = 'POST';
-            form.action = redsysRes.data.redsys_url;
-            Object.entries({
-              'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
-              'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
-              'Ds_Signature': redsysRes.data.Ds_Signature,
-            }).forEach(([name, value]) => {
-              const input = document.createElement('input');
-              input.type = 'hidden';
-              input.name = name;
-              input.value = value;
-              form.appendChild(input);
-            });
-            document.body.appendChild(form);
-            form.submit();
+          if (isStandalone && payUrl) {
+            // Show a visible button so the user physically taps -> iOS opens in Safari
+            setRedsysPayUrl(payUrl);
+            setProcessingPayment(false);
+            toast.info('Pulsa "Abrir pago seguro" para continuar en Safari');
+            return;
           }
+
+          if (payUrl) {
+            // Normal browser: full-page navigation to the auto-submitting page
+            window.location.href = payUrl;
+            return;
+          }
+
+          // Last-resort fallback: inline POST form submission
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.action = redsysRes.data.redsys_url;
+          Object.entries({
+            'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
+            'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
+            'Ds_Signature': redsysRes.data.Ds_Signature,
+          }).forEach(([name, value]) => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = name;
+            input.value = value;
+            form.appendChild(input);
+          });
+          document.body.appendChild(form);
+          form.submit();
           return;
         }
       } else if (gateway === 'stripe') {
@@ -238,6 +224,40 @@ export default function MemberMembership() {
 
   return (
     <div className="space-y-5 sm:space-y-6" data-testid="member-membership">
+      {/* Redsys external-browser modal (shown on iOS PWA so Redsys WAF/3DS/cookies work) */}
+      {redsysPayUrl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4" data-testid="redsys-external-modal">
+          <div className="w-full max-w-sm rounded-2xl bg-zinc-900 border border-zinc-800 p-6 text-center shadow-2xl">
+            <div className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(197,248,42,0.15)' }}>
+              <CreditCard size={28} style={{ color: 'var(--gym-primary, #c5f82a)' }} />
+            </div>
+            <h3 className="text-lg font-black mb-2">Pago seguro</h3>
+            <p className="text-sm text-zinc-400 mb-5">
+              Para completar el pago de forma segura, abriremos la pasarela Redsys en Safari.
+              Al terminar, vuelve a esta app para ver el resultado.
+            </p>
+            <a
+              href={redsysPayUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => { setTimeout(() => setRedsysPayUrl(null), 500); }}
+              className="block w-full py-3 rounded-xl font-black text-base text-black"
+              style={{ backgroundColor: 'var(--gym-primary, #c5f82a)' }}
+              data-testid="redsys-open-safari-btn"
+            >
+              Abrir pago seguro
+            </a>
+            <button
+              onClick={() => setRedsysPayUrl(null)}
+              className="mt-3 w-full py-2 text-xs text-zinc-500 hover:text-zinc-300"
+              data-testid="redsys-cancel-btn"
+            >
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
+
       <div>
         <h1 className="text-xl sm:text-2xl font-black tracking-tight">Mi Membresía</h1>
         <p className="text-zinc-400 text-xs sm:text-sm">Gestiona tu plan y pagos</p>
