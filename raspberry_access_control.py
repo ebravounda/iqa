@@ -33,6 +33,12 @@ import requests
 SERVER_URL = os.environ.get('GYMACCESS_SERVER_URL', 'https://c.ingresoqr.com')
 GYM_TOKEN = os.environ.get('GYMACCESS_GYM_TOKEN', 'TU_TOKEN_AQUI')
 DEVICE_ID = os.environ.get('GYMACCESS_DEVICE_ID', 'TU_DEVICE_ID')
+# Scanner assignment: optional overrides. Set to the exact /dev/input/eventX path if the
+# kernel-assigned order is wrong (one physical reader marks the opposite direction).
+# Alternatively set SWAP_SCANNERS=1 to just swap the auto-detected order.
+SCANNER_ENTRADA_PATH = os.environ.get('SCANNER_ENTRADA_PATH', '').strip()
+SCANNER_SALIDA_PATH = os.environ.get('SCANNER_SALIDA_PATH', '').strip()
+SWAP_SCANNERS = os.environ.get('SWAP_SCANNERS', '').strip() in ('1', 'true', 'yes')
 RELAY_ENTRADA = 12
 RELAY_SALIDA = 16
 TIEMPO_APERTURA = 3
@@ -331,36 +337,52 @@ def main():
         logger.error("No se encontraron lectores QR USB")
         sys.exit(1)
 
+    # Scanner-to-direction assignment with .env overrides.
+    # Precedence: explicit paths > SWAP_SCANNERS > kernel order (0=entrada, 1=salida).
+    entrada_scanner = scanners[0]
+    salida_scanner = scanners[1] if len(scanners) >= 2 else None
+
+    if SCANNER_ENTRADA_PATH or SCANNER_SALIDA_PATH:
+        match_entry = next((s for s in scanners if s.path == SCANNER_ENTRADA_PATH), None)
+        match_exit = next((s for s in scanners if s.path == SCANNER_SALIDA_PATH), None)
+        if match_entry:
+            entrada_scanner = match_entry
+        if match_exit:
+            salida_scanner = match_exit
+        logger.info(f"Asignacion de lectores por .env: ENTRADA={entrada_scanner.path} SALIDA={salida_scanner.path if salida_scanner else 'N/A'}")
+    elif SWAP_SCANNERS and len(scanners) >= 2:
+        entrada_scanner, salida_scanner = scanners[1], scanners[0]
+        logger.info("SWAP_SCANNERS activo: lectores invertidos")
+
     print("\n" + "=" * 50)
     print("   INGRESOQR - SISTEMA DE ACCESO v2.1")
     print(f"   {len(scanners)} lector(es) detectados")
     print(f"   Servidor: {SERVER_URL}")
     print(f"   Device ID: {DEVICE_ID}")
     print("-" * 50)
-    for i, s in enumerate(scanners):
-        rol = "ENTRADA" if i == 0 else "SALIDA"
-        print(f"   {rol}: {s.path} ({s.name})")
+    print(f"   ENTRADA: {entrada_scanner.path} ({entrada_scanner.name})")
+    if salida_scanner:
+        print(f"   SALIDA:  {salida_scanner.path} ({salida_scanner.name})")
     print("-" * 50)
     print("   Escanea tu codigo QR para entrar o salir")
     print("=" * 50 + "\n")
 
-    # Heartbeat: reporta estado cada 60 segundos
+    # Heartbeat: reporta estado cada 5 segundos para apertura remota rapida
     threading.Thread(target=heartbeat_loop, args=(client,), daemon=True).start()
-    logger.info("Heartbeat iniciado - reportando cada 60 segundos")
+    logger.info(f"Heartbeat iniciado - reportando cada {HEARTBEAT_INTERVAL} segundos")
 
     threads = []
-    if len(scanners) >= 1:
-        t1 = threading.Thread(target=read_scanner, args=(scanners[0], 'entrada', gpio, client))
-        t1.daemon = True
-        t1.start()
-        threads.append(t1)
-        logger.info(f"Hilo ENTRADA iniciado: {scanners[0].path}")
-    if len(scanners) >= 2:
-        t2 = threading.Thread(target=read_scanner, args=(scanners[1], 'salida', gpio, client))
+    t1 = threading.Thread(target=read_scanner, args=(entrada_scanner, 'entrada', gpio, client))
+    t1.daemon = True
+    t1.start()
+    threads.append(t1)
+    logger.info(f"Hilo ENTRADA iniciado: {entrada_scanner.path}")
+    if salida_scanner:
+        t2 = threading.Thread(target=read_scanner, args=(salida_scanner, 'salida', gpio, client))
         t2.daemon = True
         t2.start()
         threads.append(t2)
-        logger.info(f"Hilo SALIDA iniciado: {scanners[1].path}")
+        logger.info(f"Hilo SALIDA iniciado: {salida_scanner.path}")
 
     try:
         while True:
