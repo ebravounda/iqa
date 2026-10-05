@@ -54,7 +54,7 @@ async def send_device_command(device_id: str, request: Request, admin: dict = De
     command = body.get("command")
     # Super admin can send maintenance commands; gym admins can only open the turnstile
     maintenance_cmds = {"reboot", "update", "restart_service"}
-    gym_cmds = {"open_turnstile"}
+    gym_cmds = {"open_turnstile", "open_turnstile_entry", "open_turnstile_exit"}
     allowed = maintenance_cmds | gym_cmds
     if command not in allowed:
         raise HTTPException(status_code=400, detail=f"Comando no valido. Usa: {', '.join(sorted(allowed))}")

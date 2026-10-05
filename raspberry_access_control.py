@@ -37,7 +37,7 @@ RELAY_ENTRADA = 12
 RELAY_SALIDA = 16
 TIEMPO_APERTURA = 3
 PING_INTERVAL = 60
-HEARTBEAT_INTERVAL = 60
+HEARTBEAT_INTERVAL = 5
 
 KEYS = {
     ecodes.KEY_0: '0', ecodes.KEY_1: '1', ecodes.KEY_2: '2',
@@ -211,10 +211,16 @@ class GymAccessClient:
                 logger.info("[CMD] Actualizando software...")
                 os.system("cd /home/pi/gymaccess && git pull")
                 os.system("sudo systemctl restart gymaccess.service")
-            elif command == "open_turnstile":
+            elif command == "open_turnstile" or command == "open_turnstile_entry":
                 logger.info("[CMD] Apertura remota del torno (entrada)...")
                 if self.gpio:
                     self.gpio.abrir_torno('entrada')
+                else:
+                    logger.warning("[CMD] GPIO no disponible, no se puede abrir el torno")
+            elif command == "open_turnstile_exit":
+                logger.info("[CMD] Apertura remota del torno (salida)...")
+                if self.gpio:
+                    self.gpio.abrir_torno('salida')
                 else:
                     logger.warning("[CMD] GPIO no disponible, no se puede abrir el torno")
             else:
