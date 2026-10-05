@@ -92,13 +92,13 @@ async def get_accounting_report(
     
     daily_revenue = {}
     for t in transactions:
-        date_key = t.get("created_at", "")[:10]
+        date_key = (t.get("created_at") or "")[:10]
         if date_key:
-            daily_revenue[date_key] = daily_revenue.get(date_key, 0) + t.get("amount", 0)
+            daily_revenue[date_key] = daily_revenue.get(date_key, 0) + (t.get("amount") or 0)
     for s in pos_sales:
-        date_key = s.get("created_at", "")[:10]
+        date_key = (s.get("created_at") or "")[:10]
         if date_key:
-            daily_revenue[date_key] = daily_revenue.get(date_key, 0) + s.get("total", 0)
+            daily_revenue[date_key] = daily_revenue.get(date_key, 0) + (s.get("total") or 0)
     
     daily_chart = [{"date": k, "amount": v} for k, v in sorted(daily_revenue.items())]
 
@@ -599,22 +599,23 @@ async def generate_accounting_excel(
     for t in transactions:
         ms = memberships.get(t.get("member_id"), {})
         status_label = "Pagado" if t.get("payment_status") == "paid" else "Pendiente"
-        ms_status = ms.get("status", "").capitalize() if ms else ""
-        ms_end = ms.get("end_date", "")[:10] if ms else ""
+        ms_status = (ms.get("status") or "").capitalize() if ms else ""
+        ms_end = (ms.get("end_date") or "")[:10] if ms else ""
         method = method_map.get(t.get("payment_method", "stripe"), "Stripe Online")
+        created = t.get("created_at") or ""
         row = [
-            t.get("created_at", "")[:10],
-            t.get("created_at", "")[11:19] if len(t.get("created_at", "")) > 19 else "",
-            t.get("member_name", ""),
-            t.get("member_code", ""),
-            t.get("member_email", ""),
-            t.get("member_phone", ""),
-            t.get("plan_name", ""),
-            t.get("category", "General"),
-            t.get("plan_duration", ""),
+            created[:10],
+            created[11:19] if len(created) > 19 else "",
+            t.get("member_name") or "",
+            t.get("member_code") or "",
+            t.get("member_email") or "",
+            t.get("member_phone") or "",
+            t.get("plan_name") or "",
+            t.get("category") or "General",
+            t.get("plan_duration") or "",
             method,
             status_label,
-            t.get("amount", 0),
+            t.get("amount") or 0,
             ms_status,
             ms_end,
         ]
@@ -677,13 +678,14 @@ async def generate_accounting_excel(
             cell.font = header_font
             cell.fill = header_fill
         for s in pos_sales:
-            items_str = ", ".join([f"{i['product_name']} x{i['quantity']}" for i in s.get("items", [])])
+            items_str = ", ".join([f"{i.get('product_name','?')} x{i.get('quantity',1)}" for i in (s.get("items") or [])])
+            s_created = s.get("created_at") or ""
             ws_pos.append([
-                s.get("created_at", "")[:10],
-                s.get("created_at", "")[11:19] if len(s.get("created_at", "")) > 19 else "",
+                s_created[:10],
+                s_created[11:19] if len(s_created) > 19 else "",
                 items_str,
                 "Efectivo" if s.get("payment_method") == "cash" else "Tarjeta",
-                s.get("total", 0),
+                s.get("total") or 0,
             ])
         ws_pos.column_dimensions['A'].width = 12
         ws_pos.column_dimensions['B'].width = 10
@@ -701,13 +703,14 @@ async def generate_accounting_excel(
             cell.font = header_font
             cell.fill = header_fill
         for w in withdrawals:
+            w_created = w.get("created_at") or ""
             ws_w.append([
-                w.get("created_at", "")[:10],
-                w.get("created_at", "")[11:19] if len(w.get("created_at", "")) > 19 else "",
-                w.get("reason", ""),
-                w.get("notes", ""),
-                w.get("registered_by_name", ""),
-                w.get("amount", 0),
+                w_created[:10],
+                w_created[11:19] if len(w_created) > 19 else "",
+                w.get("reason") or "",
+                w.get("notes") or "",
+                w.get("registered_by_name") or "",
+                w.get("amount") or 0,
             ])
             ws_w.cell(row=ws_w.max_row, column=6).fill = red_fill
         ws_w.column_dimensions['A'].width = 12
