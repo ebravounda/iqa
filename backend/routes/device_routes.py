@@ -24,16 +24,20 @@ async def create_device(device: DeviceCreate, admin: dict = Depends(get_current_
 
 @router.get("/devices")
 async def get_devices(gym_id: Optional[str] = None, include_inactive: bool = False, admin: dict = Depends(get_current_admin)):
-    if admin["role"] != "super_admin":
-        raise HTTPException(status_code=403, detail="Solo super_admin puede ver dispositivos")
+    # super_admin can see all; gym_admin / gym_manager can see devices of their own gym
+    if admin["role"] not in ("super_admin", "gym_admin", "gym_manager"):
+        raise HTTPException(status_code=403, detail="Rol sin acceso a dispositivos")
     query = {}
-    if gym_id:
+    if admin["role"] != "super_admin":
+        query["gym_id"] = admin.get("gym_id")
+    elif gym_id:
         query["gym_id"] = gym_id
     if not include_inactive:
         query["active"] = {"$ne": False}
     devices = await db.devices.find(query, {"_id": 0}).sort("created_at", -1).to_list(200)
-    # Also return last 8 inactive devices
-    inactive_query = {**({} if not gym_id else {"gym_id": gym_id}), "active": False}
+    # Also return last 8 inactive devices (super_admin UI uses this)
+    inactive_gym = admin.get("gym_id") if admin["role"] != "super_admin" else gym_id
+    inactive_query = {**({} if not inactive_gym else {"gym_id": inactive_gym}), "active": False}
     inactive = await db.devices.find(inactive_query, {"_id": 0}).sort("deactivated_at", -1).to_list(8)
     return {"active": [d for d in devices if d.get("active") is not False], "inactive": inactive}
 

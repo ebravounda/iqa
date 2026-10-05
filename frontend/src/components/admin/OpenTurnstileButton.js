@@ -20,7 +20,11 @@ export default function OpenTurnstileButton({ gymId }) {
     const params = new URLSearchParams();
     params.set('gym_id', gymId);
     axios.get(`${API}/devices?${params.toString()}`)
-      .then(r => setDevices((r.data || []).filter(d => d.active !== false)))
+      .then(r => {
+        // Backend returns { active: [...], inactive: [...] } — use the active list.
+        const list = Array.isArray(r.data) ? r.data : (r.data?.active || []);
+        setDevices(list.filter(d => d.active !== false));
+      })
       .catch(() => setDevices([]));
   }, [gymId]);
 
