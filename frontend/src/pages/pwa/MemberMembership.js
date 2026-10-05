@@ -137,22 +137,64 @@ export default function MemberMembership() {
       if (gateway === 'redsys') {
         const redsysRes = await initiateRedsysPayment({ member_id: member?.id, plan_id: planId, gym_id: gym?.id });
         if (redsysRes.data?.redsys_url) {
-          const form = document.createElement('form');
-          form.method = 'POST';
-          form.action = redsysRes.data.redsys_url;
-          Object.entries({
-            'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
-            'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
-            'Ds_Signature': redsysRes.data.Ds_Signature,
-          }).forEach(([name, value]) => {
-            const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = name;
-            input.value = value;
-            form.appendChild(input);
-          });
-          document.body.appendChild(form);
-          form.submit();
+          // Detect PWABuilder / standalone PWA on iOS so we can open the payment in the
+          // system browser (Safari) instead of the embedded WKWebView, which breaks Redsys 3DS/WAF.
+          const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+            || window.navigator.standalone === true
+            || /pwabuilder/i.test(navigator.userAgent || '');
+
+          // Build the auto-submit HTML form
+          const formHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Redirigiendo a pago seguro...</title><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{font-family:system-ui;background:#09090B;color:#fafafa;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;text-align:center;padding:24px}.spinner{width:48px;height:48px;border:4px solid #27272a;border-top-color:#c5f82a;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 24px}@keyframes spin{to{transform:rotate(360deg)}}</style></head><body><div><div class="spinner"></div><p>Conectando con la pasarela de pago segura...</p><form id="r" method="POST" action="${redsysRes.data.redsys_url}">`
+            + `<input type="hidden" name="Ds_SignatureVersion" value="${redsysRes.data.Ds_SignatureVersion}"/>`
+            + `<input type="hidden" name="Ds_MerchantParameters" value="${redsysRes.data.Ds_MerchantParameters}"/>`
+            + `<input type="hidden" name="Ds_Signature" value="${redsysRes.data.Ds_Signature}"/>`
+            + `</form></div><script>document.getElementById('r').submit();</script></body></html>`;
+
+          if (isStandalone) {
+            // Open Redsys in the OS browser so cookies, 3DS redirects and the Redsys WAF work.
+            const w = window.open('', '_blank');
+            if (w) {
+              w.document.open();
+              w.document.write(formHtml);
+              w.document.close();
+            } else {
+              // Popup blocked -> fallback to same-window POST
+              const form = document.createElement('form');
+              form.method = 'POST';
+              form.action = redsysRes.data.redsys_url;
+              Object.entries({
+                'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
+                'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
+                'Ds_Signature': redsysRes.data.Ds_Signature,
+              }).forEach(([name, value]) => {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = name;
+                input.value = value;
+                form.appendChild(input);
+              });
+              document.body.appendChild(form);
+              form.submit();
+            }
+          } else {
+            // Normal web browser: submit in-place as before
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = redsysRes.data.redsys_url;
+            Object.entries({
+              'Ds_SignatureVersion': redsysRes.data.Ds_SignatureVersion,
+              'Ds_MerchantParameters': redsysRes.data.Ds_MerchantParameters,
+              'Ds_Signature': redsysRes.data.Ds_Signature,
+            }).forEach(([name, value]) => {
+              const input = document.createElement('input');
+              input.type = 'hidden';
+              input.name = name;
+              input.value = value;
+              form.appendChild(input);
+            });
+            document.body.appendChild(form);
+            form.submit();
+          }
           return;
         }
       } else if (gateway === 'stripe') {
