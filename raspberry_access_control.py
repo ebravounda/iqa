@@ -73,34 +73,34 @@ def get_system_info():
     try:
         temp = subprocess.check_output(["vcgencmd", "measure_temp"]).decode()
         info["cpu_temp"] = float(temp.replace("temp=", "").replace("'C\n", ""))
-    except:
+    except Exception:
         info["cpu_temp"] = None
     try:
         load = os.getloadavg()
         info["cpu_usage"] = round(load[0] * 100 / os.cpu_count(), 1)
-    except:
+    except Exception:
         info["cpu_usage"] = None
     try:
         mem = subprocess.check_output(["free", "-m"]).decode().split("\n")[1].split()
         info["memory_usage"] = round(int(mem[2]) / int(mem[1]) * 100, 1)
-    except:
+    except Exception:
         info["memory_usage"] = None
     try:
         uptime_sec = float(open("/proc/uptime").read().split()[0])
         info["uptime"] = int(uptime_sec)
-    except:
+    except Exception:
         info["uptime"] = None
     try:
         ip = subprocess.check_output(["hostname", "-I"]).decode().strip().split()[0]
         info["local_ip"] = ip
-    except:
+    except Exception:
         info["local_ip"] = None
     try:
         ext_ip = subprocess.check_output(
             ["curl", "-s", "--max-time", "5", "https://api.ipify.org"]
         ).decode().strip()
         info["ip_address"] = ext_ip
-    except:
+    except Exception:
         info["ip_address"] = None
     return info
 
@@ -138,8 +138,9 @@ class GPIOController:
 
 
 class GymAccessClient:
-    def __init__(self):
+    def __init__(self, gpio_controller=None):
         self.api_url = f"{SERVER_URL.rstrip('/')}/api"
+        self.gpio = gpio_controller
 
     def validar_qr(self, qr_code, direccion):
         try:
@@ -171,7 +172,7 @@ class GymAccessClient:
                 timeout=5
             )
             return response.status_code == 200
-        except:
+        except Exception:
             return False
 
     def heartbeat(self):
@@ -210,6 +211,12 @@ class GymAccessClient:
                 logger.info("[CMD] Actualizando software...")
                 os.system("cd /home/pi/gymaccess && git pull")
                 os.system("sudo systemctl restart gymaccess.service")
+            elif command == "open_turnstile":
+                logger.info("[CMD] Apertura remota del torno (entrada)...")
+                if self.gpio:
+                    self.gpio.abrir_torno('entrada')
+                else:
+                    logger.warning("[CMD] GPIO no disponible, no se puede abrir el torno")
             else:
                 logger.warning(f"[CMD] Comando desconocido: {command}")
         except Exception as e:
@@ -311,7 +318,7 @@ def main():
         sys.exit(1)
 
     gpio = GPIOController()
-    client = GymAccessClient()
+    client = GymAccessClient(gpio_controller=gpio)
     scanners = find_scanners()
 
     if len(scanners) == 0:

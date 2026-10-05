@@ -50,15 +50,22 @@ async def device_heartbeat(device_id: str, request: Request):
 
 @router.post("/devices/{device_id}/command")
 async def send_device_command(device_id: str, request: Request, admin: dict = Depends(get_current_admin)):
-    if admin["role"] != "super_admin":
-        raise HTTPException(status_code=403, detail="Solo super admin")
     body = await request.json()
     command = body.get("command")
-    if command not in ["reboot", "update", "restart_service"]:
-        raise HTTPException(status_code=400, detail="Comando no valido. Usa: reboot, update, restart_service")
+    # Super admin can send maintenance commands; gym admins can only open the turnstile
+    maintenance_cmds = {"reboot", "update", "restart_service"}
+    gym_cmds = {"open_turnstile"}
+    allowed = maintenance_cmds | gym_cmds
+    if command not in allowed:
+        raise HTTPException(status_code=400, detail=f"Comando no valido. Usa: {', '.join(sorted(allowed))}")
+    if command in maintenance_cmds and admin["role"] != "super_admin":
+        raise HTTPException(status_code=403, detail="Solo super admin puede enviar este comando")
     device = await db.devices.find_one({"id": device_id}, {"_id": 0})
     if not device:
         raise HTTPException(status_code=404, detail="Dispositivo no encontrado")
+    # Gym admin can only command their own gym's devices
+    if admin["role"] != "super_admin" and device.get("gym_id") != admin.get("gym_id"):
+        raise HTTPException(status_code=403, detail="Dispositivo no pertenece a tu gimnasio")
     cmd = {
         "id": str(uuid.uuid4()),
         "device_id": device_id,

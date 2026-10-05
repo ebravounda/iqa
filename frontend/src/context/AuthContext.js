@@ -88,8 +88,10 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error('Error fetching member data:', error);
-      // Only logout on authentication errors (401/403), NOT on network errors
-      if (error.response?.status === 401 || error.response?.status === 403) {
+      // Only logout on authentication errors with a real response from the backend.
+      // On network/CORS errors (error.response === undefined) KEEP the session so
+      // iOS backgrounding, WiFi switches or transient 502s don't force a re-login.
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
         logout();
       }
     } finally {
@@ -98,14 +100,21 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Periodic status check for members - detects suspension and device deactivation in real-time
+  // Also refreshes the JWT token silently (prevents mid-session expiry on mobile)
   useEffect(() => {
     if (!token || userType !== 'member') return;
     const interval = setInterval(async () => {
       try {
         const fp = localStorage.getItem('device_fingerprint') || '';
-        await axios.get(`${API}/auth/member/me${fp ? `?device_fingerprint=${fp}` : ''}`);
+        const response = await axios.get(`${API}/auth/member/me${fp ? `?device_fingerprint=${fp}` : ''}`);
+        // Silent token refresh: persist the fresh token so JWT doesn't expire on long sessions
+        if (response?.data?.token) {
+          localStorage.setItem('token', response.data.token);
+          setToken(response.data.token);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+        }
       } catch (err) {
-        // 403 will be caught by the Axios interceptor and force logout
+        // Only logout on 403 (suspended/blocked/device deactivated). Ignore network errors (iOS backgrounding).
         if (err.response?.status === 403) {
           logout();
         }

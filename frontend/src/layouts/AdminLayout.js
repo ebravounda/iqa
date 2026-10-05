@@ -9,6 +9,7 @@ import {
   Layers, Code, Megaphone, BarChart3, ClipboardList, Database, Monitor, Trophy, Dumbbell,
   Sun, Moon, AlertOctagon
 } from 'lucide-react';
+import AdminMobileBottomNav from '../components/admin/AdminMobileBottomNav';
 
 const getNavItems = (role, isImpersonating, permissions, labels) => {
   // When impersonating, show gym_admin menu
@@ -284,10 +285,17 @@ export const AdminLayout = ({ children }) => {
 
       {/* Main content */}
       <main className="admin-content" style={{ paddingTop: isImpersonating ? '36px' : '0' }}>
-        <div className="p-6 lg:p-8 pt-20 lg:pt-8 pb-16">
+        <div className="p-6 lg:p-8 pt-20 lg:pt-8 pb-24 lg:pb-16">
           {children}
         </div>
       </main>
+
+      {/* Mobile bottom nav (hidden on desktop) */}
+      <AdminMobileBottomNav
+        role={admin?.role}
+        isImpersonating={isImpersonating}
+        labels={labels}
+      />
     </div>
   );
 };

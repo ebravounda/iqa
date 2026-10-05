@@ -8,6 +8,7 @@ import {
   ArrowUpRight, Clock, AlertTriangle, Activity, LogIn, LogOut
 } from 'lucide-react';
 import { AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import OpenTurnstileButton from '../../components/admin/OpenTurnstileButton';
 
 export default function AdminDashboard() {
   const { admin, isSuperAdmin } = useAuth();
@@ -60,9 +61,14 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8 stagger-children" data-testid="admin-dashboard">
-      <div>
-        <h1 className="text-2xl font-black tracking-tight mb-1">Dashboard</h1>
-        <p className="text-zinc-400">Bienvenido, {admin?.name}</p>
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-black tracking-tight mb-1">Dashboard</h1>
+          <p className="text-zinc-400">Bienvenido, {admin?.name}</p>
+        </div>
+        {admin?.gym_id && (
+          <OpenTurnstileButton gymId={admin.gym_id} />
+        )}
       </div>
 
       {/* Stats Grid */}

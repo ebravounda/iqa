@@ -51,7 +51,7 @@ async def delete_plan(plan_id: str, admin: dict = Depends(get_current_admin)):
 
 @router.put("/plans/{plan_id}")
 async def update_plan(plan_id: str, plan_update: dict, admin: dict = Depends(get_current_admin)):
-    allowed_fields = {"name", "description", "price", "duration_days", "access_type", "is_staff_only"}
+    allowed_fields = {"name", "description", "price", "duration_days", "access_type", "is_staff_only", "category"}
     update_data = {k: v for k, v in plan_update.items() if k in allowed_fields and v is not None}
     if not update_data:
         raise HTTPException(status_code=400, detail="No data to update")

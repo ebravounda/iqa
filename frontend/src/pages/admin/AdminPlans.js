@@ -17,7 +17,7 @@ export default function AdminPlans() {
   const [loading, setLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newPlan, setNewPlan] = useState({
-    name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false
+    name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false, category: 'General'
   });
   const [gyms, setGyms] = useState([]);
   const [collapsedGyms, setCollapsedGyms] = useState({});
@@ -65,15 +65,15 @@ export default function AdminPlans() {
     if (!gymId) { toast.error('Selecciona un gimnasio'); return; }
     try {
       if (editPlan) {
-        await updatePlan(editPlan.id, { ...newPlan, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days), is_staff_only: !!newPlan.is_staff_only });
+        await updatePlan(editPlan.id, { ...newPlan, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days), is_staff_only: !!newPlan.is_staff_only, category: (newPlan.category || 'General').trim() || 'General' });
         toast.success('Plan actualizado');
       } else {
-        await createPlan({ ...newPlan, gym_id: gymId, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days), is_staff_only: !!newPlan.is_staff_only });
+        await createPlan({ ...newPlan, gym_id: gymId, price: parseFloat(newPlan.price), duration_days: parseInt(newPlan.duration_days), is_staff_only: !!newPlan.is_staff_only, category: (newPlan.category || 'General').trim() || 'General' });
         toast.success('Plan creado exitosamente');
       }
       setShowCreateModal(false);
       setEditPlan(null);
-      setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false });
+      setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false, category: 'General' });
       fetchPlans();
     } catch (error) {
       toast.error(error.response?.data?.detail || 'Error');
@@ -89,7 +89,8 @@ export default function AdminPlans() {
       duration_days: plan.duration_days?.toString() || '',
       access_type: plan.access_type || 'unlimited',
       gym_id: plan.gym_id || '',
-      is_staff_only: !!plan.is_staff_only
+      is_staff_only: !!plan.is_staff_only,
+      category: plan.category || 'General'
     });
     setShowCreateModal(true);
   };
@@ -142,7 +143,7 @@ export default function AdminPlans() {
         )}
         <Dialog open={showCreateModal} onOpenChange={(v) => { setShowCreateModal(v); if (!v) setEditPlan(null); }}>
           <DialogTrigger asChild>
-            <Button className="btn-gym-primary" data-testid="create-plan-btn" onClick={() => { setEditPlan(null); setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false }); }}>
+            <Button className="btn-gym-primary" data-testid="create-plan-btn" onClick={() => { setEditPlan(null); setNewPlan({ name: '', description: '', price: '', duration_days: '', access_type: 'unlimited', gym_id: '', is_staff_only: false, category: 'General' }); }}>
               <Plus size={20} className="mr-2" /> Nuevo Plan
             </Button>
           </DialogTrigger>
@@ -192,6 +193,25 @@ export default function AdminPlans() {
                       : { borderColor: 'var(--border-secondary)', color: 'var(--text-secondary)' }
                     }>{preset.label}</button>
                 ))}
+              </div>
+              <div>
+                <label className="text-sm mb-1 block" style={{ color: 'var(--text-secondary)' }}>Actividad / Categoria</label>
+                <Input
+                  value={newPlan.category || ''}
+                  onChange={(e) => setNewPlan({ ...newPlan, category: e.target.value })}
+                  placeholder="Ej: Kickboxing, Boxeo, Capoeira, General..."
+                  className="input-dark"
+                  list="plan-categories-list"
+                  data-testid="plan-category-input"
+                />
+                <datalist id="plan-categories-list">
+                  {Array.from(new Set((plans || []).map(p => p.category).filter(Boolean))).map(c => (
+                    <option key={c} value={c} />
+                  ))}
+                </datalist>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                  Agrupa planes por disciplina para facturacion separada (deja vacio para "General").
+                </p>
               </div>
               <label className="flex items-start gap-3 p-3 rounded-xl border cursor-pointer transition-colors hover:bg-zinc-800/40"
                 style={{

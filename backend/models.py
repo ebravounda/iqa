@@ -90,6 +90,7 @@ class PlanCreate(BaseModel):
     duration_days: int
     access_type: str = "unlimited"
     is_staff_only: Optional[bool] = False
+    category: Optional[str] = "General"
 
 class MembershipCreate(BaseModel):
     member_id: str

@@ -22,10 +22,11 @@ export default function AdminAccounting() {
   const [dateTo, setDateTo] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [quickFilter, setQuickFilter] = useState('30d');
   const [statusFilter, setStatusFilter] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [showWithdrawal, setShowWithdrawal] = useState(false);
   const [withdrawalForm, setWithdrawalForm] = useState({ amount: 0, reason: '', notes: '' });
 
-  useEffect(() => { fetchReport(); }, [dateFrom, dateTo, statusFilter]);
+  useEffect(() => { fetchReport(); }, [dateFrom, dateTo, statusFilter, categoryFilter]);
 
   const applyQuickFilter = (filter) => {
     setQuickFilter(filter);
@@ -47,6 +48,7 @@ export default function AdminAccounting() {
       if (dateFrom) params.date_from = dateFrom;
       if (dateTo) params.date_to = dateTo;
       if (statusFilter && statusFilter !== 'all') params.status = statusFilter;
+      if (categoryFilter && categoryFilter !== 'all') params.category = categoryFilter;
       const [reportRes, txRes] = await Promise.all([
         axios.get(`${API}/accounting/report`, { params }),
         axios.get(`${API}/accounting/transactions`, { params })
@@ -88,6 +90,7 @@ export default function AdminAccounting() {
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
       if (statusFilter && statusFilter !== 'all') params.append('status', statusFilter);
+      if (categoryFilter && categoryFilter !== 'all') params.append('category', categoryFilter);
       const response = await axios.get(`${API}/accounting/excel?${params.toString()}`, { responseType: 'blob' });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const a = document.createElement('a');
@@ -97,7 +100,18 @@ export default function AdminAccounting() {
       window.URL.revokeObjectURL(url);
       toast.success('Excel descargado');
     } catch (error) {
-      toast.error('Error al generar Excel');
+      // Try to extract real backend error message if the response is a blob
+      let detail = 'Error al generar Excel';
+      try {
+        if (error.response?.data instanceof Blob) {
+          const txt = await error.response.data.text();
+          const parsed = JSON.parse(txt);
+          detail = parsed.detail || detail;
+        } else if (error.response?.data?.detail) {
+          detail = error.response.data.detail;
+        }
+      } catch { /* keep default message */ }
+      toast.error(detail);
     }
   };
 
@@ -235,6 +249,17 @@ export default function AdminAccounting() {
             </Button>
           ))}
           <div className="flex items-center gap-2 ml-auto">
+            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+              <SelectTrigger className="w-44 input-dark" data-testid="category-filter">
+                <SelectValue placeholder="Actividad" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas las actividades</SelectItem>
+                {(report?.available_categories || []).map(c => (
+                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-36 input-dark" data-testid="status-filter">
                 <SelectValue placeholder="Todos" />
@@ -321,6 +346,41 @@ export default function AdminAccounting() {
           </div>
         </div>
       </div>
+
+      {/* Breakdown by Activity/Category */}
+      {report?.category_breakdown?.length > 0 && (
+        <div className="stat-card" data-testid="category-breakdown-card">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-bold">Facturacion por Actividad</h3>
+            <span className="text-xs text-zinc-500">Desglose por categoria de plan</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Actividad</th>
+                  <th className="text-right">Transacciones</th>
+                  <th className="text-right">Ingresos</th>
+                  <th className="text-right">% del total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(() => {
+                  const totalAmount = report.category_breakdown.reduce((a, c) => a + (c.amount || 0), 0) || 1;
+                  return report.category_breakdown.map((c) => (
+                    <tr key={c.category} data-testid={`cat-row-${c.category}`}>
+                      <td className="font-bold">{c.category}</td>
+                      <td className="text-right">{c.count}</td>
+                      <td className="text-right font-mono text-[var(--gym-primary)]">${c.amount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                      <td className="text-right text-zinc-400">{((c.amount / totalAmount) * 100).toFixed(1)}%</td>
+                    </tr>
+                  ));
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Transactions Table */}
       <div className="stat-card">

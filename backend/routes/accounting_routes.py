@@ -15,7 +15,8 @@ router = APIRouter(prefix="/api")
 @router.get("/accounting/report")
 async def get_accounting_report(
     gym_id: Optional[str] = None, date_from: Optional[str] = None,
-    date_to: Optional[str] = None, admin: dict = Depends(get_current_admin)
+    date_to: Optional[str] = None, category: Optional[str] = None,
+    admin: dict = Depends(get_current_admin)
 ):
     query = {"payment_status": "paid"}
     if admin["role"] != "super_admin":
@@ -30,6 +31,22 @@ async def get_accounting_report(
         else:
             query["created_at"] = {"$lte": date_to + "T23:59:59"}
     transactions = await db.payment_transactions.find(query, {"_id": 0}).sort("created_at", -1).to_list(5000)
+
+    # Build plan_id -> category map (and name) for the scoped gym to enable category filtering/breakdown
+    plan_query = {}
+    tgt_gym_id = admin.get("gym_id") if admin["role"] != "super_admin" else gym_id
+    if tgt_gym_id:
+        plan_query["gym_id"] = tgt_gym_id
+    plans_cat = await db.plans.find(plan_query, {"_id": 0, "id": 1, "name": 1, "category": 1}).to_list(500)
+    plan_cat_map = {p["id"]: (p.get("category") or "General") for p in plans_cat}
+
+    # Attach category to each transaction (fallback to "General")
+    for t in transactions:
+        t["category"] = plan_cat_map.get(t.get("plan_id"), "General")
+
+    # Optional filter by category
+    if category and category != "all":
+        transactions = [t for t in transactions if (t.get("category") or "General") == category]
     
     # Include POS sales
     pos_query = {}
@@ -84,7 +101,21 @@ async def get_accounting_report(
             daily_revenue[date_key] = daily_revenue.get(date_key, 0) + s.get("total", 0)
     
     daily_chart = [{"date": k, "amount": v} for k, v in sorted(daily_revenue.items())]
-    
+
+    # Revenue breakdown by activity/category
+    category_breakdown = {}
+    for t in transactions:
+        cat = t.get("category") or "General"
+        if cat not in category_breakdown:
+            category_breakdown[cat] = {"count": 0, "amount": 0.0}
+        category_breakdown[cat]["count"] += 1
+        category_breakdown[cat]["amount"] += t.get("amount", 0) or 0
+    category_rows = [
+        {"category": k, "count": v["count"], "amount": v["amount"]}
+        for k, v in sorted(category_breakdown.items(), key=lambda x: x[1]["amount"], reverse=True)
+    ]
+    available_categories = sorted({p.get("category") or "General" for p in plans_cat})
+
     return {
         "transactions": transactions,
         "pos_sales": pos_sales,
@@ -101,7 +132,9 @@ async def get_accounting_report(
             "total_withdrawals": total_withdrawals,
             "net_cash": cash_total + pos_cash - total_withdrawals,
         },
-        "daily_chart": daily_chart
+        "daily_chart": daily_chart,
+        "category_breakdown": category_rows,
+        "available_categories": available_categories,
     }
 
 @router.post("/accounting/withdrawal")
@@ -332,6 +365,7 @@ async def generate_accounting_pdf(
 async def generate_accounting_excel(
     gym_id: Optional[str] = None, date_from: Optional[str] = None,
     date_to: Optional[str] = None, status: Optional[str] = None,
+    category: Optional[str] = None,
     admin: dict = Depends(get_current_admin)
 ):
     """Export detailed Excel with memberships, payments, status, and summary."""
@@ -356,6 +390,21 @@ async def generate_accounting_excel(
             tx_query["created_at"] = {"$lte": date_to + "T23:59:59"}
 
     transactions = await db.payment_transactions.find(tx_query, {"_id": 0}).sort("created_at", -1).to_list(10000)
+
+    # Load plan -> category map for this gym
+    plan_q = {}
+    if target_gym_id:
+        plan_q["gym_id"] = target_gym_id
+    plans_all = await db.plans.find(plan_q, {"_id": 0, "id": 1, "name": 1, "category": 1, "price": 1, "duration_days": 1}).to_list(500)
+    plan_cat_map = {p["id"]: (p.get("category") or "General") for p in plans_all}
+
+    # Attach category to each tx
+    for t in transactions:
+        t["category"] = plan_cat_map.get(t.get("plan_id"), "General")
+
+    # Optional category filter
+    if category and category != "all":
+        transactions = [t for t in transactions if (t.get("category") or "General") == category]
 
     # Enrich with member + plan data
     for t in transactions:
@@ -539,7 +588,7 @@ async def generate_accounting_excel(
 
     # --- Sheet 2: PAGOS DETALLADOS ---
     ws_tx = wb.create_sheet("Pagos Membresias")
-    headers = ["Fecha", "Hora", "Socio", "Codigo", "Email", "Telefono", "Plan", "Duracion (dias)", "Metodo Pago", "Estado", "Monto", "Estado Membresia", "Vencimiento"]
+    headers = ["Fecha", "Hora", "Socio", "Codigo", "Email", "Telefono", "Plan", "Actividad", "Duracion (dias)", "Metodo Pago", "Estado", "Monto", "Estado Membresia", "Vencimiento"]
     ws_tx.append(headers)
     for col_idx, h in enumerate(headers, 1):
         cell = ws_tx.cell(row=1, column=col_idx)
@@ -561,6 +610,7 @@ async def generate_accounting_excel(
             t.get("member_email", ""),
             t.get("member_phone", ""),
             t.get("plan_name", ""),
+            t.get("category", "General"),
             t.get("plan_duration", ""),
             method,
             status_label,
@@ -572,18 +622,50 @@ async def generate_accounting_excel(
 
     # Color rows by status
     for row_idx in range(2, len(transactions) + 2):
-        status_cell = ws_tx.cell(row=row_idx, column=10)
+        status_cell = ws_tx.cell(row=row_idx, column=11)
         if status_cell.value == "Pagado":
             status_cell.fill = green_fill
         else:
             status_cell.fill = amber_fill
-        ws_tx.cell(row=row_idx, column=11).number_format = '#,##0.00'
-        for col in range(1, 14):
+        ws_tx.cell(row=row_idx, column=12).number_format = '#,##0.00'
+        for col in range(1, 15):
             ws_tx.cell(row=row_idx, column=col).border = thin_border
 
-    widths = [12, 10, 25, 10, 25, 15, 20, 14, 18, 12, 12, 16, 14]
+    widths = [12, 10, 25, 10, 25, 15, 20, 16, 14, 18, 12, 12, 16, 14]
     for i, w in enumerate(widths, 1):
-        ws_tx.column_dimensions[chr(64 + i) if i <= 26 else 'A'].width = w
+        col_letter = chr(64 + i) if i <= 26 else 'A'
+        ws_tx.column_dimensions[col_letter].width = w
+
+    # --- Sheet 2b: DESGLOSE POR ACTIVIDAD ---
+    cat_totals = {}
+    for t in transactions:
+        if t.get("payment_status") != "paid":
+            continue
+        c = t.get("category") or "General"
+        if c not in cat_totals:
+            cat_totals[c] = {"count": 0, "amount": 0.0}
+        cat_totals[c]["count"] += 1
+        cat_totals[c]["amount"] += t.get("amount", 0) or 0
+    if cat_totals:
+        ws_cat = wb.create_sheet("Por Actividad")
+        ws_cat.append(["Actividad", "Transacciones", "Ingresos"])
+        for col_idx in range(1, 4):
+            cell = ws_cat.cell(row=1, column=col_idx)
+            cell.font = header_font
+            cell.fill = header_fill
+        for cat_name, v in sorted(cat_totals.items(), key=lambda x: x[1]["amount"], reverse=True):
+            ws_cat.append([cat_name, v["count"], v["amount"]])
+            ws_cat.cell(row=ws_cat.max_row, column=3).number_format = '#,##0.00'
+        total_count = sum(v["count"] for v in cat_totals.values())
+        total_amount = sum(v["amount"] for v in cat_totals.values())
+        ws_cat.append(["TOTAL", total_count, total_amount])
+        for col_idx in range(1, 4):
+            ws_cat.cell(row=ws_cat.max_row, column=col_idx).font = Font(bold=True)
+            ws_cat.cell(row=ws_cat.max_row, column=col_idx).fill = green_fill
+        ws_cat.cell(row=ws_cat.max_row, column=3).number_format = '#,##0.00'
+        ws_cat.column_dimensions['A'].width = 25
+        ws_cat.column_dimensions['B'].width = 16
+        ws_cat.column_dimensions['C'].width = 18
 
     # --- Sheet 3: VENTAS POS ---
     if pos_sales:
